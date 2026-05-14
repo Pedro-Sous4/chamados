@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Laghetto</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50:  '#FDF8F0',
+              100: '#F5ECCB',
+              200: '#FDF0E0',
+              300: '#c9a882',
+              400: '#B6741A',
+              500: '#925616',
+              900: '#3b2008',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(16px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    #login-panel { animation: fadeIn .45s ease both; }
+    @media (max-width: 767px) {
+      #login-panel {
+        background-image: url('/images/hotel-bg.jpg');
+        background-size: cover;
+        background-position: center;
+      }
+      #login-panel::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(249,250,251,.9);
+        z-index: 0;
+      }
+      #login-panel > * { position: relative; z-index: 1; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex overflow-hidden bg-brand-50">
+
+<!-- Foto do hotel (esquerda) -->
+<div class="hidden md:block flex-1 relative overflow-hidden">
+  <img src="/images/hotel-bg.jpg" alt="Golden Gramado Resort Laghetto"
+       class="w-full h-full object-cover object-center block" />
+  <span class="absolute bottom-7 left-8 z-10 text-white/70 text-xs tracking-wider"
+        style="text-shadow:0 1px 4px rgba(0,0,0,.4)">
+    Golden Gramado Resort Laghetto
+  </span>
+</div>
+
+<!-- Painel de login (direita) -->
+<div id="login-panel"
+     class="w-full md:max-w-[460px] flex-shrink-0 min-h-screen bg-brand-50
+            md:border-l md:border-brand-100 md:shadow-[-8px_0_32px_rgba(146,86,22,.06)]
+            flex flex-col items-center justify-center px-12 py-12 relative">
+
+  <!-- Logo -->
+  <div class="w-20 h-20 rounded-full bg-brand-500 border-[3px] border-brand-400
+              flex items-center justify-center mb-6
+              shadow-[0_0_0_6px_rgba(182,116,26,.12),0_4px_20px_rgba(146,86,22,.18)]">
+    <img src="/images/logo-g.png" alt="Laghetto" class="w-[78%] h-[78%] object-contain" />
+  </div>
+
+  <h1 class="text-[1.65rem] font-bold text-brand-500 tracking-tight mb-1.5 text-center">
+    Bem-vindo
+  </h1>
+  <div class="w-12 h-0.5 bg-gradient-to-r from-transparent via-brand-400 to-transparent mx-auto mb-6"></div>
+  <p class="text-sm text-brand-400/80 mb-8 text-center tracking-wide">
+    Sistema de Chamados — TI Laghetto
+  </p>
+
+  <form id="form-login" novalidate class="w-full flex flex-col gap-4">
+
+    <!-- Erro -->
+    <div id="error-msg"
+         class="hidden items-center gap-2 bg-red-50 text-red-800 border border-red-200
+                rounded-lg px-3.5 py-2.5 text-sm">
+      <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+      <span id="error-text">Email ou senha incorretos.</span>
+    </div>
+
+    <!-- Email -->
+    <div class="flex flex-col gap-1.5">
+      <label for="email" class="text-[.7rem] font-bold uppercase tracking-[.8px] text-brand-500">
+        E-mail
+      </label>
+      <div class="relative">
+        <i data-lucide="mail" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-300 pointer-events-none"></i>
+        <input type="email" id="email" name="email" placeholder="seu@email.com"
+               autocomplete="username" required
+               class="w-full pl-10 pr-3.5 py-3 border-[1.5px] border-brand-100 rounded-xl
+                      text-sm text-brand-900 bg-white outline-none
+                      focus:border-brand-400 focus:ring-2 focus:ring-brand-400/10
+                      placeholder-brand-300 shadow-[0_1px_3px_rgba(146,86,22,.07)] transition-all" />
+      </div>
+    </div>
+
+    <!-- Senha -->
+    <div class="flex flex-col gap-1.5">
+      <label for="password" class="text-[.7rem] font-bold uppercase tracking-[.8px] text-brand-500">
+        Senha
+      </label>
+      <div class="relative">
+        <i data-lucide="lock" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-300 pointer-events-none"></i>
+        <input type="password" id="password" name="password" placeholder="········"
+               autocomplete="current-password" required
+               class="w-full pl-10 pr-11 py-3 border-[1.5px] border-brand-100 rounded-xl
+                      text-sm text-brand-900 bg-white outline-none
+                      focus:border-brand-400 focus:ring-2 focus:ring-brand-400/10
+                      placeholder-brand-300 shadow-[0_1px_3px_rgba(146,86,22,.07)] transition-all" />
+        <button type="button" id="toggle-pw" aria-label="Mostrar senha"
+                class="absolute right-3.5 top-1/2 -translate-y-1/2 bg-transparent border-none
+                       cursor-pointer p-0 text-brand-300 hover:text-brand-500 transition-colors">
+          <i data-lucide="eye" class="w-4 h-4" id="eye-icon"></i>
+        </button>
+      </div>
+    </div>
+
+    <button type="submit" id="btn-login"
+            class="mt-1 w-full py-3.5 bg-gradient-to-br from-brand-400 to-brand-500 text-white
+                   rounded-xl font-bold tracking-wide shadow-[0_4px_18px_rgba(146,86,22,.32)]
+                   hover:opacity-90 active:scale-[.98] disabled:opacity-50 disabled:cursor-not-allowed
+                   transition-all flex items-center justify-center gap-2 border-none cursor-pointer">
+      <i data-lucide="log-in" class="w-4 h-4"></i> Entrar
+    </button>
+
+  </form>
+</div>
+
+<script>
+  (function () {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      fetch('/api/auth/verify', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(r => { if (r.ok) window.location.replace('/'); });
+    }
+  })();
+
+  lucide.createIcons();
+
+  let pwVisible = false;
+  document.getElementById('toggle-pw').addEventListener('click', function () {
+    const input = document.getElementById('password');
+    const icon  = document.getElementById('eye-icon');
+    pwVisible = !pwVisible;
+    input.type = pwVisible ? 'text' : 'password';
+    icon.setAttribute('data-lucide', pwVisible ? 'eye-off' : 'eye');
+    lucide.createIcons();
+  });
+
+  document.getElementById('form-login').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const btn    = document.getElementById('btn-login');
+    const errEl  = document.getElementById('error-msg');
+    const errTxt = document.getElementById('error-text');
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    errEl.classList.add('hidden');
+    errEl.classList.remove('flex');
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Entrando…';
+    lucide.createIcons();
+
+    try {
+      const res  = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        errTxt.textContent = data.error || 'Email ou senha incorretos.';
+        errEl.classList.remove('hidden');
+        errEl.classList.add('flex');
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="log-in" class="w-4 h-4"></i> Entrar';
+        lucide.createIcons();
+        return;
+      }
+
+      localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('auth_email', data.email);
+      localStorage.setItem('auth_role', data.role || 'usuario');
+      window.location.replace('/');
+    } catch {
+      errTxt.textContent = 'Erro de conexão. Tente novamente.';
+      errEl.classList.remove('hidden');
+      errEl.classList.add('flex');
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="log-in" class="w-4 h-4"></i> Entrar';
+      lucide.createIcons();
+    }
+  });
+</script>
+</body>
+</html>

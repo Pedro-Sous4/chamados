@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Emulador WhatsApp — Bot</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #111b21;
+      color: #e9edef;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 480px;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: #0b141a;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────────── */
+    header {
+      background: #202c33;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #2a3942;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #00a884;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .header-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .header-field {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .header-field label {
+      font-size: 11px;
+      color: #8696a0;
+      width: 52px;
+      flex-shrink: 0;
+    }
+
+    .header-field input {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #2a3942;
+      color: #e9edef;
+      font-size: 13px;
+      padding: 2px 4px;
+      width: 100%;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .header-field input:focus {
+      border-bottom-color: #00a884;
+    }
+
+    .header-field input::placeholder { color: #3e5158; }
+
+    /* ── MESSAGES ────────────────────────────────────────────── */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: #0b141a;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23182229' fill-opacity='0.6'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    #messages::-webkit-scrollbar { width: 6px; }
+    #messages::-webkit-scrollbar-thumb { background: #2a3942; border-radius: 3px; }
+
+    .bubble {
+      max-width: 75%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .bubble.user {
+      align-self: flex-end;
+      background: #005c4b;
+      border-bottom-right-radius: 2px;
+    }
+
+    .bubble.bot {
+      align-self: flex-start;
+      background: #202c33;
+      border-bottom-left-radius: 2px;
+    }
+
+    .bubble .time {
+      font-size: 10px;
+      color: #8696a0;
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    /* ── INPUT BAR ───────────────────────────────────────────── */
+    #input-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #202c33;
+      border-top: 1px solid #2a3942;
+    }
+
+    #msg-input {
+      flex: 1;
+      background: #2a3942;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #e9edef;
+      font-size: 14px;
+      outline: none;
+      resize: none;
+      max-height: 120px;
+      line-height: 1.4;
+    }
+
+    #msg-input::placeholder { color: #8696a0; }
+
+    #send-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: none;
+      background: #00a884;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s;
+    }
+
+    #send-btn:hover { background: #06cf9c; }
+    #send-btn:disabled { background: #2a3942; cursor: default; }
+
+    #send-btn svg { width: 20px; height: 20px; }
+
+    .typing-indicator {
+      align-self: flex-start;
+      background: #202c33;
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      gap: 4px;
+    }
+
+    .typing-indicator span {
+      width: 7px; height: 7px;
+      background: #8696a0;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .typing-indicator span:nth-child(2) { animation-delay: .2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: .4s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-5px); }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="avatar">👤</div>
+    <div class="header-fields">
+      <div class="header-field">
+        <label for="f-name">Nome</label>
+        <input id="f-name" type="text" placeholder="Seu nome" value="Usuário Teste" />
+      </div>
+      <div class="header-field">
+        <label for="f-phone">Telefone</label>
+        <input id="f-phone" type="text" placeholder="5511999999999" value="5511999999999" />
+      </div>
+    </div>
+  </header>
+
+  <div id="messages"></div>
+
+  <div id="input-bar" onclick="document.getElementById('msg-input').focus()">
+    <textarea id="msg-input" rows="1" placeholder="Digite uma mensagem"></textarea>
+    <button id="send-btn">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  const messagesEl = document.getElementById('messages');
+  const input = document.getElementById('msg-input');
+  const sendBtn = document.getElementById('send-btn');
+
+  function now() {
+    return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function addBubble(text, who) {
+    const div = document.createElement('div');
+    div.className = 'bubble ' + who;
+    const body = document.createElement('div');
+    body.textContent = text;
+    const time = document.createElement('div');
+    time.className = 'time';
+    time.textContent = now();
+    div.appendChild(body);
+    div.appendChild(time);
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return div;
+  }
+
+  function showTyping() {
+    const el = document.createElement('div');
+    el.className = 'typing-indicator';
+    el.innerHTML = '<span></span><span></span><span></span>';
+    messagesEl.appendChild(el);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return el;
+  }
+
+  async function send() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    const name = document.getElementById('f-name').value.trim() || 'Usuário';
+    const phone = document.getElementById('f-phone').value.trim().replace(/\D/g, '') || '5500000000000';
+
+    input.value = '';
+    input.style.height = 'auto';
+    sendBtn.disabled = true;
+
+    addBubble(text, 'user');
+    const typing = showTyping();
+
+    try {
+      const res = await fetch('/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, text }),
+      });
+      const data = await res.json();
+      typing.remove();
+      (data.responses || []).forEach(r => addBubble(r, 'bot'));
+    } catch (e) {
+      typing.remove();
+      addBubble('⚠️ Erro ao conectar com o bot.', 'bot');
+    } finally {
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  }
+
+  sendBtn.addEventListener('click', send);
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  });
+
+  // Auto-resize textarea
+  input.addEventListener('input', () => {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+  });
+
+  // ── SSE: recebe notificações assíncronas do servidor (webhooks externos) ──
+  let _sseSource = null;
+
+  function connectSSE(phone) {
+    if (_sseSource) _sseSource.close();
+    if (!phone) return;
+    _sseSource = new EventSource('/events?phone=' + encodeURIComponent(phone));
+    _sseSource.onmessage = (e) => {
+      try {
+        const { text } = JSON.parse(e.data);
+        addBubble(text, 'bot');
+      } catch {}
+    };
+    _sseSource.onerror = () => {
+      // reconecta automaticamente pelo browser
+    };
+  }
+
+  // Inicia SSE com o telefone atual e reconecta se o campo mudar
+  const phoneInput = document.getElementById('f-phone');
+  connectSSE(phoneInput.value.trim().replace(/\D/g, ''));
+  phoneInput.addEventListener('change', () => {
+    connectSSE(phoneInput.value.trim().replace(/\D/g, ''));
+  });
+</script>
+</body>
+</html>

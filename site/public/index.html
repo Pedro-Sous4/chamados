@@ -1,0 +1,2142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chamados — Laghetto</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50:  '#FDF8F0',
+              100: '#F5ECCB',
+              200: '#FDF0E0',
+              300: '#c9a882',
+              400: '#B6741A',
+              500: '#925616',
+              900: '#3b2008',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    /* ---------- Fundo da página ---------- */
+    body { background:#f0ebe0; }
+
+    /* ---------- Badge ---------- */
+    .badge {
+      display:inline-flex; align-items:center; gap:5px;
+      padding:4px 11px; border-radius:9999px;
+      font-size:.7rem; font-weight:700; letter-spacing:.3px;
+      white-space:nowrap;
+    }
+    .badge::before {
+      content:''; display:inline-block; width:6px; height:6px;
+      border-radius:9999px; flex-shrink:0;
+    }
+    .badge-aberto         { background:#fff1f2; color:#be123c; border:1.5px solid #fda4af; }
+    .badge-aberto::before { background:#f43f5e; box-shadow:0 0 0 2px rgba(244,63,94,.25); }
+    .badge-em_atendimento { background:#fffbeb; color:#92400e; border:1.5px solid #fcd34d; }
+    .badge-em_atendimento::before { background:#f59e0b; box-shadow:0 0 0 2px rgba(245,158,11,.25); }
+    .badge-concluido      { background:#f0fdf4; color:#15803d; border:1.5px solid #86efac; }
+    .badge-concluido::before { background:#22c55e; box-shadow:0 0 0 2px rgba(34,197,94,.25); }
+    .badge-cancelado      { background:#fff1f2; color:#be123c; border:1.5px solid #fda4af; }
+    .badge-cancelado::before { background:#f43f5e; box-shadow:0 0 0 2px rgba(244,63,94,.25); }
+    .badge-default        { background:#f9fafb; color:#374151; border:1.5px solid #e5e7eb; }
+    .badge-default::before { background:#9ca3af; }
+
+    .badge-tipo {
+      display:inline-flex; align-items:center;
+      padding:4px 11px; border-radius:9999px;
+      font-size:.7rem; font-weight:700; letter-spacing:.3px;
+      background:#FDF8F0; color:#925616;
+      border:1.5px solid #e8d5b0;
+    }
+
+    /* ---------- Linhas da tabela ---------- */
+    .trow { transition:background .15s; border-left:3px solid transparent; }
+    .trow[data-status="aberto"]         { border-left-color:#f43f5e; }
+    .trow[data-status="em_atendimento"] { border-left-color:#f59e0b; }
+    .trow[data-status="concluido"]      { border-left-color:#22c55e; }
+    .trow[data-status="cancelado"]      { border-left-color:#f43f5e; }
+
+    .trow:hover { background:#fdf8f1; }
+    .trow[data-status="aberto"]:hover         { background:#fffbeb; }
+    .trow[data-status="em_atendimento"]:hover { background:#eff6ff; }
+    .trow[data-status="concluido"]:hover      { background:#f0fdf4; }
+    .trow[data-status="cancelado"]:hover      { background:#fff1f2; }
+
+    td.description { white-space:normal; word-break:break-word; max-width:240px; }
+
+    /* ---------- Animations ---------- */
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .spin { animation:spin 1s linear infinite; }
+
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    .anim-row { animation:fadeIn .28s ease both; }
+
+    @keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+    .anim-slide { animation:slideDown .3s ease both; }
+
+    .stat-item { animation:fadeIn .4s ease both; }
+    .stat-item:nth-child(2) { animation-delay:.06s; }
+    .stat-item:nth-child(3) { animation-delay:.12s; }
+    .stat-item:nth-child(4) { animation-delay:.18s; }
+
+    /* ---------- Tabs ---------- */
+    .tab-btn {
+      display:inline-flex; align-items:center; gap:7px;
+      padding:10px 22px; font-size:.78rem; font-weight:700; letter-spacing:.15px;
+      border:none; border-bottom:2.5px solid transparent;
+      background:transparent; color:#c9a882; cursor:pointer;
+      transition:color .18s, border-color .18s;
+      position:relative; top:1.5px;
+    }
+    .tab-btn:hover { color:#925616; }
+    .tab-btn.tab-active { border-bottom-color:#925616; color:#925616; }
+    .tab-btn .tab-count {
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width:18px; height:18px; padding:0 5px; border-radius:9999px;
+      font-size:.6rem; font-weight:800; letter-spacing:.2px;
+      background:#f5eccb; color:#925616; transition:background .18s,color .18s;
+    }
+    .tab-btn.tab-active .tab-count { background:#925616; color:#fff; }
+
+    /* ---------- Toasts ---------- */
+    #toast-container {
+      position:fixed; top:24px; right:24px; z-index:9999;
+      display:flex; flex-direction:column; gap:10px; pointer-events:none;
+    }
+    .toast {
+      display:flex; align-items:center; gap:10px;
+      padding:13px 18px; border-radius:14px;
+      font-size:.82rem; font-weight:600; color:#fff;
+      box-shadow:0 4px 24px rgba(0,0,0,.22);
+      pointer-events:all; min-width:260px; max-width:380px;
+      animation:toastIn .28s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .toast i { flex-shrink:0; }
+    @keyframes toastIn  { from { opacity:0; transform:translateY(-16px) scale(.95); } to { opacity:1; transform:none; } }
+    @keyframes toastOut { to   { opacity:0; transform:translateY(-8px) scale(.96); } }
+    .toast-success { background:#16a34a; }
+    .toast-error   { background:#dc2626; }
+    .toast-info    { background:#925616; }
+    .toast-warning { background:#d97706; }
+
+    /* ---------- Scrollbar custom ---------- */
+    .tbl-wrap { overflow-x:auto; }
+    .tbl-wrap::-webkit-scrollbar { height:4px; }
+    .tbl-wrap::-webkit-scrollbar-track { background:transparent; }
+    .tbl-wrap::-webkit-scrollbar-thumb { background:#e8d5b0; border-radius:9999px; }
+
+    /* ---------- Avatar ---------- */
+    .avatar { width:34px; height:34px; border-radius:9999px; display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:800; color:#fff; flex-shrink:0; letter-spacing:.5px; }
+
+    /* ---------- Profile cell ---------- */
+    .sol-cell { cursor:pointer; }
+    .sol-hint { opacity:0; transition:opacity .15s; font-size:.6rem; font-weight:600; color:#925616; line-height:1.2; margin-top:1px; }
+    .sol-cell:hover .sol-hint { opacity:1; }
+    .sol-cell:hover .sol-name { color:#925616; }
+
+    /* ---------- Profile modal ---------- */
+    @keyframes modalIn { from { opacity:0; transform:scale(.96) translateY(8px); } to { opacity:1; transform:none; } }
+    .modal-anim { animation:modalIn .22s ease both; }
+  </style>
+</head>
+<body class="min-h-screen text-brand-900">
+
+<!-- ═══════════════════════════════════════════════════════ HEADER ══ -->
+<header style="background:#c98830">
+  <div class="flex items-center justify-between px-8 py-5 gap-6 flex-wrap">
+
+    <!-- Marca -->
+    <div class="flex items-center gap-4">
+      <div class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0
+                  border border-white/20 shadow-[0_0_0_4px_rgba(255,255,255,.06)]"
+           style="background:rgba(255,255,255,.12);backdrop-filter:blur(6px)">
+        <i data-lucide="headphones" class="w-5 h-5 text-white"></i>
+      </div>
+      <div>
+        <h1 class="text-white font-bold text-lg leading-none tracking-tight">Central de Chamados</h1>
+        <p class="text-white/50 text-xs mt-1 tracking-widest uppercase font-medium">Laghetto Hotéis</p>
+      </div>
+    </div>
+
+    <!-- Ações -->
+    <div class="flex items-center gap-3 flex-wrap">
+      <button id="btn-novo-chamado"
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold
+                     transition-all shadow-[0_2px_10px_rgba(0,0,0,.2)]
+                     text-brand-900 hover:brightness-105 cursor-pointer"
+              style="background:#f0c060;border:1px solid rgba(255,255,255,0.2)">
+        <i data-lucide="plus" class="w-4 h-4"></i> Novo Chamado
+      </button>
+      <a id="btn-logins" href="/gerenciar-logins.html"
+         class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold
+                no-underline text-white/85 hover:text-white hover:bg-white/10 transition-all
+                border border-white/15">
+        <i data-lucide="users" class="w-4 h-4"></i> Logins
+      </a>
+      <button id="btn-config"
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold
+                     text-white/85 hover:text-white hover:bg-white/10 transition-all
+                     border border-white/15 cursor-pointer bg-transparent"
+              style="display:none">
+        <i data-lucide="settings" class="w-4 h-4"></i> Configurações
+      </button>
+      <div class="w-px h-6 bg-white/15 mx-1 hidden sm:block"></div>
+      <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl
+                  border border-white/15 bg-white/8">
+        <div class="w-6 h-6 rounded-full bg-brand-400/60 flex items-center justify-center">
+          <i data-lucide="user" class="w-3 h-3 text-white"></i>
+        </div>
+        <span id="header-user" class="text-xs text-white/70 max-w-[160px] truncate"></span>
+      </div>
+      <button id="btn-logout"
+              class="inline-flex items-center gap-1.5 p-2.5 rounded-xl text-white/60
+                     hover:text-white hover:bg-white/10 transition-all border border-transparent
+                     hover:border-white/15 cursor-pointer bg-transparent">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════ STATS STRIP ══ -->
+<div id="stats-strip" class="anim-slide" style="display:none">
+  <div class="bg-white/80 border-b border-brand-100"
+       style="backdrop-filter:blur(8px)">
+    <div class="max-w-6xl mx-auto px-8 grid grid-cols-2 sm:grid-cols-4 divide-x divide-brand-100">
+
+      <div class="stat-item flex items-center gap-4 py-5 px-4">
+        <div class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 bg-brand-50 border border-brand-100">
+          <i data-lucide="layers" class="w-5 h-5 text-brand-500"></i>
+        </div>
+        <div>
+          <p class="text-[.65rem] text-brand-400 font-bold uppercase tracking-wider">Total</p>
+          <p id="stat-total" class="text-3xl font-black text-brand-900 leading-none mt-0.5">0</p>
+        </div>
+      </div>
+
+      <div class="stat-item flex items-center gap-4 py-5 px-4">
+        <div class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 bg-red-50 border border-red-100">
+          <i data-lucide="clock" class="w-5 h-5 text-red-500"></i>
+        </div>
+        <div>
+          <p class="text-[.65rem] text-red-600 font-bold uppercase tracking-wider">Abertos</p>
+          <p id="stat-aberto" class="text-3xl font-black text-red-500 leading-none mt-0.5">0</p>
+        </div>
+      </div>
+
+      <div class="stat-item flex items-center gap-4 py-5 px-4">
+        <div class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 bg-amber-50 border border-amber-100">
+          <i data-lucide="zap" class="w-5 h-5 text-amber-500"></i>
+        </div>
+        <div>
+          <p class="text-[.65rem] text-amber-600 font-bold uppercase tracking-wider">Em andamento</p>
+          <p id="stat-em_atendimento" class="text-3xl font-black text-amber-500 leading-none mt-0.5">0</p>
+        </div>
+      </div>
+
+      <div class="stat-item flex items-center gap-4 py-5 px-4">
+        <div class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 bg-green-50 border border-green-100">
+          <i data-lucide="check-circle-2" class="w-5 h-5 text-green-500"></i>
+        </div>
+        <div>
+          <p class="text-[.65rem] text-green-600 font-bold uppercase tracking-wider">Concluídos</p>
+          <p id="stat-concluido" class="text-3xl font-black text-green-500 leading-none mt-0.5">0</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ TOOLBAR ══ -->
+<div class="sticky top-0 z-30 bg-white/90 border-b border-brand-100"
+     style="backdrop-filter:blur(10px)">
+  <div class="max-w-6xl mx-auto px-8 py-3 flex flex-wrap gap-2.5 items-center">
+
+    <div class="relative flex-1 min-w-[220px] max-w-xs">
+      <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-300 pointer-events-none"></i>
+      <input type="search" id="q" placeholder="Buscar nome, número, descrição…"
+             class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-brand-100
+                    bg-brand-50 text-sm text-brand-900 outline-none
+                    focus:bg-white focus:border-brand-400 focus:ring-2 focus:ring-brand-400/15
+                    placeholder-brand-300/80 transition-all" />
+    </div>
+
+    <select id="filter-status"
+            class="px-3 py-2.5 rounded-xl border border-brand-100 bg-brand-50 text-sm
+                   text-brand-900 outline-none focus:border-brand-400 transition-all cursor-pointer">
+      <option value="">Todos os status</option>
+      <option value="aberto">Aberto</option>
+      <option value="em_atendimento">Em atendimento</option>
+      <option value="concluido">Concluído</option>
+      <option value="cancelado">Cancelado</option>
+    </select>
+
+    <div id="count-wrap" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full
+                                bg-brand-500/10 border border-brand-500/20">
+      <i data-lucide="ticket" class="w-3.5 h-3.5 text-brand-500"></i>
+      <span id="count-label" class="text-xs font-bold text-brand-500"></span>
+    </div>
+
+    <button id="btn-refresh"
+            class="ml-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-xl
+                   text-sm font-bold text-white cursor-pointer border-none
+                   shadow-[0_2px_12px_rgba(146,86,22,.3)] hover:brightness-110
+                   disabled:opacity-50 transition-all"
+            style="background:#925616">
+      <i data-lucide="refresh-cw" class="w-4 h-4"></i> Atualizar
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ MAIN ══ -->
+<main class="max-w-6xl mx-auto px-8 py-7">
+
+  <!-- Card da tabela -->
+  <div class="rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(146,86,22,.1)]"
+       style="background:rgba(255,255,255,.95);backdrop-filter:blur(8px)">
+
+    <!-- Cabeçalho do card com abas -->
+    <div style="background:#fdfaf5;border-bottom:1.5px solid #F5ECCB">
+
+      <!-- Título + meta -->
+      <div class="flex items-center justify-between px-7 pt-5 pb-3">
+        <div class="flex items-center gap-3.5">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-brand-100">
+            <i data-lucide="list-checks" class="w-5 h-5 text-brand-500"></i>
+          </div>
+          <div>
+            <h2 class="text-sm font-extrabold text-brand-900 tracking-tight">Chamados recentes</h2>
+            <p id="subtitle-meta" class="text-xs text-brand-300 mt-0.5">Carregando…</p>
+          </div>
+        </div>
+        <span id="meta" class="text-xs text-brand-300/80 hidden md:inline"></span>
+      </div>
+
+      <!-- Abas -->
+      <div id="tabs-container" class="px-7 flex" style="border-top:1px solid #F5ECCB">
+        <button id="tab-site" data-tab="site" class="tab-btn tab-active">
+          <i data-lucide="monitor" class="w-3.5 h-3.5"></i>
+          Site
+          <span id="tab-count-site" class="tab-count">0</span>
+        </button>
+        <button id="tab-bot" data-tab="bot" class="tab-btn">
+          <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+          WhatsApp
+          <span id="tab-count-bot" class="tab-count">0</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="py-20 flex flex-col items-center gap-4 text-brand-300">
+      <div class="w-14 h-14 rounded-2xl flex items-center justify-center bg-brand-50 border border-brand-100">
+        <i data-lucide="loader" class="w-7 h-7 text-brand-400 spin"></i>
+      </div>
+      <p class="text-sm font-medium">Buscando chamados…</p>
+    </div>
+
+    <!-- Tabela -->
+    <div class="tbl-wrap">
+      <table id="table" class="w-full border-collapse" style="display:none">
+        <thead>
+          <tr style="background:#faf6ee;border-bottom:1.5px solid #F5ECCB">
+            <th class="pl-7 pr-3 py-3.5 text-left">
+              <span class="text-[.62rem] font-black uppercase tracking-widest text-brand-400">Solicitante</span>
+            </th>
+            <th class="px-3 py-3.5 text-left">
+              <span class="text-[.62rem] font-black uppercase tracking-widest text-brand-400">Tipo</span>
+            </th>
+            <th class="px-3 py-3.5 text-left">
+              <span class="text-[.62rem] font-black uppercase tracking-widest text-brand-400">Descrição</span>
+            </th>
+            <th class="px-3 py-3.5 text-left">
+              <span class="text-[.62rem] font-black uppercase tracking-widest text-brand-400">Status</span>
+            </th>
+            <th class="px-3 pr-7 py-3.5 text-left">
+              <span class="text-[.62rem] font-black uppercase tracking-widest text-brand-400">Data</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Empty state -->
+    <div id="empty" class="hidden py-20 flex-col items-center gap-4">
+      <div class="w-20 h-20 rounded-3xl flex items-center justify-center bg-brand-50 border border-brand-100">
+        <i data-lucide="inbox" class="w-10 h-10 text-brand-300"></i>
+      </div>
+      <div class="text-center">
+        <p class="text-base font-bold text-brand-500">Nenhum chamado encontrado</p>
+        <p class="text-sm text-brand-300 mt-1">Tente outros filtros ou
+          <button onclick="openModal()" class="text-brand-400 font-semibold hover:underline bg-transparent border-none cursor-pointer p-0 text-sm">abra um novo chamado</button>
+        </p>
+      </div>
+    </div>
+
+  </div><!-- /card -->
+</main>
+
+<!-- ═══════════════════════════════════ MODAL PERFIL SOLICITANTE ══ -->
+<div id="modal-perfil" class="fixed inset-0 z-50 flex items-center justify-center hidden"
+     style="background:rgba(30,15,5,.65);backdrop-filter:blur(5px)">
+  <div class="modal-anim w-full max-w-sm mx-4 rounded-2xl overflow-hidden shadow-2xl"
+       style="background:#fff">
+
+    <!-- Header colorido com avatar grande -->
+    <div class="relative flex flex-col items-center pt-8 pb-6 px-6"
+         style="background:linear-gradient(135deg,#c98830 0%,#925616 100%)">
+      <button id="btn-fechar-perfil"
+              class="absolute top-3 right-3 text-white/60 hover:text-white bg-transparent border-none cursor-pointer p-1 transition-colors">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+      <!-- Avatar grande -->
+      <div id="perf-avatar"
+           class="w-20 h-20 rounded-full flex items-center justify-center
+                  text-2xl font-black text-white shadow-[0_4px_20px_rgba(0,0,0,.25)]
+                  border-4 border-white/25 mb-3"
+           style="letter-spacing:.5px"></div>
+      <h2 id="perf-nome" class="text-xl font-black text-white text-center leading-tight"></h2>
+      <p id="perf-iniciais" class="text-white/50 text-xs mt-0.5 font-mono tracking-widest"></p>
+    </div>
+
+    <!-- Body -->
+    <div class="px-6 py-5 flex flex-col gap-4">
+
+      <!-- Telefone -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+             style="background:#fdf8f0;border:1px solid #F5ECCB">
+          <i data-lucide="phone" class="w-4 h-4 text-brand-500"></i>
+        </div>
+        <div>
+          <p class="text-[.6rem] font-black uppercase tracking-widest text-brand-300">E-mail do solicitante</p>
+          <p id="perf-numero" class="text-sm font-semibold text-brand-900 mt-0.5 font-mono"></p>
+        </div>
+      </div>
+
+      <!-- Chamados -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+             style="background:#fdf8f0;border:1px solid #F5ECCB">
+          <i data-lucide="ticket" class="w-4 h-4 text-brand-500"></i>
+        </div>
+        <div class="flex-1">
+          <p class="text-[.6rem] font-black uppercase tracking-widest text-brand-300">Chamados abertos</p>
+          <div id="perf-chamados-badges" class="flex flex-wrap gap-1.5 mt-1.5"></div>
+        </div>
+      </div>
+
+      <!-- Origem (último canal) -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+             style="background:#fdf8f0;border:1px solid #F5ECCB">
+          <i data-lucide="radio" class="w-4 h-4 text-brand-500"></i>
+        </div>
+        <div>
+          <p class="text-[.6rem] font-black uppercase tracking-widest text-brand-300">Último canal usado</p>
+          <p id="perf-origem" class="text-sm font-semibold text-brand-900 mt-0.5"></p>
+        </div>
+      </div>
+
+      <!-- Primeiro chamado -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+             style="background:#fdf8f0;border:1px solid #F5ECCB">
+          <i data-lucide="calendar" class="w-4 h-4 text-brand-500"></i>
+        </div>
+        <div>
+          <p class="text-[.6rem] font-black uppercase tracking-widest text-brand-300">Primeiro chamado</p>
+          <p id="perf-desde" class="text-sm font-semibold text-brand-900 mt-0.5"></p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 pb-5 flex justify-end">
+      <button id="btn-fechar-perfil-footer"
+              class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-bold
+                     border border-brand-100 text-brand-500 bg-white hover:bg-brand-50
+                     transition-colors cursor-pointer">
+        <i data-lucide="x" class="w-4 h-4"></i> Fechar
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ MODAL DETALHES CHAMADO ══ -->
+<div id="modal-detalhe" class="fixed inset-0 z-50 flex items-center justify-center hidden"
+     style="background:rgba(30,15,5,.60);backdrop-filter:blur(4px)">
+
+  <div class="w-full max-w-lg mx-4 rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+       style="background:#fff;max-height:92vh">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 shrink-0"
+         style="background:#925616">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+             style="background:rgba(255,255,255,.15)">
+          <i data-lucide="ticket" class="w-4 h-4 text-white"></i>
+        </div>
+        <div>
+          <p class="font-bold text-white text-sm leading-tight" id="det-titulo">Chamado #—</p>
+          <p class="text-white/50 text-[10px]" id="det-data"></p>
+        </div>
+      </div>
+      <button id="btn-fechar-detalhe"
+              class="text-white/60 hover:text-white transition-colors bg-transparent border-none cursor-pointer p-1">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="overflow-y-auto px-6 py-6 flex flex-col gap-5">
+
+      <!-- Status + Tipo + Origem -->
+      <div class="flex flex-wrap gap-2 items-center">
+        <span id="det-status-badge"></span>
+        <span id="det-tipo-badge" class="badge-tipo"></span>
+        <span id="det-origem-badge"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[.68rem] font-bold border"></span>
+      </div>
+
+      <!-- Informações do Usuário -->
+      <div class="flex flex-col gap-1">
+        <div class="flex items-center justify-between gap-2">
+          <p class="text-[.64rem] font-black uppercase tracking-widest text-brand-400">Informações do Usuário</p>
+          <span id="det-wpp-badge" style="display:none"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[.6rem] font-bold bg-green-50 text-green-700 border border-green-200">
+            <i data-lucide="message-circle" style="width:10px;height:10px"></i> WhatsApp
+          </span>
+        </div>
+        <div class="flex items-center gap-3 mt-1">
+          <div id="det-avatar" class="avatar shrink-0"></div>
+          <div>
+            <p id="det-nome" class="font-bold text-brand-900 text-sm"></p>
+            <p id="det-numero" class="text-xs font-mono text-brand-400 mt-0.5"></p>
+          </div>
+        </div>
+        <!-- Sala / Setor -->
+        <div id="det-sala-wrapper" class="flex items-center gap-2 mt-2 px-3 py-1.5 rounded-lg bg-brand-50 border border-brand-100">
+           <i data-lucide="building-2" class="w-3.5 h-3.5 text-brand-400"></i>
+           <span class="text-[.65rem] font-bold text-brand-400 uppercase tracking-tight">Sala/Setor:</span>
+           <span id="det-sala" class="text-xs font-bold text-brand-900"></span>
+        </div>
+      </div>
+
+      <!-- Separador -->
+      <div class="h-px bg-brand-100"></div>
+
+      <!-- Descrição -->
+      <div class="flex flex-col gap-2">
+        <p class="text-[.64rem] font-black uppercase tracking-widest text-brand-400">Descrição / Detalhes</p>
+        <div id="det-descricao"
+             class="text-sm text-brand-800 leading-relaxed whitespace-pre-wrap bg-brand-50
+                    rounded-xl px-4 py-3 border border-brand-100"></div>
+      </div>
+
+      <!-- Área de Anexo -->
+      <div id="det-anexo-wrapper" class="hidden mt-4 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600">
+            <i data-lucide="paperclip"></i>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-orange-900">Anexo disponível</p>
+            <p class="text-xs text-orange-700">A foto foi enviada pelo WhatsApp</p>
+          </div>
+        </div>
+        <a id="det-anexo-link" href="#" target="_blank" class="px-5 py-2 bg-orange-600 text-white rounded-lg text-sm font-bold hover:bg-orange-700 transition-all shadow-md">
+          Ver Anexo
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 border-t border-brand-100 flex items-center gap-2 flex-wrap shrink-0"
+         style="background:#fdfaf5">
+
+      <!-- Assumir chamado (só aparece quando status = aberto) -->
+      <button id="btn-assumir"
+              class="hidden inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-bold
+                     text-white border-none cursor-pointer hover:opacity-90 transition-all
+                     disabled:opacity-50 disabled:cursor-not-allowed"
+              style="background:#f59e0b">
+        <i data-lucide="zap" class="w-4 h-4"></i> Assumir chamado
+      </button>
+
+      <!-- Concluir chamado (aparece quando status = aberto ou em_atendimento) -->
+      <button id="btn-concluir"
+              class="hidden inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-bold
+                     text-white border-none cursor-pointer hover:opacity-90 transition-all
+                     disabled:opacity-50 disabled:cursor-not-allowed"
+              style="background:#16a34a">
+        <i data-lucide="check-circle" class="w-4 h-4"></i> Concluir chamado
+      </button>
+
+      <div class="flex-1"></div>
+
+      <button id="btn-fechar-detalhe-footer"
+              class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-bold
+                     border-none cursor-pointer hover:opacity-90 transition-all
+                     border border-brand-100 text-brand-500 bg-white hover:bg-brand-50">
+        <i data-lucide="x" class="w-4 h-4"></i> Fechar
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ MODAL NOVO CHAMADO ══ -->
+<div id="modal-chamado" class="fixed inset-0 z-50 flex items-center justify-center hidden"
+     style="background:rgba(30,15,5,.60);backdrop-filter:blur(4px)">
+
+  <div class="w-full max-w-lg mx-4 rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+       style="background:#fff;max-height:90vh">
+
+    <!-- Modal header -->
+    <div class="flex items-center justify-between px-7 py-4 shrink-0"
+         style="background:#925616">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+             style="background:rgba(255,255,255,.15)">
+          <i data-lucide="ticket" class="w-4 h-4 text-white"></i>
+        </div>
+        <h3 class="font-bold text-white text-base tracking-tight">Novo Chamado</h3>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <div id="step-dot-1" class="w-2 h-2 rounded-full bg-white transition-all"></div>
+        <div id="step-dot-2" class="w-2 h-2 rounded-full bg-white transition-all" style="opacity:.3"></div>
+        <button id="modal-close"
+                class="ml-2 text-white/60 hover:text-white transition-colors bg-transparent border-none cursor-pointer p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 1 — Tipo -->
+    <div id="modal-step-1" class="px-7 py-7 overflow-y-auto">
+      <p class="text-[.65rem] font-black uppercase tracking-widest text-brand-400 mb-1">Passo 1 de 2</p>
+      <h4 class="text-lg font-extrabold text-brand-900 mb-1">Tipo de chamado</h4>
+      <p class="text-sm text-brand-300 mb-6">Selecione a operação desejada para continuar.</p>
+
+      <div class="flex flex-col gap-3">
+
+        <!-- INCLUSÃO -->
+        <button class="tipo-card group flex items-center gap-4 px-5 py-4 rounded-xl border-2 border-brand-100
+                       hover:border-brand-400 hover:bg-brand-50 transition-all text-left cursor-pointer bg-white
+                       focus:outline-none focus:border-brand-400" data-tipo="INCLUSÃO">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-brand-100">
+            <i data-lucide="user-plus" class="w-5 h-5 text-brand-500"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-bold text-brand-900 text-sm">Inclusão</p>
+            <p class="text-xs text-brand-300 mt-0.5">Incluir um novo registro</p>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-brand-200 group-hover:text-brand-400 shrink-0 transition-colors"></i>
+        </button>
+
+        <!-- EDIÇÃO -->
+        <button class="tipo-card group flex items-center gap-4 px-5 py-4 rounded-xl border-2 border-brand-100
+                       hover:border-brand-400 hover:bg-brand-50 transition-all text-left cursor-pointer bg-white
+                       focus:outline-none focus:border-brand-400" data-tipo="EDIÇÃO">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-50">
+            <i data-lucide="pencil" class="w-5 h-5 text-blue-500"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-bold text-brand-900 text-sm">Edição</p>
+            <p class="text-xs text-brand-300 mt-0.5">Editar um registro existente</p>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-brand-200 group-hover:text-brand-400 shrink-0 transition-colors"></i>
+        </button>
+
+        <!-- DISTRATO -->
+        <button class="tipo-card group flex items-center gap-4 px-5 py-4 rounded-xl border-2 border-brand-100
+                       hover:border-brand-400 hover:bg-brand-50 transition-all text-left cursor-pointer bg-white
+                       focus:outline-none focus:border-brand-400" data-tipo="DISTRATO">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-rose-50">
+            <i data-lucide="file-x" class="w-5 h-5 text-rose-500"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-bold text-brand-900 text-sm">Distrato</p>
+            <p class="text-xs text-brand-300 mt-0.5">Cancelar / rescindir contrato</p>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-brand-200 group-hover:text-brand-400 shrink-0 transition-colors"></i>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Step 2 — Informações gerais -->
+    <div id="modal-step-2" class="hidden flex flex-col overflow-hidden">
+
+      <!-- Cabeçalho do step 2 -->
+      <div class="px-7 pt-6 pb-5 border-b border-brand-100" style="background:#fdfaf5">
+        <div class="flex items-center gap-2 mb-3">
+          <button id="modal-back"
+                  class="flex items-center justify-center w-7 h-7 rounded-lg bg-white border border-brand-100
+                         text-brand-400 hover:text-brand-500 hover:border-brand-300 hover:shadow-sm
+                         transition-all cursor-pointer">
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+          </button>
+          <span class="text-[.62rem] font-black uppercase tracking-widest text-brand-300">Passo 2 de 2</span>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+               style="background:#925616">
+            <i data-lucide="user-check" class="w-5 h-5 text-white"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <h4 class="text-base font-extrabold text-brand-900 leading-tight">Informações do Usuário</h4>
+              <!-- Toggle: notificação WhatsApp -->
+              <label for="m-notif-wpp" class="flex items-center gap-1.5 cursor-pointer select-none shrink-0">
+                <span class="text-[.62rem] font-bold text-brand-400 whitespace-nowrap">Notif. WhatsApp</span>
+                <div class="relative w-9 h-5">
+                  <input type="checkbox" id="m-notif-wpp" class="sr-only peer" />
+                  <div class="absolute inset-0 bg-brand-100 rounded-full border border-brand-200 peer-checked:bg-green-500 peer-checked:border-green-400 transition-colors"></div>
+                  <div class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-4 pointer-events-none"></div>
+                </div>
+              </label>
+            </div>
+            <div class="flex items-center gap-1.5 mt-1">
+              <span class="text-[.68rem] text-brand-400 font-medium">Tipo selecionado:</span>
+              <span id="tipo-selected-label"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[.68rem]
+                           font-bold bg-brand-100 text-brand-500 border border-brand-200"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alert -->
+      <div id="modal-alert" class="hidden mx-7 mt-4 px-4 py-3 rounded-lg text-sm flex items-center gap-2 border"></div>
+
+      <form id="modal-form" novalidate class="px-7 py-5 overflow-y-auto flex flex-col gap-0">
+
+        <!-- Seção: Identificação -->
+        <p class="text-[.6rem] font-black uppercase tracking-widest text-brand-300 mb-3 flex items-center gap-2">
+          <span class="h-px flex-1 bg-brand-100"></span> Identificação <span class="h-px flex-1 bg-brand-100"></span>
+        </p>
+
+        <!-- Nome + CPF lado a lado -->
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[.68rem] font-bold uppercase tracking-wider text-brand-500">
+              Nome <span class="text-red-400">*</span>
+            </label>
+            <div class="relative">
+              <i data-lucide="user" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-brand-300 pointer-events-none"></i>
+              <input id="m-nome" type="text" placeholder="Nome completo" maxlength="120" required
+                     class="w-full pl-8 pr-3 py-2 border-[1.5px] border-brand-100 rounded-lg
+                            text-sm text-brand-900 bg-white outline-none
+                            focus:border-brand-400 focus:ring-2 focus:ring-brand-400/10
+                            placeholder-brand-300 transition-all" />
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[.68rem] font-bold uppercase tracking-wider text-brand-500">
+              CPF <span class="text-red-400">*</span>
+            </label>
+            <div class="relative">
+              <i data-lucide="id-card" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-brand-300 pointer-events-none"></i>
+              <input id="m-cpf" type="text" placeholder="000.000.000-00" maxlength="14" required
+                     class="w-full pl-8 pr-3 py-2 border-[1.5px] border-brand-100 rounded-lg
+                            text-sm text-brand-900 bg-white outline-none
+                            focus:border-brand-400 focus:ring-2 focus:ring-brand-400/10
+                            placeholder-brand-300 transition-all" />
+            </div>
+          </div>
+        </div>
+
+        <!-- E-mail -->
+        <div class="flex flex-col gap-1.5 mb-3">
+          <label class="text-[.68rem] font-bold uppercase tracking-wider text-brand-500 flex items-center gap-1.5">
+            E-mail
+            <span class="text-brand-300 text-[.6rem] normal-case font-medium">(opcional)</span>
+          </label>
+          <div class="relative">
+            <i data-lucide="mail" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-brand-300 pointer-events-none"></i>
+            <input id="m-email" type="email" placeholder="email@exemplo.com" maxlength="120"
+                   class="w-full pl-8 pr-3 py-2 border-[1.5px] border-brand-100 rounded-lg
+                          text-sm text-brand-900 bg-white outline-none
+                          focus:border-brand-400 focus:ring-2 focus:ring-brand-400/10
+                          placeholder-brand-300 transition-all" />
+          </div>
+        </div>
+
+        <!-- WhatsApp notification phone (aparece quando toggle ativo) -->
+        <div id="m-wpp-tel-wrap" class="hidden mb-3 px-3.5 py-3 rounded-xl bg-green-50 border border-green-200">
+          <label class="text-[.68rem] font-bold uppercase tracking-wider text-green-700 flex items-center gap-1.5 mb-1.5">
+            <i data-lucide="message-circle" class="w-3 h-3"></i>
+            Número WhatsApp <span class="text-red-400">*</span>
+          </label>
+          <div class="relative">
+            <i data-lucide="smartphone" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-green-600 pointer-events-none"></i>
+            <input id="m-tel-wpp" type="tel" placeholder="Ex: 5511999990000" maxlength="20"
+                   class="w-full pl-8 pr-3 py-2 border-[1.5px] border-green-200 rounded-lg
+                          text-sm text-brand-900 bg-white outline-none
+                          focus:border-green-400 focus:ring-2 focus:ring-green-400/10
+                          placeholder-brand-300 transition-all" />
+          </div>
+          <p class="text-[.62rem] text-green-600 mt-1.5">Inclua o DDI e DDD. Ex: 5511999999999</p>
+        </div>
+
+        <!-- Seção: Local & Função -->
+        <p class="text-[.6rem] font-black uppercase tracking-widest text-brand-300 mb-3 flex items-center gap-2">
+          <span class="h-px flex-1 bg-brand-100"></span> Local &amp; Função <span class="h-px flex-1 bg-brand-100"></span>
+        </p>
+
+        <!-- Sala + Função lado a lado -->
+        <div class="grid grid-cols-2 gap-3 mb-5">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[.68rem] font-bold uppercase tracking-wider text-brand-500">
+              Sala <span class="text-red-400">*</span>
+            </label>
+            <div class="relative">
+              <i data-lucide="building-2" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-brand-300 pointer-events-none"></i>
+              <select id="m-sala" required
+                      class="w-full pl-8 pr-3 py-2 border-[1.5px] border-brand-100 rounded-lg
+                             text-sm text-brand-900 bg-white outline-none
+                             focus:border-brand-400 focus:ring-2 focus:ring-brand-400/10
+                             transition-all appearance-none">
+                <option value="">Selecione…</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[.68rem] font-bold uppercase tracking-wider text-brand-500">
+              Função <span class="text-red-400">*</span>
+            </label>
+            <div class="relative">
+              <i data-lucide="briefcase" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-brand-300 pointer-events-none"></i>
+              <input id="m-funcao" type="text" placeholder="Ex: Gerente…" maxlength="80" required
+                     class="w-full pl-8 pr-3 py-2 border-[1.5px] border-brand-100 rounded-lg
+                            text-sm text-brand-900 bg-white outline-none
+                            focus:border-brand-400 focus:ring-2 focus:ring-brand-400/10
+                            placeholder-brand-300 transition-all" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Seção: Anexo -->
+        <p class="text-[.6rem] font-black uppercase tracking-widest text-brand-300 mb-3 flex items-center gap-2">
+          <span class="h-px flex-1 bg-brand-100"></span> Anexo <span class="h-px flex-1 bg-brand-100"></span>
+        </p>
+
+        <label id="drop-zone"
+               class="group flex items-center gap-4 px-4 py-3.5 mb-5
+                      border-2 border-dashed border-brand-100 rounded-xl cursor-pointer
+                      hover:border-brand-300 hover:bg-brand-50 transition-all">
+          <div class="w-9 h-9 rounded-lg bg-brand-50 group-hover:bg-white border border-brand-100
+                      flex items-center justify-center shrink-0 transition-all">
+            <i data-lucide="paperclip" class="w-4 h-4 text-brand-400"></i>
+          </div>
+          <div class="flex flex-col min-w-0">
+            <span class="text-sm font-semibold text-brand-500">Adicionar arquivo</span>
+            <span id="file-name" class="text-xs text-brand-300 truncate">Imagem, PDF, documento… (opcional)</span>
+          </div>
+          <input id="m-file" type="file" class="hidden" />
+        </label>
+
+        <!-- Ações -->
+        <div class="flex gap-2.5 justify-end">
+          <button type="button" id="modal-cancel-btn"
+                  class="inline-flex items-center gap-1.5 px-4 py-2.5 border-[1.5px] border-brand-100
+                         rounded-lg text-sm font-semibold text-brand-500 hover:bg-brand-50
+                         transition-colors bg-white cursor-pointer">
+            <i data-lucide="x" class="w-4 h-4"></i> Cancelar
+          </button>
+          <button id="modal-submit" type="submit"
+                  class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-bold
+                         text-white shadow-[0_2px_10px_rgba(146,86,22,.28)]
+                         hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed
+                         transition-all border-none cursor-pointer"
+                  style="background:#925616">
+            <i data-lucide="send" class="w-4 h-4"></i> Abrir chamado
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ MODAL CONFIGURAÇÕES ══ -->
+<div id="modal-config-overlay"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4"
+     style="display:none!important; background:rgba(0,0,0,.55); backdrop-filter:blur(4px)">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col"
+       style="max-height:90vh">
+
+    <!-- Header do modal -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center"
+             style="background:#f5eccb">
+          <i data-lucide="settings" class="w-5 h-5" style="color:#925616"></i>
+        </div>
+        <h2 class="text-base font-bold text-gray-800">Configurações</h2>
+      </div>
+      <button id="btn-config-close"
+              class="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100
+                     transition-all cursor-pointer bg-transparent border-none">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- Abas -->
+    <div class="flex border-b border-gray-100 px-6">
+      <button data-tab="salas"
+              class="config-tab px-4 py-3 text-sm font-semibold border-b-2 transition-colors
+                     cursor-pointer bg-transparent border-x-0 border-t-0"
+              style="color:#925616; border-bottom-color:#925616">
+        <i data-lucide="door-open" class="w-4 h-4 inline-block mr-1.5 -mt-0.5"></i>Salas
+      </button>
+      <button data-tab="whatsapp"
+              class="config-tab px-4 py-3 text-sm font-semibold border-b-2 transition-colors
+                     cursor-pointer bg-transparent border-x-0 border-t-0"
+              style="color:#6b7280; border-bottom-color:transparent">
+        <i data-lucide="message-square" class="w-4 h-4 inline-block mr-1.5 -mt-0.5"></i>Whatsapp
+      </button>
+    </div>
+
+    <!-- Painel: Salas -->
+    <div id="tab-salas" class="flex flex-col flex-1 overflow-hidden p-6 gap-4">
+
+      <!-- Formulário adicionar sala -->
+      <div class="flex gap-2">
+        <input id="nova-sala-input" type="text" maxlength="80"
+               placeholder="Nome da sala…"
+               class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm
+                      outline-none focus:border-brand-400 transition-colors" />
+        <button id="btn-add-sala"
+                class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm
+                       font-bold text-white shadow cursor-pointer border-none transition-all
+                       hover:opacity-90 active:scale-95"
+                style="background:#925616">
+          <i data-lucide="plus" class="w-4 h-4"></i> Adicionar
+        </button>
+      </div>
+
+      <!-- Mensagem de erro inline -->
+      <p id="sala-error" class="text-xs text-red-600 -mt-2 hidden"></p>
+
+      <!-- Lista de salas -->
+      <div class="flex-1 overflow-y-auto pr-1" style="max-height:340px">
+        <ul id="salas-list" class="flex flex-col gap-2">
+          <li class="text-sm text-gray-400 text-center py-6" id="salas-empty">
+            <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+            Nenhuma sala cadastrada ainda.
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Painel: Whatsapp -->
+    <div id="tab-whatsapp" class="flex flex-col flex-1 overflow-hidden p-6 gap-6 hidden">
+      
+      <!-- Formulário de Edição/Adição -->
+      <div class="flex flex-col gap-2">
+        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Configurar Número</label>
+        <div class="flex gap-2">
+          <input id="wpp-numero-input" type="text" maxlength="20"
+                 placeholder="Ex: 5511999999999"
+                 class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm
+                        outline-none focus:border-brand-400 transition-colors" />
+          <button id="btn-save-wpp"
+                  class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm
+                         font-bold text-white shadow cursor-pointer border-none transition-all
+                         hover:opacity-90 active:scale-95"
+                  style="background:#925616">
+            <i data-lucide="save" class="w-4 h-4"></i> Salvar
+          </button>
+        </div>
+        <p class="text-[.65rem] text-gray-400">Este é o número que receberá as mensagens do bot para registro no sistema.</p>
+      </div>
+
+      <!-- Seção do Número Atual -->
+      <div id="wpp-current-section" class="flex flex-col gap-3 pt-4 border-t border-gray-100 hidden">
+        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Número Registrado</label>
+        <div class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-green-100 bg-green-50 group">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-green-100">
+              <i data-lucide="phone" class="w-4 h-4 text-green-600"></i>
+            </div>
+            <span id="wpp-current-display" class="text-sm font-bold text-green-800"></span>
+          </div>
+          <button id="btn-del-wpp" title="Excluir número"
+                  class="p-2 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50
+                         transition-all opacity-0 group-hover:opacity-100 cursor-pointer border-none bg-transparent">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Seção do Status e QR Code -->
+      <div id="wpp-status-section" class="flex flex-col gap-4 pt-4 border-t border-gray-100">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Status da Conexão</label>
+          <div id="wpp-status-badge" class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-gray-100 text-gray-500">
+            Verificando…
+          </div>
+        </div>
+        
+        <div id="wpp-qr-container" class="hidden flex flex-col items-center gap-4 p-6 rounded-2xl bg-gray-50 border border-gray-100">
+          <p class="text-xs text-gray-500 text-center">Escaneie o QR Code abaixo para conectar o bot:</p>
+          <div class="p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+            <img id="wpp-qr-img" src="" alt="QR Code" class="w-48 h-48" />
+          </div>
+          <div class="flex items-center gap-2 text-[10px] text-brand-500 font-bold animate-pulse">
+            <i data-lucide="loader" class="w-3 h-3"></i> AGUARDANDO SCAN…
+          </div>
+        </div>
+
+        <div id="wpp-connected-info" class="hidden flex items-center justify-between p-4 rounded-xl bg-green-50 border border-green-100">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white shadow-lg shadow-green-200">
+              <i data-lucide="check" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-green-800">Bot Conectado</p>
+              <p class="text-[10px] text-green-600 font-medium uppercase tracking-tight">O sistema está pronto para receber chamados.</p>
+            </div>
+          </div>
+          <button id="btn-logout-wpp" class="px-3 py-1.5 rounded-lg text-[10px] font-bold text-red-600 border border-red-200 hover:bg-red-50 transition-all cursor-pointer bg-white">
+            DESVINCULAR
+          </button>
+        </div>
+
+        <div id="wpp-disconnected-info" class="hidden flex items-center gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">
+          <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
+            <i data-lucide="offline" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-gray-600">Bot Offline</p>
+            <p class="text-[10px] text-gray-400 font-medium">Inicie o serviço do bot no servidor para conectar.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="wpp-success" class="hidden px-4 py-3 rounded-lg bg-green-50 text-green-700 text-xs font-medium border border-green-200 flex items-center gap-2">
+        <i data-lucide="check-circle" class="w-4 h-4"></i> Configuração salva com sucesso!
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ---------- Auth guard ---------- */
+  (function () {
+    const t = localStorage.getItem('auth_token');
+    if (!t) { window.location.replace('/login.html'); return; }
+    document.getElementById('header-user').textContent = localStorage.getItem('auth_email') || '';
+    const role = localStorage.getItem('auth_role') || 'usuario';
+    if (role !== 'administrador') {
+      const btn = document.getElementById('btn-logins');
+      if (btn) btn.style.display = 'none';
+    }
+    if (role === 'administrador' || role === 'supervisor') {
+      const btnCfg = document.getElementById('btn-config');
+      if (btnCfg) btnCfg.style.removeProperty('display');
+    }
+  })();
+
+  document.getElementById('btn-logout').addEventListener('click', async function () {
+    const t = localStorage.getItem('auth_token');
+    await fetch('/api/auth/logout', { method:'POST', headers:{ 'Authorization':'Bearer '+t } }).catch(()=>{});
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_email');
+    localStorage.removeItem('auth_role');
+    window.location.replace('/login.html');
+  });
+
+  lucide.createIcons();
+
+  /* ---------- Modal Configurações ---------- */
+  (function () {
+    const overlay  = document.getElementById('modal-config-overlay');
+    const btnOpen  = document.getElementById('btn-config');
+    const btnClose = document.getElementById('btn-config-close');
+    const input    = document.getElementById('nova-sala-input');
+    const btnAdd   = document.getElementById('btn-add-sala');
+    const list     = document.getElementById('salas-list');
+    const errEl    = document.getElementById('sala-error');
+    const emptyEl  = document.getElementById('salas-empty');
+
+    function token() { return localStorage.getItem('auth_token') || ''; }
+
+    function showError(msg) {
+      errEl.textContent = msg;
+      errEl.classList.remove('hidden');
+      setTimeout(() => errEl.classList.add('hidden'), 3500);
+    }
+
+    function escHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function renderSalas(salas) {
+      list.querySelectorAll('li[data-id]').forEach(el => el.remove());
+      if (salas.length === 0) {
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+      salas.forEach(function (sala) {
+        const li = document.createElement('li');
+        li.dataset.id = sala.id;
+        li.className = 'flex items-center justify-between gap-3 px-4 py-3 rounded-xl border ' +
+                       'border-gray-100 bg-gray-50 hover:bg-orange-50 transition-colors group';
+        li.innerHTML =
+          '<div class="flex items-center gap-2.5">' +
+            '<div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style="background:#f5eccb">' +
+              '<i data-lucide="door-open" class="w-3.5 h-3.5" style="color:#925616"></i>' +
+            '</div>' +
+            '<span class="text-sm font-medium text-gray-700">' + escHtml(sala.nome) + '</span>' +
+          '</div>' +
+          '<button data-del="' + sala.id + '" title="Excluir sala" ' +
+                  'class="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 ' +
+                  'transition-all opacity-0 group-hover:opacity-100 cursor-pointer border-none bg-transparent">' +
+            '<i data-lucide="trash-2" class="w-4 h-4"></i>' +
+          '</button>';
+        list.appendChild(li);
+      });
+      lucide.createIcons({ nodes: list.querySelectorAll('[data-lucide]') });
+    }
+
+    async function loadSalas() {
+      try {
+        const res  = await fetch('/api/salas', { headers: { 'Authorization': 'Bearer ' + token() } });
+        const data = await res.json();
+        renderSalas(data.salas || []);
+      } catch { renderSalas([]); }
+    }
+
+    async function addSala() {
+      const nome = input.value.trim();
+      if (!nome) { input.focus(); return; }
+      btnAdd.disabled = true;
+      try {
+        const res  = await fetch('/api/salas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
+          body: JSON.stringify({ nome }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || 'Erro ao adicionar sala'); return; }
+        input.value = '';
+        loadSalas();
+        if (typeof loadSalasSelect === 'function') loadSalasSelect();
+      } catch { showError('Erro de conexão.'); }
+      finally { btnAdd.disabled = false; }
+    }
+
+    async function deleteSala(id) {
+      try {
+        const res  = await fetch('/api/salas', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
+          body: JSON.stringify({ id }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || 'Erro ao excluir sala'); return; }
+        loadSalas();
+        if (typeof loadSalasSelect === 'function') loadSalasSelect();
+      } catch { showError('Erro de conexão.'); }
+    }
+
+    list.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-del]');
+      if (!btn) return;
+      deleteSala(btn.dataset.del);
+    });
+
+    btnAdd.addEventListener('click', addSala);
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); addSala(); }
+    });
+
+    if (btnOpen) {
+      btnOpen.addEventListener('click', function () {
+        overlay.style.removeProperty('display');
+        loadSalas();
+      });
+    }
+
+    btnClose.addEventListener('click', function () {
+      overlay.style.display = 'none';
+    });
+
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) overlay.style.display = 'none';
+    });
+
+    /* --- Tab Switching Logic --- */
+    const tabs = document.querySelectorAll('.config-tab');
+    const panels = {
+      salas:    document.getElementById('tab-salas'),
+      whatsapp: document.getElementById('tab-whatsapp')
+    };
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        const target = this.dataset.tab;
+        tabs.forEach(t => {
+          const isActive = t.dataset.tab === target;
+          t.style.color = isActive ? '#925616' : '#6b7280';
+          t.style.borderBottomColor = isActive ? '#925616' : 'transparent';
+        });
+        Object.keys(panels).forEach(p => {
+          panels[p].classList.toggle('hidden', p !== target);
+        });
+        if (target === 'salas') loadSalas();
+        if (target === 'whatsapp') loadWppConfig();
+        lucide.createIcons();
+      });
+    });
+
+    /* --- WhatsApp Config Logic --- */
+    const wppInput    = document.getElementById('wpp-numero-input');
+    const btnSaveWpp  = document.getElementById('btn-save-wpp');
+    const wppSuccess  = document.getElementById('wpp-success');
+    const wppSection  = document.getElementById('wpp-current-section');
+    const wppDisplay  = document.getElementById('wpp-current-display');
+    const btnDelWpp   = document.getElementById('btn-del-wpp');
+
+    const wppBadge    = document.getElementById('wpp-status-badge');
+    const wppQRBox    = document.getElementById('wpp-qr-container');
+    const wppQRImg    = document.getElementById('wpp-qr-img');
+    const wppConnInfo = document.getElementById('wpp-connected-info');
+    const wppDiscInfo = document.getElementById('wpp-disconnected-info');
+
+    let wppPollTimer = null;
+
+    async function loadWppConfig() {
+      try {
+        const res = await fetch('/api/config/whatsapp', { headers: { 'Authorization': 'Bearer ' + token() } });
+        const data = await res.json();
+        const numero = data.numero || '';
+        wppInput.value = numero;
+        
+        if (numero) {
+          wppDisplay.textContent = numero;
+          wppSection.classList.remove('hidden');
+        } else {
+          wppSection.classList.add('hidden');
+        }
+
+        updateWppStatusUI(data.status, data.qr);
+        
+        // Se estiver esperando QR ou offline, agenda nova verificação
+        if (data.status !== 'connected' && overlay.style.display !== 'none' && panels.whatsapp.classList.contains('hidden') === false) {
+           clearTimeout(wppPollTimer);
+           wppPollTimer = setTimeout(loadWppConfig, 3000);
+        }
+
+        lucide.createIcons();
+      } catch {}
+    }
+
+    function updateWppStatusUI(status, qr) {
+      const ST_CFG = {
+        connected:  { label: 'Conectado',  cls: 'bg-green-100 text-green-700' },
+        waiting_qr: { label: 'Aguardando QR', cls: 'bg-amber-100 text-amber-700' },
+        offline:    { label: 'Offline',    cls: 'bg-gray-100 text-gray-500' },
+        notLogged:  { label: 'Desconectado', cls: 'bg-red-100 text-red-700' }
+      };
+      
+      const cfg = ST_CFG[status] || { label: status, cls: 'bg-blue-100 text-blue-700' };
+      wppBadge.textContent = cfg.label;
+      wppBadge.className = 'px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ' + cfg.cls;
+
+      wppConnInfo.classList.toggle('hidden', status !== 'connected');
+      wppDiscInfo.classList.toggle('hidden', status !== 'offline' && status !== 'notLogged');
+      
+      if (status === 'waiting_qr' && qr) {
+        wppQRImg.src = qr;
+        wppQRBox.classList.remove('hidden');
+      } else {
+        wppQRBox.classList.add('hidden');
+      }
+    }
+
+    btnSaveWpp.addEventListener('click', async function() {
+      btnSaveWpp.disabled = true;
+      try {
+        const res = await fetch('/api/config/whatsapp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
+          body: JSON.stringify({ numero: wppInput.value })
+        });
+        if (res.ok) {
+          wppSuccess.classList.remove('hidden');
+          setTimeout(() => wppSuccess.classList.add('hidden'), 3000);
+          loadWppConfig();
+        } else {
+          const data = await res.json();
+          showError(data.error || 'Erro ao salvar configuração');
+        }
+      } catch {
+        showError('Erro de conexão');
+      } finally {
+        btnSaveWpp.disabled = false;
+      }
+    });
+
+    btnDelWpp.addEventListener('click', async function() {
+      if (!confirm('Deseja realmente excluir este número?')) return;
+      try {
+        const res = await fetch('/api/config/whatsapp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
+          body: JSON.stringify({ numero: '' })
+        });
+        if (res.ok) {
+          loadWppConfig();
+        } else {
+          showError('Erro ao excluir número');
+        }
+      } catch {
+        showError('Erro de conexão');
+      }
+    });
+
+    /* --- Logout WPP (Desvincular) --- */
+    document.getElementById('btn-logout-wpp').addEventListener('click', async function() {
+      if (!confirm('Deseja realmente desvincular o WhatsApp? O bot parará de responder.')) return;
+      this.disabled = true;
+      this.textContent = 'PROCESSANDO…';
+      try {
+        const res = await fetch('/api/config/whatsapp/logout', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token() }
+        });
+        if (res.ok) {
+          loadWppConfig();
+        } else {
+          showError('Erro ao desvincular');
+        }
+      } catch {
+        showError('Erro de conexão');
+      } finally {
+        this.disabled = false;
+        this.textContent = 'DESVINCULAR';
+        lucide.createIcons();
+      }
+    });
+  })();
+
+  /* ---------- DOM refs ---------- */
+  const qInput      = document.getElementById('q');
+  const statusSel   = document.getElementById('filter-status');
+  const btn         = document.getElementById('btn-refresh');
+  const tbody       = document.getElementById('tbody');
+  const table       = document.getElementById('table');
+  const emptyEl     = document.getElementById('empty');
+  const loadingEl   = document.getElementById('loading');
+  const metaEl      = document.getElementById('meta');
+  const statsStrip  = document.getElementById('stats-strip');
+  const countLabel  = document.getElementById('count-label');
+  const countWrap   = document.getElementById('count-wrap');
+  const subtitleMeta= document.getElementById('subtitle-meta');
+
+  /* ---------- Aba ativa ---------- */
+  let currentOrigin = 'site';
+
+  /* ---------- Status config ---------- */
+  const STATUS_CFG = {
+    aberto:           { label:'Aberto',         cls:'badge-aberto' },
+    em_atendimento:   { label:'Em atendimento', cls:'badge-em_atendimento' },
+    concluido:        { label:'Concluído',      cls:'badge-concluido' },
+    cancelado:        { label:'Cancelado',      cls:'badge-cancelado' },
+  };
+
+  function statusBadge(status) {
+    const cfg = STATUS_CFG[status] || { label: status || '—', cls:'badge-default' };
+    return '<span class="badge ' + cfg.cls + '">' + cfg.label + '</span>';
+  }
+
+  /* ---------- Avatar ---------- */
+  const AV_COLORS = ['#e85d4a','#f79a3e','#70b5f9','#6dc6a0','#9f7aea','#f76d8e','#52b2cf','#a78bfa'];
+  function makeAvatar(name) {
+    const clean = (name||'').trim();
+    const parts  = clean.split(/\s+/);
+    const init   = (parts.length>=2 ? parts[0][0]+parts[1][0] : clean.slice(0,2)).toUpperCase() || '?';
+    let hash = 0;
+    for (let i=0; i<clean.length; i++) hash = (hash * 31 + clean.charCodeAt(i)) & 0xffffffff;
+    const bg = AV_COLORS[Math.abs(hash) % AV_COLORS.length];
+    return '<div class="avatar" style="background:' + bg + '">' + escHtml(init) + '</div>';
+  }
+
+  /* ---------- URL builder ---------- */
+  function buildURL() {
+    const params = new URLSearchParams();
+    const q      = qInput.value.trim();
+    const status = statusSel.value;
+    if (q)      params.set('q',      q);
+    if (status) params.set('status', status);
+    params.set('origem', currentOrigin);
+    return '/api/tickets' + (params.toString() ? '?'+params.toString() : '');
+  }
+
+  /* ---------- Load ---------- */
+  async function load() {
+    btn.disabled = true;
+    loadingEl.style.display = 'flex';
+    table.style.display = 'none';
+    emptyEl.style.display = 'none';
+    statsStrip.style.display = 'none';
+    countWrap.style.display = 'none';
+    subtitleMeta.textContent = 'Carregando…';
+
+    try {
+      const res     = await fetch(buildURL());
+      const data    = await res.json();
+      const tickets = data.tickets || [];
+      _allTickets   = tickets;
+
+      tbody.innerHTML = '';
+
+      /* Stats (sem filtros) */
+      const noFilter = !qInput.value.trim() && !statusSel.value;
+      if (noFilter) {
+        const byStatus = tickets.reduce(function(acc, t) {
+          acc[t.status] = (acc[t.status]||0) + 1; return acc;
+        }, {});
+        document.getElementById('stat-total').textContent          = data.total || 0;
+        document.getElementById('stat-aberto').textContent         = byStatus.aberto || 0;
+        document.getElementById('stat-em_atendimento').textContent = byStatus.em_atendimento || 0;
+        document.getElementById('stat-concluido').textContent      = byStatus.concluido || 0;
+        statsStrip.style.display = 'block';
+        lucide.createIcons();
+      }
+
+      /* Count pill */
+      countLabel.textContent = data.total + ' chamado' + (data.total !== 1 ? 's' : '');
+      countWrap.style.display = 'flex';
+
+      if (tickets.length === 0) {
+        emptyEl.style.display = 'flex';
+        subtitleMeta.textContent = 'Nenhum resultado';
+        lucide.createIcons();
+      } else {
+        table.style.display = 'table';
+        subtitleMeta.textContent = data.total + ' chamado' + (data.total !== 1 ? 's' : '') + ' encontrado' + (data.total !== 1 ? 's' : '');
+
+        const STATUS_ORDER = { aberto: 0, em_atendimento: 1, concluido: 2, cancelado: 3 };
+        tickets.slice().sort(function(a, b) {
+          const sa = STATUS_ORDER[a.status] ?? 2;
+          const sb = STATUS_ORDER[b.status] ?? 2;
+          if (sa !== sb) return sa - sb;
+          // Dentro do mesmo status, mais recente primeiro
+          return b.id - a.id;
+        }).forEach(function(t, i) {
+          const tr = document.createElement('tr');
+          tr.className = 'trow anim-row border-b border-brand-100/60 cursor-pointer';
+          tr.style.animationDelay = (i * 30) + 'ms';
+          tr.dataset.status = t.status || '';
+          tr.dataset.ticket = JSON.stringify(t);
+
+          const rawSol = t.solicitanteNome
+            ? t.solicitanteNome
+            : (t.solicitante
+              ? t.solicitante
+              : (t.origem !== 'site' ? (t.name || 'Bot') : '—'));
+          const solLabel = rawSol.includes('@') ? rawSol.split('@')[0] : rawSol;
+
+          tr.innerHTML =
+            /* Solicitante (login) */
+            '<td class="pl-7 pr-3 py-4 sol-cell" data-cell="profile">' +
+              '<div class="flex items-center gap-3">' +
+                makeAvatar(solLabel) +
+                '<div class="min-w-0">' +
+                  '<p class="sol-name font-bold text-brand-900 text-sm truncate max-w-[140px]" style="transition:color .15s" title="' + escHtml(solLabel) + '">' + escHtml(solLabel) + '</p>' +
+                  '<p class="sol-hint">ver perfil →</p>' +
+                '</div>' +
+              '</div>' +
+            '</td>' +
+            /* Tipo */
+            '<td class="px-3 py-4"><span class="badge-tipo">' + escHtml(t.type || '—') + '</span></td>' +
+            /* Descrição */
+            '<td class="px-3 py-4 max-w-[260px]">' + 
+              '<div class="flex items-center gap-2">' +
+                fmtDesc(t.description) + 
+                (t.attachment ? '<span class="p-1 bg-orange-100 text-orange-600 rounded shrink-0" title="Possui anexo"><i data-lucide="paperclip" style="width:12px;height:12px"></i></span>' : '') +
+              '</div>' +
+            '</td>' +
+            /* Status */
+            '<td class="px-3 py-4">' + statusBadge(t.status) + '</td>' +
+            /* Data */
+            '<td class="px-3 pr-7 py-4 whitespace-nowrap">' + fmtDate(t.createdAt) + '</td>';
+
+          tbody.appendChild(tr);
+        });
+        lucide.createIcons();
+      }
+
+      const now = new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+      metaEl.textContent = 'Atualizado às ' + now;
+      updateTabCounts();
+
+    } catch (err) {
+      subtitleMeta.textContent = 'Erro ao carregar';
+      emptyEl.innerHTML =
+        '<div class="w-20 h-20 rounded-3xl flex items-center justify-center" style="background:#fff1f2;border:1px solid #fecdd3">' +
+        '<i data-lucide="wifi-off" class="w-10 h-10 text-rose-400"></i></div>' +
+        '<div class="text-center"><p class="text-base font-bold text-rose-600">Falha na conexão</p>' +
+        '<p class="text-sm text-rose-400 mt-1">' + escHtml(err.message) + '</p></div>';
+      emptyEl.style.display = 'flex';
+      lucide.createIcons();
+    } finally {
+      loadingEl.style.display = 'none';
+      btn.disabled = false;
+    }
+  }
+
+  /* ---------- Helpers ---------- */
+
+  /* Renderiza descrição estruturada (linhas "Chave: valor") como pills */
+  function fmtDesc(raw) {
+    if (!raw) return '<span class="text-brand-200 text-xs">—</span>';
+    const lines = raw.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
+    // Detecta se é formato estruturado (pelo menos a primeira linha tem ":")
+    const structured = lines.length > 1 && lines[0].includes(':');
+    if (!structured) {
+      // Fallback: texto simples truncado
+      return '<span class="text-xs text-brand-700 line-clamp-2" title="' + escHtml(raw) + '">' + escHtml(raw.slice(0, 90)) + (raw.length > 90 ? '…' : '') + '</span>';
+    }
+    const ICONS = { 'Nome':'user', 'CPF':'id-card', 'E-mail':'mail', 'Sala':'building-2', 'Função':'briefcase', 'Anexo':'paperclip' };
+    let html = '<div class="flex flex-col gap-1">';
+    lines.forEach(function(line) {
+      const sep = line.indexOf(':');
+      if (sep === -1) return;
+      const key = line.slice(0, sep).trim();
+      const val = line.slice(sep + 1).trim();
+      const icon = ICONS[key] || 'dot';
+      html +=
+        '<div class="flex items-center gap-1.5 min-w-0">' +
+          '<i data-lucide="' + icon + '" style="width:10px;height:10px;flex-shrink:0;color:#c9a882"></i>' +
+          '<span class="text-[.68rem] font-semibold text-brand-400 shrink-0">' + escHtml(key) + '</span>' +
+          '<span class="text-[.68rem] text-brand-700 truncate" title="' + escHtml(val) + '">' + escHtml(val) + '</span>' +
+        '</div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '<span class="text-brand-200">—</span>';
+    const d    = new Date(iso);
+    const date = d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit' });
+    const time = d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    return '<span class="text-xs font-semibold text-brand-700">' + date + '</span>' +
+           '<br><span class="text-[.65rem] text-brand-300">' + time + '</span>';
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ---------- Toast ---------- */
+  function showToast(msg, type, duration) {
+    type     = type     || 'info';
+    duration = duration || 4000;
+    const iconSvg = {
+      success: '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>',
+      error:   '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>',
+      info:    '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
+      warning: '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+    };
+    const container = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = 'toast toast-' + type;
+    t.innerHTML =
+      iconSvg[type] +
+      '<span style="flex:1;line-height:1.4">' + escHtml(msg) + '</span>' +
+      '<button onclick="this.parentNode.remove()" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;padding:0;margin-left:4px;line-height:1;font-size:14px">✕</button>';
+    container.appendChild(t);
+    setTimeout(function() {
+      t.style.animation = 'toastOut .22s ease forwards';
+      setTimeout(function() { if (t.parentNode) t.remove(); }, 230);
+    }, duration);
+  }
+
+
+  let debTimer;
+  qInput.addEventListener('input', function() { clearTimeout(debTimer); debTimer = setTimeout(load, 300); });
+  statusSel.addEventListener('change', load);
+  btn.addEventListener('click',        load);
+  setInterval(load, 30000);
+
+  /* ---------- Tab switch ---------- */
+  document.getElementById('tabs-container').addEventListener('click', function(e) {
+    const tabBtn = e.target.closest('.tab-btn');
+    if (!tabBtn) return;
+    if (tabBtn.dataset.tab === currentOrigin) return;
+    currentOrigin = tabBtn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(function(b) {
+      b.classList.toggle('tab-active', b.dataset.tab === currentOrigin);
+    });
+    qInput.value    = '';
+    statusSel.value = '';
+    load();
+  });
+
+  /* ---------- Atualiza contadores das abas ---------- */
+  async function updateTabCounts() {
+    try {
+      const [resSite, resBot] = await Promise.all([
+        fetch('/api/tickets?origem=site'),
+        fetch('/api/tickets?origem=bot'),
+      ]);
+      const [dataSite, dataBot] = await Promise.all([resSite.json(), resBot.json()]);
+      document.getElementById('tab-count-site').textContent = dataSite.total || 0;
+      document.getElementById('tab-count-bot').textContent  = dataBot.total  || 0;
+    } catch {}
+  }
+
+  load();
+  updateTabCounts();
+
+  /* ─────────────────────────────────── MODAL DETALHES ─── */
+
+  const AV_COLORS_DET = ['#e85d4a','#f79a3e','#70b5f9','#6dc6a0','#9f7aea','#f76d8e','#52b2cf','#a78bfa'];
+
+  function makeAvatarEl(name) {
+    const clean = (name||'').trim();
+    const parts = clean.split(/\s+/);
+    const init  = (parts.length >= 2 ? parts[0][0] + parts[1][0] : clean.slice(0,2)).toUpperCase() || '?';
+    let hash = 0;
+    for (let i = 0; i < clean.length; i++) hash = (hash * 31 + clean.charCodeAt(i)) & 0xffffffff;
+    const bg = AV_COLORS_DET[Math.abs(hash) % AV_COLORS_DET.length];
+    const el = document.getElementById('det-avatar');
+    el.style.background = bg;
+    el.textContent = init;
+  }
+
+  let _detalheTicket = null;
+
+  function openDetalhe(ticket) {
+    _detalheTicket = ticket;
+    const modal = document.getElementById('modal-detalhe');
+
+    document.getElementById('det-titulo').textContent = 'Chamado #' + ticket.id;
+
+    if (ticket.createdAt) {
+      const d = new Date(ticket.createdAt);
+      document.getElementById('det-data').textContent =
+        d.toLocaleDateString('pt-BR') + ' às ' +
+        d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    } else {
+      document.getElementById('det-data').textContent = '';
+    }
+
+    // Status badge
+    const sCfg = {
+      aberto:         { label:'Aberto',         cls:'badge-aberto' },
+      em_atendimento: { label:'Em atendimento', cls:'badge-em_atendimento' },
+      concluido:      { label:'Concluído',      cls:'badge-concluido' },
+      cancelado:      { label:'Cancelado',      cls:'badge-cancelado' },
+    };
+    const sc = sCfg[ticket.status] || { label: ticket.status || '—', cls:'badge-default' };
+    document.getElementById('det-status-badge').innerHTML =
+      '<span class="badge ' + sc.cls + '">' + escHtml(sc.label) + '</span>';
+
+    // Tipo
+    document.getElementById('det-tipo-badge').textContent = ticket.type || '—';
+
+    // Origem
+    const origemEl = document.getElementById('det-origem-badge');
+    if ((ticket.origem || '') === 'site') {
+      origemEl.style.cssText = 'background:#f0fdf4;color:#15803d;border-color:#86efac';
+      origemEl.innerHTML = '<i data-lucide="monitor" style="width:11px;height:11px"></i> Site';
+    } else {
+      origemEl.style.cssText = 'background:#eff6ff;color:#1d4ed8;border-color:#93c5fd';
+      origemEl.innerHTML = '<i data-lucide="message-circle" style="width:11px;height:11px"></i> ChatBot';
+    }
+
+    // Solicitante
+    const solNome = ticket.solicitanteNome || ticket.solicitante || ticket.name || '—';
+    const solEmail = ticket.solicitanteEmail || (ticket.solicitante ? ticket.solicitante + (ticket.solicitante.includes('@') ? '' : '') : '') || '—';
+    makeAvatarEl(solNome);
+    document.getElementById('det-nome').textContent   = solNome;
+    document.getElementById('det-numero').textContent = ticket.solicitanteEmail || ticket.solicitante || '—';
+
+    // Badge WhatsApp
+    const wppBadge = document.getElementById('det-wpp-badge');
+    if (ticket.notifWpp) {
+      wppBadge.style.display = 'inline-flex';
+    } else {
+      wppBadge.style.display = 'none';
+    }
+
+    // Sala
+    document.getElementById('det-sala').textContent = ticket.sala || 'Não informado';
+
+    // Descrição
+    document.getElementById('det-descricao').textContent = ticket.description || '—';
+
+    // Anexo
+    const anexoWrapper = document.getElementById('det-anexo-wrapper');
+    const anexoLink    = document.getElementById('det-anexo-link');
+    if (ticket.attachment) {
+      anexoLink.href = '/uploads/' + encodeURIComponent(ticket.attachment);
+      anexoWrapper.classList.remove('hidden');
+    } else {
+      anexoWrapper.classList.add('hidden');
+    }
+
+    // Botões de ação
+    const btnAssumir  = document.getElementById('btn-assumir');
+    const btnConcluir = document.getElementById('btn-concluir');
+    const st = ticket.status;
+    btnAssumir.classList.toggle('hidden',  st !== 'aberto');
+    btnConcluir.classList.toggle('hidden', st === 'concluido' || st === 'cancelado');
+    btnAssumir.disabled  = false;
+    btnConcluir.disabled = false;
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    lucide.createIcons();
+  }
+
+  function closeDetalhe() {
+    document.getElementById('modal-detalhe').classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('btn-fechar-detalhe').addEventListener('click',        closeDetalhe);
+  document.getElementById('btn-fechar-detalhe-footer').addEventListener('click', closeDetalhe);
+  document.getElementById('modal-detalhe').addEventListener('click', function(e) {
+    if (e.target === this) closeDetalhe();
+  });
+
+  async function updateTicketStatus(novoStatus) {
+    if (!_detalheTicket) return;
+    const btnAssumir  = document.getElementById('btn-assumir');
+    const btnConcluir = document.getElementById('btn-concluir');
+    btnAssumir.disabled = btnConcluir.disabled = true;
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch('/api/tickets/' + _detalheTicket.id, {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body:    JSON.stringify({ status: novoStatus }),
+      });
+      if (res.status === 401) {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_email');
+        window.location.replace('/login.html');
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error || 'Erro ao atualizar chamado.', 'error');
+        return;
+      }
+
+      // Toast por tipo de ação
+      if (novoStatus === 'em_atendimento') {
+        showToast('Chamado assumido!', 'info');
+      } else if (novoStatus === 'concluido') {
+        showToast('Chamado concluído!', 'success');
+        // Toast de e-mail
+        if (data.emailResult) {
+          if (data.emailResult.ok) {
+            showToast('E-mail de conclusão enviado para ' + data.emailResult.to, 'success', 6000);
+          } else {
+            showToast('Falha ao enviar e-mail: ' + data.emailResult.error, 'error', 7000);
+          }
+        }
+      } else if (novoStatus === 'cancelado') {
+        showToast('Chamado cancelado.', 'warning');
+      }
+
+      // Atualiza ticket local e reabre modal com novos dados
+      _detalheTicket = data;
+      openDetalhe(data);
+      // Atualiza a linha da tabela
+      document.querySelectorAll('tr[data-ticket]').forEach(function(row) {
+        try {
+          const t = JSON.parse(row.dataset.ticket);
+          if (String(t.id) === String(data.id)) {
+            row.dataset.ticket = JSON.stringify(data);
+            row.dataset.status = data.status;
+            const tds = row.querySelectorAll('td');
+            if (tds[3]) tds[3].innerHTML = statusBadge(data.status);
+            lucide.createIcons();
+          }
+        } catch {}
+      });
+    } catch (err) {
+      showToast('Erro de conexão: ' + err.message, 'error');
+    } finally {
+      btnAssumir.disabled = btnConcluir.disabled = false;
+    }
+  }
+
+  document.getElementById('btn-assumir').addEventListener('click',  function() { updateTicketStatus('em_atendimento'); });
+  document.getElementById('btn-concluir').addEventListener('click', function() { updateTicketStatus('concluido'); });
+
+  // Clique nas linhas da tabela
+  document.getElementById('tbody').addEventListener('click', function(e) {
+    // Clique na célula de perfil do solicitante
+    if (e.target.closest('[data-cell="profile"]')) {
+      const tr = e.target.closest('tr[data-ticket]');
+      if (!tr) return;
+      try { openPerfilSolicitante(JSON.parse(tr.dataset.ticket)); } catch {}
+      return;
+    }
+    const tr = e.target.closest('tr[data-ticket]');
+    if (!tr) return;
+    try {
+      openDetalhe(JSON.parse(tr.dataset.ticket));
+    } catch {}
+  });
+
+  /* ─────────────────────────────────── MODAL PERFIL SOLICITANTE ─── */
+
+  const AV_COLORS_PERF = ['#e85d4a','#f79a3e','#70b5f9','#6dc6a0','#9f7aea','#f76d8e','#52b2cf','#a78bfa'];
+
+  function avatarBgForName(name) {
+    const clean = (name||'').trim();
+    let hash = 0;
+    for (let i = 0; i < clean.length; i++) hash = (hash * 31 + clean.charCodeAt(i)) & 0xffffffff;
+    return AV_COLORS_PERF[Math.abs(hash) % AV_COLORS_PERF.length];
+  }
+
+  function initialsOf(name) {
+    const parts = (name||'').trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return (name||'').slice(0,2).toUpperCase() || '?';
+  }
+
+  let _allTickets = [];  // cache atualizado a cada load()
+
+  function openPerfilSolicitante(ticket) {
+    // Perfil do solicitante = quem abriu o chamado (login), não o nome da pessoa do chamado
+    const rawSol = ticket.solicitante
+      ? ticket.solicitante
+      : (ticket.origem !== 'site' ? (ticket.name || 'Bot') : '—');
+    const solLabel = rawSol.includes('@') ? rawSol.split('@')[0] : rawSol;
+    const name     = solLabel;
+    const number   = ticket.number || '—';
+
+    // Avatar
+    const perf  = document.getElementById('perf-avatar');
+    const inits = initialsOf(name);
+    perf.style.background = avatarBgForName(name);
+    perf.textContent      = inits;
+
+    document.getElementById('perf-nome').textContent     = name;
+    document.getElementById('perf-iniciais').textContent = inits;
+    document.getElementById('perf-numero').textContent   = number;
+
+    // Chamados deste solicitante
+    const meus = _allTickets.filter(function(t) {
+      const sol = t.solicitante || (t.origem === 'bot' ? 'Bot' : '');
+      return sol === solLabel || (!ticket.solicitante && (t.number || '') === number);
+    });
+
+    // Badges por status
+    const statusMap = {};
+    meus.forEach(function(t) { statusMap[t.status] = (statusMap[t.status]||0)+1; });
+    const badgesEl = document.getElementById('perf-chamados-badges');
+    badgesEl.innerHTML = '';
+    if (Object.keys(statusMap).length === 0) {
+      badgesEl.innerHTML = '<span class="text-xs text-brand-300">Nenhum</span>';
+    } else {
+      const STD = {
+        aberto:         { label:'Abertos',         style:'background:#fff1f2;color:#be123c;border:1.5px solid #fda4af' },
+        em_atendimento: { label:'Em andamento',     style:'background:#fffbeb;color:#92400e;border:1.5px solid #fcd34d' },
+        concluido:      { label:'Concluídos',       style:'background:#f0fdf4;color:#15803d;border:1.5px solid #86efac' },
+        cancelado:      { label:'Cancelados',       style:'background:#f9fafb;color:#374151;border:1.5px solid #e5e7eb' },
+      };
+      Object.entries(statusMap).forEach(function(e) {
+        const cfg = STD[e[0]] || { label: e[0], style:'background:#f9fafb;color:#374151;border:1.5px solid #e5e7eb' };
+        const span = document.createElement('span');
+        span.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[.68rem] font-bold';
+        span.style.cssText = cfg.style;
+        span.textContent = e[1] + ' ' + cfg.label;
+        badgesEl.appendChild(span);
+      });
+    }
+
+    // Último canal
+    const last = meus.slice().sort(function(a,b){ return b.id - a.id; })[0];
+    const origemEl = document.getElementById('perf-origem');
+    if (last && last.origem === 'site') {
+      origemEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:5px;background:#f0fdf4;color:#15803d;border:1.5px solid #86efac;padding:2px 10px;border-radius:9999px;font-size:.7rem;font-weight:700"><svg xmlns=\'http://www.w3.org/2000/svg\' width=\'11\' height=\'11\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><rect width=\'20\' height=\'14\' x=\'2\' y=\'3\' rx=\'2\'/><line x1=\'8\' x2=\'16\' y1=\'21\' y2=\'21\'/><line x1=\'12\' x2=\'12\' y1=\'17\' y2=\'21\'/></svg>Site</span>';
+    } else {
+      origemEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:5px;background:#eff6ff;color:#1d4ed8;border:1.5px solid #93c5fd;padding:2px 10px;border-radius:9999px;font-size:.7rem;font-weight:700"><svg xmlns=\'http://www.w3.org/2000/svg\' width=\'11\' height=\'11\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><path d=\'M7.9 20A9 9 0 1 0 4 16.1L2 22Z\'/></svg>ChatBot</span>';
+    }
+
+    // Primeiro chamado
+    const oldest = meus.slice().sort(function(a,b){ return a.id - b.id; })[0];
+    const desdeEl = document.getElementById('perf-desde');
+    if (oldest && oldest.createdAt) {
+      desdeEl.textContent = new Date(oldest.createdAt).toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+    } else {
+      desdeEl.textContent = '—';
+    }
+
+    document.getElementById('modal-perfil').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    lucide.createIcons();
+  }
+
+  function closePerfil() {
+    document.getElementById('modal-perfil').classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('btn-fechar-perfil').addEventListener('click',        closePerfil);
+  document.getElementById('btn-fechar-perfil-footer').addEventListener('click', closePerfil);
+  document.getElementById('modal-perfil').addEventListener('click', function(e) {
+    if (e.target === this) closePerfil();
+  });
+
+  /* ─────────────────────────────────── MODAL NOVO CHAMADO ─── */
+  async function loadSalasSelect() {
+    const sel = document.getElementById('m-sala');
+    const current = sel.value;
+    // mantém só o placeholder
+    while (sel.options.length > 1) sel.remove(1);
+    try {
+      const res  = await fetch('/api/salas', { headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '') } });
+      const data = await res.json();
+      (data.salas || []).forEach(function (s) {
+        const opt = document.createElement('option');
+        opt.value = s.nome;
+        opt.textContent = s.nome.charAt(0) + s.nome.slice(1).toLowerCase();
+        if (s.nome === current) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    } catch {}
+  }
+
+  document.getElementById('btn-novo-chamado').addEventListener('click', openModal);
+
+  function openModal() {
+    document.getElementById('modal-chamado').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    goStep(1);
+    loadSalasSelect();
+    // Pré-preenche o número WhatsApp se o usuário tiver telefone cadastrado
+    fetch('/api/me/contato', { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('auth_token') } })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && data.telefone) {
+          const input = document.getElementById('m-tel-wpp');
+          const wrap = document.getElementById('m-wpp-tel-wrap');
+          const toggle = document.getElementById('m-notif-wpp');
+          input.value = data.telefone;
+          toggle.checked = true;
+          wrap.classList.remove('hidden');
+        }
+      })
+      .catch(() => {});
+  }
+
+  function closeModal() {
+    document.getElementById('modal-chamado').classList.add('hidden');
+    document.body.style.overflow = '';
+    document.getElementById('modal-form').reset();
+    document.getElementById('m-notif-wpp').checked = false;
+    document.getElementById('m-wpp-tel-wrap').classList.add('hidden');
+    const fn = document.getElementById('file-name');
+    fn.textContent = 'Imagem, PDF, documento… (opcional)';
+    fn.style.color = '';
+    clearModalAlert();
+  }
+
+  function goStep(n) {
+    const s1 = document.getElementById('modal-step-1');
+    const s2 = document.getElementById('modal-step-2');
+    const d1 = document.getElementById('step-dot-1');
+    const d2 = document.getElementById('step-dot-2');
+    if (n === 1) {
+      s1.classList.remove('hidden'); s2.classList.add('hidden');
+      d1.style.opacity = '1'; d2.style.opacity = '0.3';
+    } else {
+      s1.classList.add('hidden'); s2.classList.remove('hidden');
+      d1.style.opacity = '0.3'; d2.style.opacity = '1';
+    }
+  }
+
+  // Tipo cards — delegação no document para funcionar mesmo com modal renderizado depois do script
+  document.addEventListener('click', function(e) {
+    const card = e.target.closest('.tipo-card');
+    if (!card) return;
+    const tipo = card.dataset.tipo;
+    document.getElementById('tipo-selected-label').textContent = tipo;
+    document.getElementById('modal-chamado').dataset.tipo = tipo;
+    goStep(2);
+    lucide.createIcons();
+  });
+
+  document.getElementById('modal-close').addEventListener('click',      closeModal);
+  document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('modal-back').addEventListener('click',       function() { goStep(1); clearModalAlert(); });
+
+  // Fechar ao clicar fora
+  document.getElementById('modal-chamado').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // Toggle WhatsApp notification field
+  document.getElementById('m-notif-wpp').addEventListener('change', function() {
+    const wrap = document.getElementById('m-wpp-tel-wrap');
+    wrap.classList.toggle('hidden', !this.checked);
+    if (!this.checked) document.getElementById('m-tel-wpp').value = '';
+    lucide.createIcons();
+  });
+
+  // CPF mask
+  document.getElementById('m-cpf').addEventListener('input', function() {
+    let v = this.value.replace(/\D/g, '').slice(0, 11);
+    if (v.length > 9)      v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+    else if (v.length > 6) v = v.replace(/^(\d{3})(\d{3})(\d{1,3})/,        '$1.$2.$3');
+    else if (v.length > 3) v = v.replace(/^(\d{3})(\d{1,3})/,               '$1.$2');
+    this.value = v;
+  });
+
+  // File input display
+  document.getElementById('m-file').addEventListener('change', function() {
+    const fn = document.getElementById('file-name');
+    if (this.files && this.files[0]) {
+      fn.textContent = this.files[0].name;
+      fn.style.color = '#925616';
+    } else {
+      fn.textContent = 'Imagem, PDF, documento… (opcional)';
+      fn.style.color = '';
+    }
+  });
+
+  // Modal alert helpers
+  function showModalAlert(msg, type) {
+    const el = document.getElementById('modal-alert');
+    el.className = type === 'success'
+      ? 'flex mb-4 px-4 py-3 rounded-lg text-sm items-center gap-2 border bg-green-50 text-green-800 border-green-200'
+      : 'flex mb-4 px-4 py-3 rounded-lg text-sm items-center gap-2 border bg-red-50 text-red-800 border-red-200';
+    const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+    el.innerHTML = '<i data-lucide="' + icon + '" class="w-4 h-4 shrink-0"></i><span>' + escHtml(msg) + '</span>';
+    lucide.createIcons();
+  }
+
+  function clearModalAlert() {
+    const el = document.getElementById('modal-alert');
+    el.className = 'hidden';
+    el.textContent = '';
+  }
+
+  // Modal form submit
+  document.getElementById('modal-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    clearModalAlert();
+
+    const tipo     = document.getElementById('modal-chamado').dataset.tipo || '';
+    const nome     = document.getElementById('m-nome').value.trim();
+    const cpf      = document.getElementById('m-cpf').value.trim();
+    const email    = document.getElementById('m-email').value.trim();
+    const sala     = document.getElementById('m-sala').value;
+    const funcao   = document.getElementById('m-funcao').value.trim();
+    const file     = document.getElementById('m-file').files[0];
+    const notifWpp = document.getElementById('m-notif-wpp').checked;
+    const wppTel   = document.getElementById('m-tel-wpp').value.trim();
+
+    if (!nome || !cpf || !sala || !funcao) {
+      showModalAlert('Preencha todos os campos obrigatórios.', 'error');
+      return;
+    }
+    if (notifWpp && !wppTel) {
+      showModalAlert('Informe o número de WhatsApp para notificação.', 'error');
+      return;
+    }
+
+    const descLines = [
+      'Nome: ' + nome,
+      'CPF: ' + cpf,
+      email  ? 'E-mail: ' + email  : null,
+      'Sala: ' + sala,
+      'Função: ' + funcao,
+      file   ? 'Anexo: ' + file.name : null,
+    ].filter(Boolean);
+
+    const submitBtn = document.getElementById('modal-submit');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Salvando…';
+    lucide.createIcons();
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch('/api/tickets', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body:    JSON.stringify({
+          name:        nome,
+          number:      notifWpp ? wppTel.replace(/\D/g,'') : cpf.replace(/\D/g, ''),
+          type:        tipo,
+          description: descLines.join('\n'),
+          origem:      'site',
+          notifWpp:    notifWpp ? wppTel.replace(/\D/g,'') : null,
+          solicitante: localStorage.getItem('auth_email') || '',
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showModalAlert(data.error || 'Erro ao salvar chamado.', 'error');
+        showToast(data.error || 'Erro ao salvar chamado.', 'error');
+        return;
+      }
+
+      showModalAlert('Chamado #' + data.id + ' aberto com sucesso!', 'success');
+      showToast('Chamado criado com sucesso!', 'success');
+      document.getElementById('modal-form').reset();
+      document.getElementById('m-notif-wpp').checked = false;
+      document.getElementById('m-wpp-tel-wrap').classList.add('hidden');
+      const fn = document.getElementById('file-name');
+      fn.textContent = 'Imagem, PDF, documento… (opcional)';
+      fn.style.color = '';
+      setTimeout(function() { closeModal(); load(); }, 1800);
+    } catch (err) {
+      showModalAlert('Erro de conexão: ' + err.message, 'error');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Abrir chamado';
+      lucide.createIcons();
+    }
+  });
+</script>
+
+<!-- ═══════════════════════════════════ TOASTS ══ -->
+<div id="toast-container"></div>
+
+<!-- ═══════════════════════════════════ TOUR ══ -->
+<script src="/tour.js"></script>
+
+</body>
+</html>

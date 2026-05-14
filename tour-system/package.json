@@ -1,0 +1,26 @@
+{
+  "name": "tour-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema de tutorial guiado (onboarding) com react-joyride",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test":  "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "dependencies": {
+    "react":            "^18.3.1",
+    "react-dom":        "^18.3.1",
+    "react-joyride":    "^2.9.3",
+    "react-scripts":    "5.0.1"
+  },
+  "devDependencies": {
+    "@types/react":     "^18.3.1",
+    "@types/react-dom": "^18.3.1"
+  },
+  "browserslist": {
+    "production": [">0.2%", "not dead", "not op_mini all"],
+    "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
+  }
+}

@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1744286400000,
+    "email": "ti3@laghettomultipropriedade.com.br",
+    "name": "Lorenzo Kunzler",
+    "role": "administrador",
+    "password": "9805e6fe7da778fa09aa2f84376de99aa9884d3e05d3e980f5465b13d64d2f60b940f5ec31d397ecc2bd386984d823fca722cbbc4790734ca43c8ea04a0e111f",
+    "createdAt": "2026-04-10T00:00:00.000Z"
+  },
+  {
+    "id": 1776973201245,
+    "createdAt": "2026-04-23T19:40:01.245Z",
+    "email": "ti2@laghettomultipropriedade.com.br",
+    "password": "9805e6fe7da778fa09aa2f84376de99aa9884d3e05d3e980f5465b13d64d2f60b940f5ec31d397ecc2bd386984d823fca722cbbc4790734ca43c8ea04a0e111f",
+    "role": "administrador",
+    "name": "Pedro Sousa"
+  }
+]

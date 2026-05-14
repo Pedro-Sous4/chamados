@@ -1,0 +1,16 @@
+{
+  "name": "chamados-site",
+  "version": "1.0.0",
+  "description": "Interface web para visualização de chamados",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  },
+  "dependencies": {
+    "nodemailer": "^8.0.5"
+  }
+}

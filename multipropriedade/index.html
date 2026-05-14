@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chamados — Multipropriedade</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-user-type="Solicitante">
+
+  <!-- ═══════════════════════════════ HEADER ═══════════════════════════════ -->
+  <header>
+    <div class="header-brand">
+      <div class="header-icon">🎫</div>
+      <div>
+        <div class="header-title">Sistema de Chamados</div>
+        <div class="header-subtitle">Multipropriedade Laghetto</div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <!-- Toggle de tipo de usuário -->
+      <button class="user-toggle" onclick="toggleUserType()" title="Alternar tipo de acesso">
+        <span class="toggle-label">Acesso:</span>
+        <span class="user-badge" id="user-label">Solicitante</span>
+      </button>
+
+      <!-- Botão novo chamado -->
+      <button class="btn-primary" onclick="openModal()">
+        <span>＋</span>
+        <span>Novo Chamado</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════ STATS ════════════════════════════════ -->
+  <div class="stats-bar">
+    <div class="stats-inner">
+      <div class="stat-card si-total">
+        <div class="stat-icon">🗂</div>
+        <div>
+          <div class="stat-label">Total</div>
+          <div class="stat-num" id="stat-total">0</div>
+        </div>
+      </div>
+      <div class="stat-card si-aberto">
+        <div class="stat-icon">🕐</div>
+        <div>
+          <div class="stat-label">Abertos</div>
+          <div class="stat-num" id="stat-abertos">0</div>
+        </div>
+      </div>
+      <div class="stat-card si-atend">
+        <div class="stat-icon">⚡</div>
+        <div>
+          <div class="stat-label">Em Atendimento</div>
+          <div class="stat-num" id="stat-atendimento">0</div>
+        </div>
+      </div>
+      <div class="stat-card si-conc">
+        <div class="stat-icon">✅</div>
+        <div>
+          <div class="stat-label">Concluídos</div>
+          <div class="stat-num" id="stat-concluidos">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ MAIN ═════════════════════════════════ -->
+  <main>
+
+    <!-- Filtros -->
+    <div class="filters">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input
+          type="search"
+          id="search-input"
+          class="search-input"
+          placeholder="Buscar por nome, sala, ID…"
+          oninput="handleSearch(this.value)"
+        />
+      </div>
+      <select class="filter-select" id="filter-tipo" onchange="handleFilterTipo(this.value)">
+        <option value="">Todos os tipos</option>
+        <option value="Inclusão">Inclusão</option>
+        <option value="Edição">Edição</option>
+        <option value="Distrato">Distrato</option>
+      </select>
+      <select class="filter-select" id="filter-status" onchange="handleFilterStatus(this.value)">
+        <option value="">Todos os status</option>
+        <option value="Aberto">Aberto</option>
+        <option value="Em Atendimento">Em Atendimento</option>
+        <option value="Concluído">Concluído</option>
+        <option value="Cancelado">Cancelado</option>
+      </select>
+    </div>
+
+    <!-- Tabela de chamados -->
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">
+          <div class="table-title-icon">📋</div>
+          <div>
+            <h2>Chamados cadastrados</h2>
+            <p id="table-subtitle">Carregando…</p>
+          </div>
+        </div>
+        <span class="count-badge" id="count-badge">0 chamados</span>
+      </div>
+
+      <!-- Scroll horizontal em telas pequenas -->
+      <div style="overflow-x:auto">
+        <table class="ticket-table" id="ticket-table">
+          <thead>
+            <tr>
+              <th class="col-id">ID</th>
+              <th>Nome / Função</th>
+              <th>Tipo</th>
+              <th>Sala</th>
+              <th>Status</th>
+              <th class="col-data">Data</th>
+              <th class="col-acoes">Alterar Status</th>
+            </tr>
+          </thead>
+          <tbody id="ticket-list"></tbody>
+        </table>
+      </div>
+
+      <!-- Estado vazio -->
+      <div id="empty-state" class="hidden">
+        <div class="empty-icon">📭</div>
+        <h3>Nenhum chamado encontrado</h3>
+        <p>Tente ajustar os filtros ou abra um novo chamado.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ═══════════════════════════ MODAL NOVO CHAMADO ════════════════════════ -->
+  <div class="overlay hidden" id="modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+
+      <!-- Cabeçalho do modal -->
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="modal-title">Novo Chamado</div>
+          <div class="modal-subtitle" id="modal-subtitle">Preencha as informações abaixo</div>
+        </div>
+        <button class="modal-close" onclick="closeModal()" aria-label="Fechar">✕</button>
+      </div>
+
+      <!-- Indicador de etapas -->
+      <div class="step-indicator">
+        <div class="step-item">
+          <div class="step-dot" id="dot-1">1</div>
+          <div class="step-label" id="label-1">Tipo</div>
+        </div>
+        <div class="step-line" id="step-line"></div>
+        <div class="step-item">
+          <div class="step-dot" id="dot-2">2</div>
+          <div class="step-label" id="label-2">Dados</div>
+        </div>
+      </div>
+
+      <!-- ─── ETAPA 1: Tipo de solicitação ─── -->
+      <div id="step-1" class="step-body">
+        <div class="step-question">Tipo de solicitação</div>
+
+        <div class="tipo-cards">
+
+          <div class="tipo-card" data-tipo="Inclusão" onclick="selectTipo('Inclusão')">
+            <div class="tipo-card-icon">➕</div>
+            <div class="tipo-card-text">
+              <strong>Inclusão</strong>
+              <span>Incluir novo dado ou usuário</span>
+            </div>
+            <div class="tipo-card-check">✓</div>
+          </div>
+
+          <div class="tipo-card" data-tipo="Edição" onclick="selectTipo('Edição')">
+            <div class="tipo-card-icon">✏️</div>
+            <div class="tipo-card-text">
+              <strong>Edição</strong>
+              <span>Alterar ou corrigir informações</span>
+            </div>
+            <div class="tipo-card-check">✓</div>
+          </div>
+
+          <div class="tipo-card" data-tipo="Distrato" onclick="selectTipo('Distrato')">
+            <div class="tipo-card-icon">🗑️</div>
+            <div class="tipo-card-text">
+              <strong>Distrato</strong>
+              <span>Cancelar ou encerrar contrato</span>
+            </div>
+            <div class="tipo-card-check">✓</div>
+          </div>
+
+        </div>
+
+        <!-- Erro etapa 1 -->
+        <div class="field-error hidden" id="step1-error">
+          <span>⚠</span> <span id="step1-error-text"></span>
+        </div>
+      </div>
+
+      <!-- Footer etapa 1 -->
+      <div id="footer-1" class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn-primary" onclick="nextStep()">
+          Próximo <span>→</span>
+        </button>
+      </div>
+
+      <!-- ─── ETAPA 2: Dados do usuário ─── -->
+      <div id="step-2" class="step-body hidden">
+
+        <form id="form-chamado" onsubmit="return false" novalidate>
+          <div class="form-grid">
+
+            <!-- Nome -->
+            <div class="form-field full">
+              <label class="form-label" for="field-nome">
+                Nome <span class="req">*</span>
+              </label>
+              <input
+                type="text"
+                id="field-nome"
+                class="form-input"
+                placeholder="Nome completo do solicitante"
+                maxlength="120"
+                autocomplete="off"
+              />
+            </div>
+
+            <!-- CPF -->
+            <div class="form-field">
+              <label class="form-label" for="field-cpf">
+                CPF <span class="req">*</span>
+              </label>
+              <input
+                type="text"
+                id="field-cpf"
+                class="form-input"
+                placeholder="000.000.000-00"
+                maxlength="14"
+                oninput="maskCPF(this)"
+                autocomplete="off"
+              />
+            </div>
+
+            <!-- Email -->
+            <div class="form-field">
+              <label class="form-label" for="field-email">Email</label>
+              <input
+                type="email"
+                id="field-email"
+                class="form-input"
+                placeholder="email@exemplo.com"
+                maxlength="120"
+                autocomplete="off"
+              />
+            </div>
+
+            <!-- Sala -->
+            <div class="form-field">
+              <label class="form-label" for="field-sala">
+                Sala <span class="req">*</span>
+              </label>
+              <select id="field-sala" class="form-select">
+                <option value="">Selecione a sala…</option>
+                <option value="PEDRAS ALTAS">PEDRAS ALTAS</option>
+                <option value="NOTURNO PEDRAS ALTAS">NOTURNO PEDRAS ALTAS</option>
+                <option value="NBA">NBA</option>
+              </select>
+            </div>
+
+            <!-- Função -->
+            <div class="form-field">
+              <label class="form-label" for="field-funcao">
+                Função <span class="req">*</span>
+              </label>
+              <input
+                type="text"
+                id="field-funcao"
+                class="form-input"
+                placeholder="Ex: Gerente, Atendente…"
+                maxlength="80"
+                autocomplete="off"
+              />
+            </div>
+
+            <!-- Anexo -->
+            <div class="form-field full">
+              <label class="form-label">Anexo</label>
+              <div class="file-upload-wrap" onclick="document.getElementById('file-input').click()">
+                <button type="button" class="file-upload-btn">📎 Escolher arquivo</button>
+                <span id="file-name-display">Nenhum arquivo selecionado</span>
+              </div>
+              <input
+                type="file"
+                id="file-input"
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                onchange="handleFileChange(this)"
+              />
+            </div>
+
+          </div><!-- /form-grid -->
+
+          <!-- Erro etapa 2 -->
+          <div class="field-error hidden" id="form-error" style="margin-top:.75rem">
+            <span>⚠</span> <span id="form-error-text"></span>
+          </div>
+
+        </form>
+      </div><!-- /step-2 -->
+
+      <!-- Footer etapa 2 -->
+      <div id="footer-2" class="modal-footer hidden">
+        <button class="btn-secondary" onclick="prevStep()">← Voltar</button>
+        <button class="btn-primary" onclick="submitChamado()">
+          ✓ Enviar Chamado
+        </button>
+      </div>
+
+    </div><!-- /modal -->
+  </div><!-- /modal-overlay -->
+
+  <!-- ═══════════════════════════════ MODAL DETALHE ════════════════════════ -->
+  <div class="overlay hidden" id="detail-overlay">
+    <div class="modal detail-modal" role="dialog" aria-modal="true">
+
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Detalhes do Chamado</div>
+          <div class="modal-subtitle" id="detail-id-subtitle"></div>
+        </div>
+        <button class="modal-close" onclick="closeDetail()" aria-label="Fechar">✕</button>
+      </div>
+
+      <div class="step-body" id="detail-content">
+        <!-- Preenchido dinamicamente pelo script.js -->
+      </div>
+
+      <div class="modal-footer">
+        <span></span>
+        <button class="btn-secondary" onclick="closeDetail()">Fechar</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ TOAST ════════════════════════════════ -->
+  <div id="toast"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

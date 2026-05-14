@@ -1,0 +1,17 @@
+# Dependências
+node_modules/
+package-lock.json
+
+# Bot WhatsApp (Tokens de Sessão e Cache)
+bot/tokens/
+bot/wppconnect-logs/
+bot/src/session.data.json
+
+# Dados e Uploads (Imagens de teste)
+dados/uploads/*
+!dados/uploads/.gitkeep
+
+# Ambiente e Logs
+.env
+*.log
+.DS_Store
