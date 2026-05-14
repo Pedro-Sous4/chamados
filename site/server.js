@@ -218,14 +218,105 @@ const ROUTES = {
    * GET /api/tickets
    * Query params: status, type, q (busca livre em name/description/number)
    */
+  'GET /api/stats': (req, res) => {
+    const url = new URL(req.url, `http://localhost:${PORT}`);
+    const start = url.searchParams.get('start');
+    const end = url.searchParams.get('end');
+
+    let tickets = readCollection('tickets');
+
+    // Filtro por Data (createdAt: YYYY-MM-DD...)
+    console.log(`[STATS] Filtro: start=${start}, end=${end} | Total na base: ${tickets.length}`);
+    
+    if (start || end) {
+      tickets = tickets.filter(t => {
+        if (!t.createdAt) return false;
+        const d = t.createdAt.split('T')[0]; // Ex: 2026-05-14
+        
+        const isAfterStart = !start || d >= start;
+        const isBeforeEnd = !end || d <= end;
+        
+        return isAfterStart && isBeforeEnd;
+      });
+    }
+    console.log(`[STATS] Após filtro: ${tickets.length}`);
+
+    const stats = {
+      total: tickets.length,
+      status: { aberto: 0, concluido: 0, em_atendimento: 0, cancelado: 0 },
+      porSetor: {},
+      porTipo: {},
+      porSolicitante: {},
+      porOrigem: { bot: 0, site: 0 },
+      palavrasChave: {}
+    };
+
+    const stopWords = ['o', 'a', 'de', 'do', 'da', 'em', 'um', 'uma', 'e', 'com', 'no', 'na', 'para', 'com', 'que', 'os', 'as'];
+
+    tickets.forEach(t => {
+      // Status
+      const s = t.status || 'aberto';
+      if (stats.status[s] !== undefined) stats.status[s]++;
+
+      // Origem
+      const ori = t.origem === 'site' ? 'site' : 'bot';
+      stats.porOrigem[ori]++;
+
+      // Setor (Sala) - Pega apenas o sub-setor final se for Administrativo
+      const salaStr = t.sala || 'Não Informado';
+      let salaBase = salaStr;
+      if (salaStr.includes('Administrativo')) {
+        const matches = salaStr.match(/\(([^)]+)\)$/);
+        if (matches && matches[1]) {
+          salaBase = matches[1];
+        }
+      }
+      stats.porSetor[salaBase] = (stats.porSetor[salaBase] || 0) + 1;
+
+      // Tipo de Problema
+      const tipo = t.type || 'Suporte';
+      stats.porTipo[tipo] = (stats.porTipo[tipo] || 0) + 1;
+
+      // Solicitante
+      const sol = t.solicitante || t.name || 'Anônimo';
+      stats.porSolicitante[sol] = (stats.porSolicitante[sol] || 0) + 1;
+
+      // Palavras-Chave (Análise de descrição)
+      const words = (t.description || '').toLowerCase()
+        .replace(/[^\w\s]/g, '')
+        .split(/\s+/)
+        .filter(w => w.length > 2 && !stopWords.includes(w));
+      
+      words.forEach(w => {
+        stats.palavrasChave[w] = (stats.palavrasChave[w] || 0) + 1;
+      });
+    });
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(stats));
+  },
+
   'GET /api/tickets': (req, res) => {
     const url = new URL(req.url, `http://localhost:${PORT}`);
     const filterStatus = url.searchParams.get('status') || '';
     const filterType   = url.searchParams.get('type')   || '';
     const filterQ      = (url.searchParams.get('q') || '').toLowerCase();
     const filterOrigin = url.searchParams.get('origem') || '';
+    const start        = url.searchParams.get('start');
+    const end          = url.searchParams.get('end');
 
     let tickets = readCollection('tickets');
+
+    // Filtro por Data
+    if (start || end) {
+      tickets = tickets.filter(t => {
+        if (!t.createdAt) return false;
+        const d = t.createdAt.split('T')[0];
+        const isAfterStart = !start || d >= start;
+        const isBeforeEnd = !end || d <= end;
+        return isAfterStart && isBeforeEnd;
+      });
+    }
 
     if (filterOrigin === 'site') tickets = tickets.filter(t => t.origem === 'site');
     else if (filterOrigin === 'bot') tickets = tickets.filter(t => t.origem !== 'site');
