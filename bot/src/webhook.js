@@ -11,7 +11,7 @@ const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
  * Endpoint:  POST /webhook/chamado-concluido
  * Body JSON: { "telefone": "5511999999999", "secret": "..." }
  */
-const ALLOWED_URLS = ['/webhook/chamado-concluido', '/webhook/chamado-assumido', '/webhook/logout'];
+const ALLOWED_URLS = ['/webhook/chamado-concluido', '/webhook/chamado-assumido', '/webhook/logout', '/webhook/mensagem-avulsa'];
 
 function startWebhook() {
   const server = http.createServer((req, res) => {
@@ -87,14 +87,47 @@ function startWebhook() {
           `*#${id}* — ${tipo}\n` +
           `👤 Assumido por: ${atendente}\n\n` +
           `Em breve você receberá o atendimento.`;
-      } else {
+      } else if (endpoint === '/webhook/chamado-concluido') {
         const id   = data.id   || '—';
         const tipo = data.tipo || data.type || '—';
+        const obs  = data.observacao || '';
+        const anexo = data.anexo_solucao;
         console.log(`[webhook] chamado concluído para ${userId}`);
         mensagem =
           `✅ *Chamado Concluído*\n\n` +
           `*#${id}* — ${tipo}\n\n` +
+          (obs ? `📝 *Observação do Técnico:*\n${obs}\n\n` : '') +
           `Caso precise de mais suporte, estamos à disposição.`;
+          
+        if (anexo) {
+           try {
+             const client = require('./context').getClient();
+             await client.sendFile(userId, anexo, 'solucao', mensagem);
+             res.writeHead(200);
+             res.end('Mensagem com anexo enviada');
+             return;
+           } catch(e) { console.error('Erro ao enviar anexo da solução', e); }
+        }
+      } else if (endpoint === '/webhook/mensagem-avulsa') {
+        const id = data.id || '—';
+        const obs = data.observacao || '';
+        const anexo = data.anexo_solucao;
+        const atendente = data.atendente || '—';
+        console.log(`[webhook] mensagem avulsa para ${userId}`);
+        mensagem = 
+          `💬 *Atualização no Chamado #${id}*\n\n` +
+          `*De:* ${atendente}\n\n` +
+          `${obs}`;
+          
+        if (anexo) {
+           try {
+             const client = require('./context').getClient();
+             await client.sendFile(userId, anexo, 'anexo', mensagem);
+             res.writeHead(200);
+             res.end('Mensagem avulsa com anexo enviada');
+             return;
+           } catch(e) { console.error('Erro ao enviar anexo avulso', e); }
+        }
       }
 
       try {

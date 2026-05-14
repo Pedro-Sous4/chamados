@@ -48,6 +48,12 @@ wppconnect
     },
     statusFind: (statusSession) => {
       console.log('[Status]', statusSession);
+      const connectedStatuses = ['isLogged', 'qrReadSuccess', 'chatAvailable', 'inChat', 'SUCCESS'];
+      if (connectedStatuses.includes(statusSession)) {
+        // Ignora reportar esses status diretamente para não sobrescrever o 'connected' 
+        // enviado no .then(), que contém o número do celular.
+        return; 
+      }
       reportStatus(statusSession);
     },
     headless: true,

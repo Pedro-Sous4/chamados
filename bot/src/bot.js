@@ -241,6 +241,11 @@ async function processState(client, message, userId) {
 
     if (session.state === 'idle' || session.state === 'aguardando_nome') {
        await send(`Recebi seu anexo. Vou guardá-lo para o chamado.`);
+       // Se enviou SÓ mídia na etapa de pedir nome, apenas aguarda. Não avança.
+       if (!text) return;
+    } else {
+       // Se for em outra etapa e enviou SÓ mídia, apenas guarda e não avança
+       if (!text) return;
     }
   }
 
@@ -261,8 +266,8 @@ async function processState(client, message, userId) {
 
   // ── ESTADO: aguardando_nome ────────────────────────────────────────────────
   if (session.state === 'aguardando_nome') {
-    if (!text && !isMedia) { await send('Por favor, informe seu nome para continuarmos:'); return; }
-    const nome = text || getName(message);
+    if (!text) { await send('Por favor, digite o seu nome para continuarmos:'); return; }
+    const nome = text; // Garante que o usuário digitou o nome
     updateSession(userId, { state: 'aguardando_sala', nome });
     await send(SALAS_MENU);
     return;

@@ -648,6 +648,7 @@ const ROUTES = {
     req.on('end', () => {
       try {
         const data = JSON.parse(body);
+        console.log(`[WPP] Status recebido do bot: ${data.status} (Número: ${data.numero || 'N/A'})`);
         global._botStatus = data.status;
         global._botQR = data.qr;
 
@@ -726,11 +727,35 @@ const ROUTES = {
         return sendJson(res, 400, { error: 'JSON inválido' });
       }
       const numero = (data.numero || '').replace(/\D/g, '');
-      const config = readCollection('config');
-      config.whatsapp = { numero };
-      const configPath = path.join(DADOS_DIR, 'config.json');
       fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
       sendJson(res, 200, { ok: true, whatsapp: config.whatsapp });
+    });
+  },
+
+  'POST /api/upload': (req, res) => {
+    const session = requireAuth(req, res);
+    if (!session) return;
+
+    const url = new URL(req.url, `http://localhost:${PORT}`);
+    const originalName = url.searchParams.get('filename') || 'arquivo.bin';
+    const ext = path.extname(originalName) || '.bin';
+    const filename = `${Date.now()}_${Math.floor(Math.random() * 1000)}${ext}`;
+    
+    const uploadsDir = path.join(DADOS_DIR, 'uploads');
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+    const filePath = path.join(uploadsDir, filename);
+    const writeStream = fs.createWriteStream(filePath);
+
+    req.pipe(writeStream);
+
+    req.on('end', () => {
+      sendJson(res, 201, { filename });
+    });
+
+    req.on('error', (err) => {
+      console.error('[upload] Erro:', err.message);
+      sendJson(res, 500, { error: 'Falha no upload' });
     });
   },
 };
@@ -804,10 +829,11 @@ const server = http.createServer((req, res) => {
       
       // Atualiza campos permitidos
       if (data.status)      tickets[idx].status      = data.status;
-      if (data.observacao)  tickets[idx].observacao  = data.observacao;
-      if (data.type)        tickets[idx].type        = data.type;
-      if (data.description) tickets[idx].description = data.description;
-      if (data.sala)        tickets[idx].sala        = data.sala;
+      if (data.observacao)    tickets[idx].observacao    = data.observacao;
+      if (data.anexo_solucao) tickets[idx].anexo_solucao = data.anexo_solucao;
+      if (data.type)          tickets[idx].type          = data.type;
+      if (data.description)   tickets[idx].description   = data.description;
+      if (data.sala)          tickets[idx].sala          = data.sala;
       
       tickets[idx].updatedAt = new Date().toISOString();
       require('fs').writeFileSync(ticketsPath, JSON.stringify(tickets, null, 2), 'utf-8');
@@ -819,12 +845,12 @@ const server = http.createServer((req, res) => {
       const origemNotif = !!notifPhone;
 
       let emailResult = null;
+      const atendenteLogin = readCollection('logins').find(u => u.email.toLowerCase() === session.email.toLowerCase());
+      const atendenteNome = (atendenteLogin && atendenteLogin.name) ? atendenteLogin.name : session.email;
+
       if (data.status === 'concluido' && anteriorStatus !== 'concluido' && !notifPhone) {
         const destEmail = ticket.solicitanteEmail || null;
         if (destEmail) {
-          const logins = readCollection('logins');
-          const atendenteLogin = logins.find(u => u.email.toLowerCase() === session.email.toLowerCase());
-          const atendenteNome = (atendenteLogin && atendenteLogin.name) ? atendenteLogin.name : session.email;
           emailResult = await sendConclusaoEmail({
             toEmail:         destEmail,
             solicitanteNome: ticket.solicitanteNome || ticket.solicitante || '',
@@ -837,6 +863,49 @@ const server = http.createServer((req, res) => {
       }
 
       sendJson(res, 200, emailResult ? Object.assign({}, ticket, { emailResult }) : ticket);
+
+      // Notifica o bot quando o chamado for concluído (fire-and-forget)
+      if (
+        data.status === 'concluido' &&
+        anteriorStatus !== 'concluido' &&
+        origemNotif
+      ) {
+        const payload = JSON.stringify({
+          secret:    WEBHOOK_SECRET,
+          telefone:  notifPhone,
+          id:        ticket.id,
+          tipo:      ticket.type,
+          atendente: atendenteNome,
+          observacao: ticket.observacao || '',
+          anexo_solucao: ticket.anexo_solucao ? path.join(DADOS_DIR, 'uploads', ticket.anexo_solucao) : null
+        });
+        const whReq = require('http').request(
+          { hostname: 'localhost', port: WEBHOOK_PORT, path: '/webhook/chamado-concluido', method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
+          (whRes) => { whRes.resume(); console.log(`[site] webhook concluido: ${whRes.statusCode}`); }
+        );
+        whReq.on('error', (e) => console.warn('[site] webhook indisponível:', e.message));
+        whReq.write(payload);
+        whReq.end();
+      } else if (data.observacao !== undefined && !data.status && origemNotif) {
+        // Envio de mensagem avulsa / follow-up sem mudar o status
+        const payload = JSON.stringify({
+          secret:    WEBHOOK_SECRET,
+          telefone:  notifPhone,
+          id:        ticket.id,
+          atendente: atendenteNome,
+          observacao: data.observacao,
+          anexo_solucao: data.anexo_solucao ? path.join(DADOS_DIR, 'uploads', data.anexo_solucao) : null
+        });
+        const whReq = require('http').request(
+          { hostname: 'localhost', port: WEBHOOK_PORT, path: '/webhook/mensagem-avulsa', method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
+          (whRes) => { whRes.resume(); console.log(`[site] webhook mensagem-avulsa: ${whRes.statusCode}`); }
+        );
+        whReq.on('error', (e) => console.warn('[site] webhook indisponível:', e.message));
+        whReq.write(payload);
+        whReq.end();
+      }
 
       if (data.status === 'em_atendimento' && anteriorStatus !== 'em_atendimento' && origemNotif) {
         const payload = JSON.stringify({ secret: WEBHOOK_SECRET, telefone: notifPhone, id: ticket.id, tipo: ticket.type, atendente: session.email });
@@ -865,31 +934,6 @@ const server = http.createServer((req, res) => {
     if (tickets.length === filtered.length) return sendJson(res, 404, { error: 'Chamado não encontrado' });
     require('fs').writeFileSync(ticketsPath, JSON.stringify(filtered, null, 2), 'utf-8');
     return sendJson(res, 200, { ok: true });
-  }
-
-      // Notifica o bot quando o chamado for concluído (fire-and-forget)
-      if (
-        data.status === 'concluido' &&
-        anteriorStatus !== 'concluido' &&
-        origemNotif
-      ) {
-        const payload = JSON.stringify({
-          secret:    WEBHOOK_SECRET,
-          telefone:  notifPhone,
-          id:        ticket.id,
-          tipo:      ticket.type,
-        });
-        const whReq = require('http').request(
-          { hostname: 'localhost', port: WEBHOOK_PORT, path: '/webhook/chamado-concluido', method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
-          (whRes) => { whRes.resume(); console.log(`[site] webhook concluido: ${whRes.statusCode}`); }
-        );
-        whReq.on('error', (e) => console.warn('[site] webhook indisponível:', e.message));
-        whReq.write(payload);
-        whReq.end();
-      }
-    });
-    return;
   }
 
   // Serve arquivos estáticos de public/

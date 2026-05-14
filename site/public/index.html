@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chamados — Laghetto</title>
 
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com?v=1.0.3"></script>
   <script>
+    window._V = '1.0.3';
     tailwind.config = {
       theme: {
         extend: {
@@ -25,7 +26,7 @@
       }
     }
   </script>
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js?v=1.0.2"></script>
   <style>
     /* ---------- Fundo da página ---------- */
     body { background:#f0ebe0; }
@@ -51,6 +52,8 @@
     .badge-cancelado::before { background:#f43f5e; box-shadow:0 0 0 2px rgba(244,63,94,.25); }
     .badge-default        { background:#f9fafb; color:#374151; border:1.5px solid #e5e7eb; }
     .badge-default::before { background:#9ca3af; }
+    .badge-arquivado      { background:#f3f4f6; color:#4b5563; border:1.5px solid #d1d5db; }
+    .badge-arquivado::before { background:#6b7280; }
 
     .badge-tipo {
       display:inline-flex; align-items:center;
@@ -503,10 +506,6 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <button id="btn-editar-chamado" title="Editar Chamado"
-                class="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all bg-transparent border-none cursor-pointer">
-          <i data-lucide="pencil" class="w-4 h-4"></i>
-        </button>
         <button id="btn-arquivar-chamado" title="Arquivar Chamado"
                 class="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all bg-transparent border-none cursor-pointer">
           <i data-lucide="archive" class="w-4 h-4"></i>
@@ -575,10 +574,44 @@
           Observação Técnica / Solução
           <span id="det-obs-saved-badge" class="hidden px-1.5 py-0.5 bg-green-100 text-green-700 text-[9px] rounded-md font-bold">SALVO</span>
         </p>
-        <textarea id="det-obs-input" placeholder="O que foi feito para resolver este chamado?..."
+
+        <!-- Novo: Anexo de Solução (Movido para cima para visibilidade) -->
+        <div class="flex flex-col gap-1.5 mb-1">
+          <div class="flex items-center gap-2">
+            <label for="det-obs-file" class="flex-1 flex items-center gap-2 px-3 py-2 bg-white border border-dashed border-brand-200 rounded-lg cursor-pointer hover:bg-brand-50 transition-all">
+              <i data-lucide="upload-cloud" class="w-4 h-4 text-brand-400"></i>
+              <span id="det-obs-file-label" class="text-xs text-brand-500 truncate">Anexar imagem/solução...</span>
+              <input type="file" id="det-obs-file" class="hidden" accept="image/*,application/pdf" />
+            </label>
+            <button id="btn-clear-obs-file" class="hidden p-2 text-red-400 hover:text-red-600 transition-all bg-transparent border-none cursor-pointer">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <textarea id="det-obs-input" placeholder="O que foi feito para resolver este chamado? Ou digite aqui sua resposta ao cliente..."
                   class="w-full px-4 py-3 text-sm text-brand-900 bg-brand-50 border border-brand-100
                          rounded-xl outline-none focus:border-brand-400 focus:bg-white transition-all
                          min-h-[100px] resize-none"></textarea>
+        <div class="flex justify-end mt-2">
+          <button id="btn-salvar-obs" class="inline-flex items-center gap-2 px-4 py-2 bg-brand-100 text-brand-700 font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-brand-200 transition-all">
+            <i data-lucide="send" class="w-4 h-4"></i>
+            Salvar / Enviar Resposta
+          </button>
+        </div>
+      </div>
+
+      <!-- Exibição do Anexo da Solução Salvo -->
+      <div id="det-anexo-solucao-wrapper" class="hidden p-3 rounded-xl bg-green-50 border border-green-100 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center text-green-600">
+            <i data-lucide="check-square" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <p class="text-[10px] font-black text-green-800 uppercase">Solução Anexada</p>
+            <a id="det-anexo-solucao-link" href="#" target="_blank" class="text-xs font-bold text-green-600 hover:underline">Ver arquivo de solução</a>
+          </div>
+        </div>
       </div>
 
       <!-- Área de Anexo -->
@@ -991,49 +1024,17 @@
     <!-- Painel: Whatsapp -->
     <div id="tab-whatsapp" class="flex flex-col flex-1 overflow-hidden p-6 gap-6 hidden">
       
-      <!-- Formulário de Edição/Adição -->
-      <div class="flex flex-col gap-2">
-        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Configurar Número</label>
-        <div class="flex gap-2">
-          <input id="wpp-numero-input" type="text" maxlength="20"
-                 placeholder="Ex: 5511999999999"
-                 class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm
-                        outline-none focus:border-brand-400 transition-colors" />
-          <button id="btn-save-wpp"
-                  class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm
-                         font-bold text-white shadow cursor-pointer border-none transition-all
-                         hover:opacity-90 active:scale-95"
-                  style="background:#925616">
-            <i data-lucide="save" class="w-4 h-4"></i> Salvar
-          </button>
-        </div>
-        <p class="text-[.65rem] text-gray-400">Este é o número que receberá as mensagens do bot para registro no sistema.</p>
-      </div>
-
-      <!-- Seção do Número Atual -->
-      <div id="wpp-current-section" class="flex flex-col gap-3 pt-4 border-t border-gray-100 hidden">
-        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Número Registrado</label>
-        <div class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-green-100 bg-green-50 group">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-green-100">
-              <i data-lucide="phone" class="w-4 h-4 text-green-600"></i>
-            </div>
-            <span id="wpp-current-display" class="text-sm font-bold text-green-800"></span>
-          </div>
-          <button id="btn-del-wpp" title="Excluir número"
-                  class="p-2 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50
-                         transition-all opacity-0 group-hover:opacity-100 cursor-pointer border-none bg-transparent">
-            <i data-lucide="trash-2" class="w-4 h-4"></i>
-          </button>
-        </div>
-      </div>
-
-      <!-- Seção do Status e QR Code -->
-      <div id="wpp-status-section" class="flex flex-col gap-4 pt-4 border-t border-gray-100">
+      <!-- Seção única de Status e QR Code -->
+      <div id="wpp-status-section" class="flex flex-col gap-5 pt-2">
         <div class="flex items-center justify-between">
           <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Status da Conexão</label>
-          <div id="wpp-status-badge" class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-gray-100 text-gray-500">
-            Verificando…
+          <div class="flex items-center gap-3">
+            <div id="wpp-status-badge" class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-gray-100 text-gray-500">
+              Verificando…
+            </div>
+            <button id="btn-logout-wpp" class="px-3 py-1.5 rounded-lg bg-white border border-red-100 text-red-500 text-[10px] font-bold uppercase tracking-wider hover:bg-red-50 transition-all cursor-pointer">
+              Desvincular
+            </button>
           </div>
         </div>
         
@@ -1045,16 +1046,28 @@
           <div class="flex items-center gap-2 text-[10px] text-brand-500 font-bold animate-pulse">
             <i data-lucide="loader" class="w-3 h-3"></i> AGUARDANDO SCAN…
           </div>
+
+          <!-- Dicas de orientação -->
+          <div class="mt-2 p-3 bg-brand-50 border border-brand-100 rounded-xl text-[11px] text-brand-800 leading-relaxed">
+            <p class="flex items-start gap-2 mb-1.5">
+              <i data-lucide="info" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-brand-500"></i>
+              <span>Se você escanear e o celular disser que conectou, mas o painel ainda mostrar "Aguardando", <strong>aguarde de 10 a 15 segundos</strong>.</span>
+            </p>
+            <p class="flex items-start gap-2">
+              <i data-lucide="alert-triangle" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-500"></i>
+              <span>Se ainda assim não mudar, use o botão <strong>Desvincular</strong> no topo para limpar a sessão e tentar novamente.</span>
+            </p>
+          </div>
         </div>
 
         <div id="wpp-connected-info" class="hidden flex items-center justify-between p-4 rounded-xl bg-green-50 border border-green-100">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center text-white">
-               <i data-lucide="check" class="w-5 h-5"></i>
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white shadow-lg shadow-green-200">
+               <i data-lucide="phone" class="w-5 h-5"></i>
             </div>
             <div>
-              <p class="text-sm font-bold text-green-900">Bot Conectado</p>
-              <p class="text-xs text-green-700">Pronto para receber chamados</p>
+              <p id="wpp-connected-number" class="text-sm font-black text-green-900 leading-tight"></p>
+              <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider mt-0.5">Bot Conectado e Ativo</p>
             </div>
           </div>
         </div>
@@ -1153,6 +1166,10 @@
     }
   })();
 
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
   /* ---------- Modal Configurações ---------- */
   (function () {
     const overlay  = document.getElementById('modal-config-overlay');
@@ -1170,10 +1187,6 @@
       errEl.textContent = msg;
       errEl.classList.remove('hidden');
       setTimeout(() => errEl.classList.add('hidden'), 3500);
-    }
-
-    function escHtml(str) {
-      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
     function renderSalas(salas) {
@@ -1363,36 +1376,19 @@
     });
 
     /* --- WhatsApp Config Logic --- */
-    const wppInput    = document.getElementById('wpp-numero-input');
-    const btnSaveWpp  = document.getElementById('btn-save-wpp');
-    const wppSuccess  = document.getElementById('wpp-success');
-    const wppSection  = document.getElementById('wpp-current-section');
-    const wppDisplay  = document.getElementById('wpp-current-display');
-    const btnDelWpp   = document.getElementById('btn-del-wpp');
-
     const wppBadge    = document.getElementById('wpp-status-badge');
     const wppQRBox    = document.getElementById('wpp-qr-container');
     const wppQRImg    = document.getElementById('wpp-qr-img');
     const wppConnInfo = document.getElementById('wpp-connected-info');
-    const wppDiscInfo = document.getElementById('wpp-disconnected-info');
 
     let wppPollTimer = null;
 
     async function loadWppConfig() {
       try {
-        const res = await fetch('/api/config/whatsapp', { headers: { 'Authorization': 'Bearer ' + token() } });
+        const res  = await fetch('/api/config/whatsapp', { headers: { 'Authorization': 'Bearer ' + token() } });
         const data = await res.json();
-        const numero = data.numero || '';
-        wppInput.value = numero;
         
-        if (numero) {
-          wppDisplay.textContent = numero;
-          wppSection.classList.remove('hidden');
-        } else {
-          wppSection.classList.add('hidden');
-        }
-
-        updateWppStatusUI(data.status, data.qr);
+        updateWppStatusUI(data.status, data.qr, data.numero);
         
         // Se estiver esperando QR ou offline, agenda nova verificação
         if (data.status !== 'connected' && overlay.style.display !== 'none' && panels.whatsapp.classList.contains('hidden') === false) {
@@ -1404,7 +1400,7 @@
       } catch {}
     }
 
-    function updateWppStatusUI(status, qr) {
+    function updateWppStatusUI(status, qr, numero) {
       const ST_CFG = {
         connected:  { label: 'Conectado',  cls: 'bg-green-100 text-green-700' },
         waiting_qr: { label: 'Aguardando QR', cls: 'bg-amber-100 text-amber-700' },
@@ -1417,56 +1413,31 @@
       wppBadge.className = 'px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ' + cfg.cls;
 
       wppConnInfo.classList.toggle('hidden', status !== 'connected');
-      wppDiscInfo.classList.toggle('hidden', status !== 'offline' && status !== 'notLogged');
       
+      if (status === 'connected' && numero) {
+        const elNum = document.getElementById('wpp-connected-number');
+        if (elNum) elNum.textContent = numero;
+      }
+      
+      const btnLogoutWpp = document.getElementById('btn-logout-wpp');
+      if (btnLogoutWpp) {
+        btnLogoutWpp.classList.toggle('hidden', status === 'notLogged');
+      }
+
       if (status === 'waiting_qr' && qr) {
-        wppQRImg.src = qr;
+        // Apenas atualiza o SRC se o QR mudou mesmo, para evitar piscadas
+        if (wppQRImg.src !== qr) {
+          console.log('[WPP] Novo QR Code recebido');
+          wppQRImg.src = qr;
+        }
         wppQRBox.classList.remove('hidden');
-      } else {
+      } else if (status === 'connected') {
         wppQRBox.classList.add('hidden');
       }
+      // Não escondemos o QR se o status for offline temporário, 
+      // para manter a imagem na tela enquanto tenta recuperar.
     }
 
-    btnSaveWpp.addEventListener('click', async function() {
-      btnSaveWpp.disabled = true;
-      try {
-        const res = await fetch('/api/config/whatsapp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
-          body: JSON.stringify({ numero: wppInput.value })
-        });
-        if (res.ok) {
-          wppSuccess.classList.remove('hidden');
-          setTimeout(() => wppSuccess.classList.add('hidden'), 3000);
-          loadWppConfig();
-        } else {
-          const data = await res.json();
-          showError(data.error || 'Erro ao salvar configuração');
-        }
-      } catch {
-        showError('Erro de conexão');
-      } finally {
-        btnSaveWpp.disabled = false;
-      }
-    });
-
-    btnDelWpp.addEventListener('click', async function() {
-      if (!confirm('Deseja realmente excluir este número?')) return;
-      try {
-        const res = await fetch('/api/config/whatsapp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
-          body: JSON.stringify({ numero: '' })
-        });
-        if (res.ok) {
-          loadWppConfig();
-        } else {
-          showError('Erro ao excluir número');
-        }
-      } catch {
-        showError('Erro de conexão');
-      }
-    });
 
     /* --- Logout WPP (Desvincular) --- */
     document.getElementById('btn-logout-wpp').addEventListener('click', async function() {
@@ -1508,7 +1479,11 @@
   const subtitleMeta= document.getElementById('subtitle-meta');
 
   /* ---------- Aba ativa ---------- */
-  let currentOrigin = 'site';
+  let currentOrigin  = 'site';
+  let _allTickets    = [];
+  let _detalheTicket = null;
+
+
 
   /* ---------- Status config ---------- */
   const STATUS_CFG = {
@@ -1516,6 +1491,7 @@
     em_atendimento:   { label:'Em atendimento', cls:'badge-em_atendimento' },
     concluido:        { label:'Concluído',      cls:'badge-concluido' },
     cancelado:        { label:'Cancelado',      cls:'badge-cancelado' },
+    arquivado:        { label:'Arquivado',      cls:'badge-arquivado' },
   };
 
   function statusBadge(status) {
@@ -1700,10 +1676,6 @@
            '<br><span class="text-[.65rem] text-brand-300">' + time + '</span>';
   }
 
-  function escHtml(str) {
-    return String(str)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
 
   /* ---------- Toast ---------- */
   function showToast(msg, type, duration) {
@@ -1734,7 +1706,7 @@
   qInput.addEventListener('input', function() { clearTimeout(debTimer); debTimer = setTimeout(load, 300); });
   statusSel.addEventListener('change', load);
   btn.addEventListener('click',        load);
-  setInterval(load, 30000);
+  /* setInterval removido conforme solicitado pelo usuário */
 
   /* ---------- Tab switch ---------- */
   document.getElementById('tabs-container').addEventListener('click', function(e) {
@@ -1782,7 +1754,6 @@
     el.textContent = init;
   }
 
-  let _detalheTicket = null;
 
   function openDetalhe(ticket) {
     _detalheTicket = ticket;
@@ -1872,6 +1843,26 @@
       document.getElementById('det-status-badge').innerHTML = '<span class="badge bg-gray-200 text-gray-700">Arquivado</span>';
     }
 
+    // Anexo da solução
+    const mDetAnexoSolWrapper = document.getElementById('det-anexo-solucao-wrapper');
+    const mDetAnexoSolLink = document.getElementById('det-anexo-solucao-link');
+    if (ticket.anexo_solucao) {
+      mDetAnexoSolWrapper.classList.remove('hidden');
+      mDetAnexoSolLink.href = '/uploads/' + ticket.anexo_solucao;
+    } else {
+      mDetAnexoSolWrapper.classList.add('hidden');
+    }
+
+    // Reset file input
+    const mDetObsFile  = document.getElementById('det-obs-file');
+    const mDetObsFileLabel = document.getElementById('det-obs-file-label');
+    const mDetBtnClearFile = document.getElementById('btn-clear-obs-file');
+    if (mDetObsFile) {
+      mDetObsFile.value = '';
+      mDetObsFileLabel.textContent = 'Clique para anexar imagem/arquivo...';
+      mDetBtnClearFile.classList.add('hidden');
+    }
+
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     lucide.createIcons();
@@ -1894,6 +1885,10 @@
     const btnConcluir = document.getElementById('btn-concluir');
     if (btnAssumir)  btnAssumir.disabled = true;
     if (btnConcluir) btnConcluir.disabled = true;
+    
+    // Se houver arquivo, faz upload antes
+    const anexoSol = await uploadSolutionFile();
+    if (anexoSol) extra.anexo_solucao = anexoSol;
 
     try {
       const token = localStorage.getItem('auth_token');
@@ -1961,18 +1956,108 @@
     }
   });
 
-  document.getElementById('btn-editar-chamado').addEventListener('click', () => {
+  // Auxiliares para Upload de Solução
+  if (document.getElementById('det-obs-file')) {
+    const mDetObsFile  = document.getElementById('det-obs-file');
+    const mDetObsFileLabel = document.getElementById('det-obs-file-label');
+    const mDetBtnClearFile = document.getElementById('btn-clear-obs-file');
+
+    mDetObsFile.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        mDetObsFileLabel.textContent = file.name;
+        mDetBtnClearFile.classList.remove('hidden');
+      } else {
+        mDetObsFileLabel.textContent = 'Clique para anexar imagem/arquivo...';
+        mDetBtnClearFile.classList.add('hidden');
+      }
+    });
+
+    mDetBtnClearFile.addEventListener('click', function() {
+      mDetObsFile.value = '';
+      mDetObsFileLabel.textContent = 'Clique para anexar imagem/arquivo...';
+      mDetBtnClearFile.classList.add('hidden');
+    });
+  }
+
+  async function uploadSolutionFile() {
+    const fileInput = document.getElementById('det-obs-file');
+    if (!fileInput || !fileInput.files[0]) return null;
+    const file = fileInput.files[0];
+    try {
+      const res = await fetch('/api/upload?filename=' + encodeURIComponent(file.name), {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '') },
+        body: file
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.filename;
+      }
+    } catch (err) {
+      console.error('Erro no upload:', err);
+    }
+    return null;
+  }
+
+  document.getElementById('btn-salvar-obs').addEventListener('click', async () => {
     const obs = document.getElementById('det-obs-input').value.trim();
+    if (!obs && !document.getElementById('det-obs-file').files[0]) {
+      showToast('Digite uma observação ou anexe um arquivo primeiro.', 'error');
+      return;
+    }
+    
     const token = localStorage.getItem('auth_token');
+    
+    const btnSalvar = document.getElementById('btn-salvar-obs');
+    const originalText = btnSalvar.innerHTML;
+    btnSalvar.disabled = true;
+    btnSalvar.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Enviando...';
+    
+    const anexoSol = await uploadSolutionFile();
+    
+    const body = { observacao: obs };
+    if (anexoSol) body.anexo_solucao = anexoSol;
+
     fetch('/api/tickets/' + _detalheTicket.id, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ observacao: obs })
-    }).then(r => {
-      if (r.ok) {
+      body: JSON.stringify(body)
+    }).then(r => r.json()).then(data => {
+      btnSalvar.disabled = false;
+      btnSalvar.innerHTML = originalText;
+      lucide.createIcons();
+      
+      if (data.id) {
+        // Atualiza objeto local
+        _detalheTicket.observacao = data.observacao;
+        _detalheTicket.anexo_solucao = data.anexo_solucao;
+        
+        // Se salvou anexo, mostra na UI
+        if (data.anexo_solucao) {
+           const wrap = document.getElementById('det-anexo-solucao-wrapper');
+           const link = document.getElementById('det-anexo-solucao-link');
+           wrap.classList.remove('hidden');
+           link.href = '/uploads/' + data.anexo_solucao;
+        }
+
         document.getElementById('det-obs-saved-badge').classList.remove('hidden');
         setTimeout(() => document.getElementById('det-obs-saved-badge').classList.add('hidden'), 2000);
+        showToast('Resposta enviada com sucesso!', 'success');
+        
+        // Limpa o anexo se houver
+        const mDetBtnClearFile = document.getElementById('btn-clear-obs-file');
+        if (mDetBtnClearFile) mDetBtnClearFile.click();
+        
+        load(); // Recarrega lista
+      } else {
+        showToast(data.error || 'Erro ao enviar resposta.', 'error');
       }
+    }).catch(() => {
+      btnSalvar.disabled = false;
+      btnSalvar.innerHTML = originalText;
+      lucide.createIcons();
+      showToast('Erro de conexão.', 'error');
     });
   });
 
@@ -2009,7 +2094,6 @@
     return (name||'').slice(0,2).toUpperCase() || '?';
   }
 
-  let _allTickets = [];  // cache atualizado a cada load()
 
   function openPerfilSolicitante(ticket) {
     // Perfil do solicitante = quem abriu o chamado (login), não o nome da pessoa do chamado
