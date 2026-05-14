@@ -968,11 +968,11 @@
 
     <!-- Abas -->
     <div class="flex border-b border-gray-100 px-6">
-      <button data-tab="salas"
+      <button data-tab="config-bot"
               class="config-tab px-4 py-3 text-sm font-semibold border-b-2 transition-colors
                      cursor-pointer bg-transparent border-x-0 border-t-0"
               style="color:#925616; border-bottom-color:#925616">
-        <i data-lucide="door-open" class="w-4 h-4 inline-block mr-1.5 -mt-0.5"></i>Salas
+        <i data-lucide="bot" class="w-4 h-4 inline-block mr-1.5 -mt-0.5"></i>Config Bot
       </button>
       <button data-tab="whatsapp"
               class="config-tab px-4 py-3 text-sm font-semibold border-b-2 transition-colors
@@ -988,16 +988,24 @@
       </button>
     </div>
 
-    <!-- Painel: Salas -->
-    <div id="tab-salas" class="flex flex-col flex-1 overflow-hidden p-6 gap-4">
+    <!-- Painel: Configuração Bot -->
+    <div id="tab-config-bot" class="flex flex-col flex-1 overflow-hidden p-6 gap-4">
 
-      <!-- Formulário adicionar sala -->
+      <!-- Seletor de Categoria -->
+      <div class="flex gap-2 p-1 bg-gray-100 rounded-xl">
+        <button onclick="changeBotCategory('salas')" id="cat-btn-salas" class="cat-btn flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-brand-500 shadow-sm transition-all border-none cursor-pointer">Salas</button>
+        <button onclick="changeBotCategory('setores')" id="cat-btn-setores" class="cat-btn flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Setores</button>
+        <button onclick="changeBotCategory('sistemas')" id="cat-btn-sistemas" class="cat-btn flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Sistemas</button>
+        <button onclick="changeBotCategory('problemas')" id="cat-btn-problemas" class="cat-btn flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Problemas</button>
+      </div>
+
+      <!-- Formulário adicionar item -->
       <div class="flex gap-2">
-        <input id="nova-sala-input" type="text" maxlength="80"
-               placeholder="Nome da sala…"
+        <input id="novo-bot-item-input" type="text" maxlength="80"
+               placeholder="Novo item..."
                class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm
                       outline-none focus:border-brand-400 transition-colors" />
-        <button id="btn-add-sala"
+        <button id="btn-add-bot-item"
                 class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm
                        font-bold text-white shadow cursor-pointer border-none transition-all
                        hover:opacity-90 active:scale-95"
@@ -1006,15 +1014,14 @@
         </button>
       </div>
 
-      <!-- Mensagem de erro inline -->
-      <p id="sala-error" class="text-xs text-red-600 -mt-2 hidden"></p>
+      <p id="bot-config-error" class="text-xs text-red-600 -mt-2 hidden"></p>
 
-      <!-- Lista de salas -->
-      <div class="flex-1 overflow-y-auto pr-1" style="max-height:340px">
-        <ul id="salas-list" class="flex flex-col gap-2">
-          <li class="text-sm text-gray-400 text-center py-6" id="salas-empty">
+      <!-- Lista de itens -->
+      <div class="flex-1 overflow-y-auto pr-1" style="max-height:280px">
+        <ul id="bot-config-list" class="flex flex-col gap-2">
+          <li class="text-sm text-gray-400 text-center py-6" id="bot-config-empty">
             <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
-            Nenhuma sala cadastrada ainda.
+            Nenhum item cadastrado.
           </li>
         </ul>
       </div>
@@ -1175,105 +1182,129 @@
     const overlay  = document.getElementById('modal-config-overlay');
     const btnOpen  = document.getElementById('btn-config');
     const btnClose = document.getElementById('btn-config-close');
-    const input    = document.getElementById('nova-sala-input');
-    const btnAdd   = document.getElementById('btn-add-sala');
-    const list     = document.getElementById('salas-list');
-    const errEl    = document.getElementById('sala-error');
-    const emptyEl  = document.getElementById('salas-empty');
+    
+    // Bot Config Elements
+    const inputBot    = document.getElementById('novo-bot-item-input');
+    const btnAddBot   = document.getElementById('btn-add-bot-item');
+    const listBot     = document.getElementById('bot-config-list');
+    const errBot      = document.getElementById('bot-config-error');
+    const emptyBot    = document.getElementById('bot-config-empty');
+    
+    let currentCategory = 'salas';
+    let botConfigData = { salas: [], setores: [], sistemas: [], problemas: [] };
 
     function token() { return localStorage.getItem('auth_token') || ''; }
 
-    function showError(msg) {
-      errEl.textContent = msg;
-      errEl.classList.remove('hidden');
-      setTimeout(() => errEl.classList.add('hidden'), 3500);
+    function showErrorBot(msg) {
+      errBot.textContent = msg;
+      errBot.classList.remove('hidden');
+      setTimeout(() => errBot.classList.add('hidden'), 3500);
     }
 
-    function renderSalas(salas) {
-      list.querySelectorAll('li[data-id]').forEach(el => el.remove());
-      if (salas.length === 0) {
-        emptyEl.classList.remove('hidden');
+    const ICONS = { salas: 'door-open', setores: 'layers', sistemas: 'monitor', problemas: 'alert-triangle' };
+
+    function renderBotConfig() {
+      listBot.querySelectorAll('li[data-key]').forEach(el => el.remove());
+      const items = botConfigData[currentCategory] || [];
+      if (items.length === 0) {
+        emptyBot.classList.remove('hidden');
         return;
       }
-      emptyEl.classList.add('hidden');
-      salas.forEach(function (sala) {
+      emptyBot.classList.add('hidden');
+      items.forEach(function (item) {
         const li = document.createElement('li');
-        li.dataset.id = sala.id;
-        li.className = 'flex items-center justify-between gap-3 px-4 py-3 rounded-xl border ' +
-                       'border-gray-100 bg-gray-50 hover:bg-orange-50 transition-colors group';
+        li.dataset.key = item.key;
+        li.className = 'flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 hover:bg-orange-50 transition-colors group';
         li.innerHTML =
           '<div class="flex items-center gap-2.5">' +
             '<div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style="background:#f5eccb">' +
-              '<i data-lucide="door-open" class="w-3.5 h-3.5" style="color:#925616"></i>' +
+              '<i data-lucide="' + (ICONS[currentCategory] || 'hash') + '" class="w-3.5 h-3.5" style="color:#925616"></i>' +
             '</div>' +
-            '<span class="text-sm font-medium text-gray-700">' + escHtml(sala.nome) + '</span>' +
+            '<span class="text-sm font-medium text-gray-700">' + escHtml(item.value) + '</span>' +
           '</div>' +
-          '<button data-del="' + sala.id + '" title="Excluir sala" ' +
+          '<button data-del="' + escHtml(item.key) + '" title="Excluir" ' +
                   'class="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 ' +
                   'transition-all opacity-0 group-hover:opacity-100 cursor-pointer border-none bg-transparent">' +
             '<i data-lucide="trash-2" class="w-4 h-4"></i>' +
           '</button>';
-        list.appendChild(li);
+        listBot.appendChild(li);
       });
-      lucide.createIcons({ nodes: list.querySelectorAll('[data-lucide]') });
+      lucide.createIcons({ nodes: listBot.querySelectorAll('[data-lucide]') });
     }
 
-    async function loadSalas() {
+    async function loadBotConfig() {
       try {
-        const res  = await fetch('/api/salas', { headers: { 'Authorization': 'Bearer ' + token() } });
+        const res  = await fetch('/api/config/bot', { headers: { 'Authorization': 'Bearer ' + token() } });
         const data = await res.json();
-        renderSalas(data.salas || []);
-      } catch { renderSalas([]); }
+        botConfigData = data;
+        renderBotConfig();
+      } catch { renderBotConfig(); }
     }
 
-    async function addSala() {
-      const nome = input.value.trim();
-      if (!nome) { input.focus(); return; }
-      btnAdd.disabled = true;
+    async function addBotConfigItem() {
+      const value = inputBot.value.trim();
+      if (!value) { inputBot.focus(); return; }
+      btnAddBot.disabled = true;
       try {
-        const res  = await fetch('/api/salas', {
+        const res  = await fetch('/api/config/bot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
-          body: JSON.stringify({ nome }),
+          body: JSON.stringify({ category: currentCategory, value }),
         });
         const data = await res.json();
-        if (!res.ok) { showError(data.error || 'Erro ao adicionar sala'); return; }
-        input.value = '';
-        loadSalas();
-        if (typeof loadSalasSelect === 'function') loadSalasSelect();
-      } catch { showError('Erro de conexão.'); }
-      finally { btnAdd.disabled = false; }
+        if (!res.ok) { showErrorBot(data.error || 'Erro ao adicionar item'); return; }
+        inputBot.value = '';
+        loadBotConfig();
+        if (currentCategory === 'salas' && typeof loadSalasSelect === 'function') loadSalasSelect();
+      } catch { showErrorBot('Erro de conexão.'); }
+      finally { btnAddBot.disabled = false; }
     }
 
-    async function deleteSala(id) {
+    async function deleteBotConfigItem(key) {
       try {
-        const res  = await fetch('/api/salas', {
+        const res  = await fetch('/api/config/bot', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
-          body: JSON.stringify({ id }),
+          body: JSON.stringify({ category: currentCategory, key: String(key) }),
         });
         const data = await res.json();
-        if (!res.ok) { showError(data.error || 'Erro ao excluir sala'); return; }
-        loadSalas();
-        if (typeof loadSalasSelect === 'function') loadSalasSelect();
-      } catch { showError('Erro de conexão.'); }
+        if (!res.ok) { showErrorBot(data.error || 'Erro ao excluir item'); return; }
+        loadBotConfig();
+        if (currentCategory === 'salas' && typeof loadSalasSelect === 'function') loadSalasSelect();
+      } catch { showErrorBot('Erro de conexão.'); }
     }
 
-    list.addEventListener('click', function (e) {
+    listBot.addEventListener('click', function (e) {
       const btn = e.target.closest('[data-del]');
       if (!btn) return;
-      deleteSala(btn.dataset.del);
+      deleteBotConfigItem(btn.dataset.del);
     });
 
-    btnAdd.addEventListener('click', addSala);
-    input.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); addSala(); }
+    btnAddBot.addEventListener('click', addBotConfigItem);
+    inputBot.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); addBotConfigItem(); }
     });
+
+    window.changeBotCategory = function(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.cat-btn').forEach(b => {
+        b.classList.remove('bg-white', 'text-brand-500', 'shadow-sm');
+        b.classList.add('text-gray-400');
+      });
+      const activeBtn = document.getElementById('cat-btn-' + cat);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-gray-400');
+        activeBtn.classList.add('bg-white', 'text-brand-500', 'shadow-sm');
+      }
+      inputBot.placeholder = "Novo " + (cat === 'salas' ? 'sala' : cat.slice(0, -1)) + "...";
+      renderBotConfig();
+    };
 
     if (btnOpen) {
       btnOpen.addEventListener('click', function () {
         overlay.style.removeProperty('display');
-        loadSalas();
+        loadBotConfig();
+        loadWppConfig();
       });
     }
 
@@ -1288,7 +1319,7 @@
     /* --- Tab Switching Logic --- */
     const tabs = document.querySelectorAll('.config-tab');
     const panels = {
-      salas:    document.getElementById('tab-salas'),
+      'config-bot': document.getElementById('tab-config-bot'),
       whatsapp: document.getElementById('tab-whatsapp'),
       logins:   document.getElementById('tab-logins')
     };
@@ -1302,9 +1333,9 @@
           t.style.borderBottomColor = isActive ? '#925616' : 'transparent';
         });
         Object.keys(panels).forEach(p => {
-          panels[p].classList.toggle('hidden', p !== target);
+          if(panels[p]) panels[p].classList.toggle('hidden', p !== target);
         });
-        if (target === 'salas') loadSalas();
+        if (target === 'config-bot') loadBotConfig();
         if (target === 'whatsapp') loadWppConfig();
         if (target === 'logins')   loadLoginsTab();
         lucide.createIcons();

@@ -1,0 +1,47 @@
+{
+  "salas": {
+    "1": "Administrativo (Jurídico, Estratégico, Financeiro, etc)",
+    "2": "Pós-Vendas",
+    "3": "Unique",
+    "4": "Comercial",
+    "5": "Captação",
+    "6": "Sala Pedras Altas",
+    "7": "Sala Pedras Altas Noturno",
+    "8": "Sala NBA",
+    "9": "Sala Golden"
+  },
+  "setores": [
+    "Jurídico",
+    "Estratégico",
+    "Central de Contratos",
+    "Financeiro",
+    "Contas a Receber",
+    "Departamento Pessoal",
+    "Recursos Humanos",
+    "Diretoria"
+  ],
+  "sistemas": [
+    "Esolution",
+    "E-mail Corporativo",
+    "Sienge",
+    "ASC Brasil",
+    "DocuSign",
+    "ClickSign",
+    "GED",
+    "Dynamics",
+    "Valley",
+    "Neo Interact",
+    "CobMais"
+  ],
+  "hardware": {
+    "1": "Impressora",
+    "2": "Computador/Notebook",
+    "3": "Totem de Vendas",
+    "4": "Câmeras",
+    "5": "Internet/Wi-Fi"
+  },
+  "problemas": [
+    "Impressora Travou",
+    "Impressora Atolou papel"
+  ]
+}

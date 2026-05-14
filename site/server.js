@@ -566,68 +566,160 @@ const ROUTES = {
     sendJson(res, 200, { telefone: null });
   },
 
-  // ── Salas ──────────────────────────────────────────────────────────────────
-
-  'GET /api/salas': (req, res) => {
-    if (!requireAuth(req, res)) return;
-    const salas = readCollection('salas');
-    sendJson(res, 200, { salas });
-  },
-
-  'POST /api/salas': (req, res) => {
+  // ── Logins ─────────────────────────────────────────────────────────────────
+  
+  'GET /api/logins': (req, res) => {
     const session = requireAuth(req, res);
     if (!session) return;
     const ALLOWED = ['administrador', 'supervisor'];
     if (!ALLOWED.includes(session.role || 'usuario')) {
       return sendJson(res, 403, { error: 'Sem permissão' });
     }
+    const logins = readCollection('logins').map(u => ({ id: u.id, name: u.name, email: u.email, role: u.role }));
+    sendJson(res, 200, { logins });
+  },
+
+  'POST /api/logins': (req, res) => {
+    const session = requireAuth(req, res);
+    if (!session) return;
+    if (session.role !== 'administrador') return sendJson(res, 403, { error: 'Sem permissão' });
     let body = '';
     req.on('data', chunk => (body += chunk));
     req.on('end', () => {
       let data;
-      try { data = JSON.parse(body); } catch {
-        return sendJson(res, 400, { error: 'JSON inválido' });
+      try { data = JSON.parse(body); } catch { return sendJson(res, 400, { error: 'JSON inválido' }); }
+      if (!data.email || !data.password) return sendJson(res, 422, { error: 'Email e senha são obrigatórios' });
+      const logins = readCollection('logins');
+      if (logins.some(u => u.email.toLowerCase() === data.email.toLowerCase())) {
+        return sendJson(res, 409, { error: 'E-mail já cadastrado' });
       }
-      const nome = (data.nome || '').trim();
-      if (!nome) return sendJson(res, 422, { error: 'Campo "nome" obrigatório' });
-      const salas = readCollection('salas');
-      if (salas.some(s => s.nome.toLowerCase() === nome.toLowerCase())) {
-        return sendJson(res, 409, { error: 'Sala já cadastrada' });
-      }
-      const nova = { id: Date.now(), nome, createdAt: new Date().toISOString() };
-      salas.push(nova);
-      const filePath = path.join(DADOS_DIR, 'salas.json');
-      fs.writeFileSync(filePath, JSON.stringify(salas, null, 2), 'utf-8');
-      sendJson(res, 201, nova);
+      const crypto = require('crypto');
+      const hash = crypto.createHash('sha512').update(data.password).digest('hex');
+      const novo = { id: Date.now(), name: data.name || '', email: data.email, password: hash, role: data.role || 'usuario' };
+      logins.push(novo);
+      fs.writeFileSync(path.join(DADOS_DIR, 'logins.json'), JSON.stringify(logins, null, 2), 'utf-8');
+      sendJson(res, 201, { ok: true });
     });
   },
 
-  'DELETE /api/salas': (req, res) => {
+  'DELETE /api/logins': (req, res) => {
     const session = requireAuth(req, res);
     if (!session) return;
-    const ALLOWED = ['administrador', 'supervisor'];
-    if (!ALLOWED.includes(session.role || 'usuario')) {
-      return sendJson(res, 403, { error: 'Sem permissão' });
-    }
+    if (session.role !== 'administrador') return sendJson(res, 403, { error: 'Sem permissão' });
     let body = '';
     req.on('data', chunk => (body += chunk));
     req.on('end', () => {
       let data;
-      try { data = JSON.parse(body); } catch {
-        return sendJson(res, 400, { error: 'JSON inválido' });
-      }
-      const { id } = data;
-      if (!id) return sendJson(res, 422, { error: 'id é obrigatório' });
-      let salas = readCollection('salas');
-      if (!salas.some(s => String(s.id) === String(id))) {
-        return sendJson(res, 404, { error: 'Sala não encontrada' });
-      }
-      salas = salas.filter(s => String(s.id) !== String(id));
-      const filePath = path.join(DADOS_DIR, 'salas.json');
-      fs.writeFileSync(filePath, JSON.stringify(salas, null, 2), 'utf-8');
+      try { data = JSON.parse(body); } catch { return sendJson(res, 400, { error: 'JSON inválido' }); }
+      if (!data.id) return sendJson(res, 422, { error: 'id é obrigatório' });
+      let logins = readCollection('logins');
+      if (!logins.some(u => String(u.id) === String(data.id))) return sendJson(res, 404, { error: 'Usuário não encontrado' });
+      logins = logins.filter(u => String(u.id) !== String(data.id));
+      fs.writeFileSync(path.join(DADOS_DIR, 'logins.json'), JSON.stringify(logins, null, 2), 'utf-8');
       sendJson(res, 200, { ok: true });
     });
   },
+
+  // ── Configurações Bot (Salas, Setores, etc) ────────────────────────────────
+
+  'GET /api/config/bot': (req, res) => {
+    if (!requireAuth(req, res)) return;
+    let config = readCollection('bot_config');
+    if (!config.salas) config.salas = {};
+    if (!config.setores) config.setores = [];
+    if (!config.sistemas) config.sistemas = [];
+    if (!config.problemas) config.problemas = [];
+    
+    // Converte tudo para um formato uniforme para o frontend: [{ key: "...", value: "..." }]
+    const responseData = {};
+    for (const cat in config) {
+      responseData[cat] = [];
+      if (Array.isArray(config[cat])) {
+        config[cat].forEach((val, i) => responseData[cat].push({ key: i, value: val }));
+      } else if (typeof config[cat] === 'object' && config[cat] !== null) {
+        for (const k in config[cat]) {
+          responseData[cat].push({ key: k, value: config[cat][k] });
+        }
+      }
+    }
+    sendJson(res, 200, responseData);
+  },
+
+  'POST /api/config/bot': (req, res) => {
+    const session = requireAuth(req, res);
+    if (!session) return;
+    const ALLOWED = ['administrador', 'supervisor'];
+    if (!ALLOWED.includes(session.role || 'usuario')) return sendJson(res, 403, { error: 'Sem permissão' });
+    
+    let body = '';
+    req.on('data', chunk => (body += chunk));
+    req.on('end', () => {
+      let data;
+      try { data = JSON.parse(body); } catch { return sendJson(res, 400, { error: 'JSON inválido' }); }
+      const { category, value } = data;
+      if (!category || !value) return sendJson(res, 422, { error: 'Categoria e valor são obrigatórios' });
+      
+      let config = readCollection('bot_config');
+      if (!config[category]) config[category] = [];
+      
+      let items = config[category];
+      if (Array.isArray(items)) {
+        if (items.includes(value)) return sendJson(res, 409, { error: 'Item já existe' });
+        items.push(value);
+      } else if (typeof items === 'object' && items !== null) {
+        if (Object.values(items).includes(value)) return sendJson(res, 409, { error: 'Item já existe' });
+        const maxKey = Math.max(0, ...Object.keys(items).map(Number).filter(n => !isNaN(n)));
+        items[String(maxKey + 1)] = value;
+      }
+      
+      fs.writeFileSync(path.join(DADOS_DIR, 'bot_config.json'), JSON.stringify(config, null, 2), 'utf-8');
+      sendJson(res, 201, { ok: true });
+    });
+  },
+
+  'DELETE /api/config/bot': (req, res) => {
+    const session = requireAuth(req, res);
+    if (!session) return;
+    const ALLOWED = ['administrador', 'supervisor'];
+    if (!ALLOWED.includes(session.role || 'usuario')) return sendJson(res, 403, { error: 'Sem permissão' });
+    
+    let body = '';
+    req.on('data', chunk => (body += chunk));
+    req.on('end', () => {
+      let data;
+      try { data = JSON.parse(body); } catch { return sendJson(res, 400, { error: 'JSON inválido' }); }
+      const { category, key } = data;
+      if (!category || key === undefined) return sendJson(res, 422, { error: 'Categoria e key são obrigatórios' });
+      
+      let config = readCollection('bot_config');
+      let items = config[category];
+      
+      if (Array.isArray(items)) {
+        const index = Number(key);
+        if (index >= 0 && index < items.length) items.splice(index, 1);
+      } else if (typeof items === 'object' && items !== null) {
+        if (items[key] !== undefined) delete items[key];
+      }
+      
+      fs.writeFileSync(path.join(DADOS_DIR, 'bot_config.json'), JSON.stringify(config, null, 2), 'utf-8');
+      sendJson(res, 200, { ok: true });
+    });
+  },
+
+  // ── Salas (Retrocompatibilidade para o modal de Novo Chamado) ──────────────
+
+  'GET /api/salas': (req, res) => {
+    if (!requireAuth(req, res)) return;
+    const botConfig = readCollection('bot_config');
+    let salas = [];
+    if (Array.isArray(botConfig.salas)) {
+      salas = botConfig.salas.map((nome, i) => ({ id: i, nome }));
+    } else if (typeof botConfig.salas === 'object' && botConfig.salas !== null) {
+      salas = Object.entries(botConfig.salas).map(([k, nome]) => ({ id: k, nome }));
+    }
+    sendJson(res, 200, { salas });
+  },
+
 
   // ── Configurações ───────────────────────────────────────────────────────────
 
