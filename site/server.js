@@ -320,7 +320,12 @@ const ROUTES = {
 
     if (filterOrigin === 'site') tickets = tickets.filter(t => t.origem === 'site');
     else if (filterOrigin === 'bot') tickets = tickets.filter(t => t.origem !== 'site');
-    if (filterStatus) tickets = tickets.filter(t => t.status === filterStatus);
+    if (filterStatus) {
+      tickets = tickets.filter(t => t.status === filterStatus);
+    } else {
+      // Por padrão, esconde os arquivados
+      tickets = tickets.filter(t => t.status !== 'arquivado');
+    }
     if (filterType)   tickets = tickets.filter(t => t.type   === filterType);
     if (filterQ) {
       tickets = tickets.filter(t =>
@@ -784,28 +789,35 @@ const server = http.createServer((req, res) => {
       try { data = JSON.parse(body); } catch {
         return sendJson(res, 400, { error: 'JSON inválido' });
       }
-      const ALLOWED_STATUS = ['aberto', 'em_atendimento', 'concluido', 'cancelado'];
+      
+      const ALLOWED_STATUS = ['aberto', 'em_atendimento', 'concluido', 'cancelado', 'arquivado'];
       if (data.status && !ALLOWED_STATUS.includes(data.status)) {
         return sendJson(res, 422, { error: 'Status inválido' });
       }
+      
       const ticketsPath = require('path').join(DADOS_DIR, 'tickets.json');
       let tickets = readCollection('tickets');
       const idx = tickets.findIndex(t => Number(t.id) === id);
       if (idx === -1) return sendJson(res, 404, { error: 'Chamado não encontrado' });
 
       const anteriorStatus = tickets[idx].status;
-      if (data.status) tickets[idx].status = data.status;
+      
+      // Atualiza campos permitidos
+      if (data.status)      tickets[idx].status      = data.status;
+      if (data.observacao)  tickets[idx].observacao  = data.observacao;
+      if (data.type)        tickets[idx].type        = data.type;
+      if (data.description) tickets[idx].description = data.description;
+      if (data.sala)        tickets[idx].sala        = data.sala;
+      
       tickets[idx].updatedAt = new Date().toISOString();
       require('fs').writeFileSync(ticketsPath, JSON.stringify(tickets, null, 2), 'utf-8');
 
       const ticket = tickets[idx];
-
       const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3000;
       const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
       const notifPhone = ticket.notifWpp || (ticket.origem === 'bot' ? ticket.number : null);
       const origemNotif = !!notifPhone;
 
-      // Envia e-mail de conclusão ANTES de responder, para incluir resultado no response
       let emailResult = null;
       if (data.status === 'concluido' && anteriorStatus !== 'concluido' && !notifPhone) {
         const destEmail = ticket.solicitanteEmail || null;
@@ -826,19 +838,8 @@ const server = http.createServer((req, res) => {
 
       sendJson(res, 200, emailResult ? Object.assign({}, ticket, { emailResult }) : ticket);
 
-      // Notifica o bot quando o chamado for assumido (fire-and-forget)
-      if (
-        data.status === 'em_atendimento' &&
-        anteriorStatus !== 'em_atendimento' &&
-        origemNotif
-      ) {
-        const payload = JSON.stringify({
-          secret:     WEBHOOK_SECRET,
-          telefone:   notifPhone,
-          id:         ticket.id,
-          tipo:       ticket.type,
-          atendente:  session.email,
-        });
+      if (data.status === 'em_atendimento' && anteriorStatus !== 'em_atendimento' && origemNotif) {
+        const payload = JSON.stringify({ secret: WEBHOOK_SECRET, telefone: notifPhone, id: ticket.id, tipo: ticket.type, atendente: session.email });
         const whReq = require('http').request(
           { hostname: 'localhost', port: WEBHOOK_PORT, path: '/webhook/chamado-assumido', method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
@@ -848,6 +849,23 @@ const server = http.createServer((req, res) => {
         whReq.write(payload);
         whReq.end();
       }
+    });
+    return;
+  }
+
+  // Dynamic route: DELETE /api/tickets/:id
+  const deleteTicketMatch = /^DELETE \/api\/tickets\/(\d+)$/.exec(routeKey);
+  if (deleteTicketMatch) {
+    const session = requireAuth(req, res);
+    if (!session) return;
+    const id = Number(deleteTicketMatch[1]);
+    const ticketsPath = require('path').join(DADOS_DIR, 'tickets.json');
+    let tickets = readCollection('tickets');
+    const filtered = tickets.filter(t => Number(t.id) !== id);
+    if (tickets.length === filtered.length) return sendJson(res, 404, { error: 'Chamado não encontrado' });
+    require('fs').writeFileSync(ticketsPath, JSON.stringify(filtered, null, 2), 'utf-8');
+    return sendJson(res, 200, { ok: true });
+  }
 
       // Notifica o bot quando o chamado for concluído (fire-and-forget)
       if (

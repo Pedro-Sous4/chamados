@@ -186,12 +186,6 @@
               style="background:#f0c060;border:1px solid rgba(255,255,255,0.2)">
         <i data-lucide="plus" class="w-4 h-4"></i> Novo Chamado
       </button>
-      <a id="btn-logins" href="/gerenciar-logins.html"
-         class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold
-                no-underline text-white/85 hover:text-white hover:bg-white/10 transition-all
-                border border-white/15">
-        <i data-lucide="users" class="w-4 h-4"></i> Logins
-      </a>
       <button id="btn-config"
               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold
                      text-white/85 hover:text-white hover:bg-white/10 transition-all
@@ -289,6 +283,7 @@
       <option value="em_atendimento">Em atendimento</option>
       <option value="concluido">Concluído</option>
       <option value="cancelado">Cancelado</option>
+      <option value="arquivado">Arquivado</option>
     </select>
 
     <div id="count-wrap" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full
@@ -507,10 +502,25 @@
           <p class="text-white/50 text-[10px]" id="det-data"></p>
         </div>
       </div>
-      <button id="btn-fechar-detalhe"
-              class="text-white/60 hover:text-white transition-colors bg-transparent border-none cursor-pointer p-1">
-        <i data-lucide="x" class="w-5 h-5"></i>
-      </button>
+      <div class="flex items-center gap-2">
+        <button id="btn-editar-chamado" title="Editar Chamado"
+                class="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all bg-transparent border-none cursor-pointer">
+          <i data-lucide="pencil" class="w-4 h-4"></i>
+        </button>
+        <button id="btn-arquivar-chamado" title="Arquivar Chamado"
+                class="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all bg-transparent border-none cursor-pointer">
+          <i data-lucide="archive" class="w-4 h-4"></i>
+        </button>
+        <button id="btn-excluir-chamado" title="Excluir Chamado"
+                class="p-2 rounded-lg text-white/70 hover:text-red-300 hover:bg-red-500/20 transition-all bg-transparent border-none cursor-pointer">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+        <div class="w-px h-6 bg-white/10 mx-1"></div>
+        <button id="btn-fechar-detalhe"
+                class="text-white/60 hover:text-white transition-colors bg-transparent border-none cursor-pointer p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Body -->
@@ -557,6 +567,18 @@
         <div id="det-descricao"
              class="text-sm text-brand-800 leading-relaxed whitespace-pre-wrap bg-brand-50
                     rounded-xl px-4 py-3 border border-brand-100"></div>
+      </div>
+
+      <!-- Observação Técnica (Novo) -->
+      <div id="det-obs-wrapper" class="flex flex-col gap-2">
+        <p class="text-[.64rem] font-black uppercase tracking-widest text-brand-400 flex items-center gap-2">
+          Observação Técnica / Solução
+          <span id="det-obs-saved-badge" class="hidden px-1.5 py-0.5 bg-green-100 text-green-700 text-[9px] rounded-md font-bold">SALVO</span>
+        </p>
+        <textarea id="det-obs-input" placeholder="O que foi feito para resolver este chamado?..."
+                  class="w-full px-4 py-3 text-sm text-brand-900 bg-brand-50 border border-brand-100
+                         rounded-xl outline-none focus:border-brand-400 focus:bg-white transition-all
+                         min-h-[100px] resize-none"></textarea>
       </div>
 
       <!-- Área de Anexo -->
@@ -925,6 +947,12 @@
               style="color:#6b7280; border-bottom-color:transparent">
         <i data-lucide="message-square" class="w-4 h-4 inline-block mr-1.5 -mt-0.5"></i>Whatsapp
       </button>
+      <button data-tab="logins"
+              class="config-tab px-4 py-3 text-sm font-semibold border-b-2 transition-colors
+                     cursor-pointer bg-transparent border-x-0 border-t-0"
+              style="color:#6b7280; border-bottom-color:transparent">
+        <i data-lucide="users" class="w-4 h-4 inline-block mr-1.5 -mt-0.5"></i>Logins
+      </button>
     </div>
 
     <!-- Painel: Salas -->
@@ -1021,36 +1049,67 @@
 
         <div id="wpp-connected-info" class="hidden flex items-center justify-between p-4 rounded-xl bg-green-50 border border-green-100">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white shadow-lg shadow-green-200">
-              <i data-lucide="check" class="w-5 h-5"></i>
+            <div class="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center text-white">
+               <i data-lucide="check" class="w-5 h-5"></i>
             </div>
             <div>
-              <p class="text-sm font-bold text-green-800">Bot Conectado</p>
-              <p class="text-[10px] text-green-600 font-medium uppercase tracking-tight">O sistema está pronto para receber chamados.</p>
+              <p class="text-sm font-bold text-green-900">Bot Conectado</p>
+              <p class="text-xs text-green-700">Pronto para receber chamados</p>
             </div>
           </div>
-          <button id="btn-logout-wpp" class="px-3 py-1.5 rounded-lg text-[10px] font-bold text-red-600 border border-red-200 hover:bg-red-50 transition-all cursor-pointer bg-white">
-            DESVINCULAR
-          </button>
         </div>
-
-        <div id="wpp-disconnected-info" class="hidden flex items-center gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">
-          <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
-            <i data-lucide="offline" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <p class="text-sm font-bold text-gray-600">Bot Offline</p>
-            <p class="text-[10px] text-gray-400 font-medium">Inicie o serviço do bot no servidor para conectar.</p>
-          </div>
-        </div>
-      </div>
-
-      <div id="wpp-success" class="hidden px-4 py-3 rounded-lg bg-green-50 text-green-700 text-xs font-medium border border-green-200 flex items-center gap-2">
-        <i data-lucide="check-circle" class="w-4 h-4"></i> Configuração salva com sucesso!
       </div>
     </div>
-  </div>
-</div>
+
+    <!-- Painel: Logins (Novo) -->
+    <div id="tab-logins" class="flex flex-col flex-1 overflow-hidden p-6 gap-4 hidden">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-bold text-gray-400 uppercase">Nome Completo</label>
+          <input id="lgn-nome" type="text" placeholder="Nome" class="px-3 py-2 border rounded-lg text-sm outline-none focus:border-brand-400" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-bold text-gray-400 uppercase">E-mail</label>
+          <input id="lgn-email" type="email" placeholder="email@exemplo.com" class="px-3 py-2 border rounded-lg text-sm outline-none focus:border-brand-400" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-bold text-gray-400 uppercase">Senha</label>
+          <input id="lgn-senha" type="password" placeholder="Senha" class="px-3 py-2 border rounded-lg text-sm outline-none focus:border-brand-400" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-bold text-gray-400 uppercase">Nível</label>
+          <select id="lgn-role" class="px-3 py-2 border rounded-lg text-sm outline-none focus:border-brand-400">
+            <option value="usuario">👤 Usuário</option>
+            <option value="supervisor">💼 Supervisor</option>
+            <option value="administrador">🛡️ Administrador</option>
+          </select>
+        </div>
+      </div>
+      <button id="btn-add-login" class="w-full py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold hover:opacity-90 shadow-sm transition-all">
+        Cadastrar Novo Acesso
+      </button>
+
+      <div class="h-px bg-gray-100 my-1"></div>
+
+      <div class="flex-1 overflow-y-auto pr-1" style="max-height:200px">
+        <table class="w-full text-[11px] border-collapse">
+          <thead>
+            <tr class="text-left text-gray-400 border-b">
+              <th class="pb-2 font-black uppercase tracking-widest">Usuário</th>
+              <th class="pb-2 font-black uppercase tracking-widest">Nível</th>
+              <th class="pb-2 font-black uppercase tracking-widest text-right">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="lgn-list-body">
+            <!-- Preenchido via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    </div> <!-- Fim tab-logins -->
+
+  </div> <!-- Fim modal container inner -->
+</div> <!-- Fim modal overlay -->
 
 <script>
   /* ---------- Auth guard ---------- */
@@ -1079,6 +1138,20 @@
   });
 
   lucide.createIcons();
+
+  /* ---------- Auth guard & Role Logic ---------- */
+  (function() {
+    const role = localStorage.getItem('auth_role') || 'usuario';
+    const btnConfig = document.getElementById('btn-config');
+    if (role === 'administrador' || role === 'supervisor') {
+      if (btnConfig) btnConfig.style.display = 'inline-flex';
+    }
+    // Ocultar aba de logins dentro do modal se não for admin
+    if (role !== 'administrador') {
+      const tabLgn = document.querySelector('[data-tab="logins"]');
+      if (tabLgn) tabLgn.style.display = 'none';
+    }
+  })();
 
   /* ---------- Modal Configurações ---------- */
   (function () {
@@ -1203,7 +1276,8 @@
     const tabs = document.querySelectorAll('.config-tab');
     const panels = {
       salas:    document.getElementById('tab-salas'),
-      whatsapp: document.getElementById('tab-whatsapp')
+      whatsapp: document.getElementById('tab-whatsapp'),
+      logins:   document.getElementById('tab-logins')
     };
 
     tabs.forEach(tab => {
@@ -1219,8 +1293,73 @@
         });
         if (target === 'salas') loadSalas();
         if (target === 'whatsapp') loadWppConfig();
+        if (target === 'logins')   loadLoginsTab();
         lucide.createIcons();
       });
+    });
+
+    /* --- Logins Tab Logic --- */
+    async function loadLoginsTab() {
+      const tbody = document.getElementById('lgn-list-body');
+      tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400">Carregando...</td></tr>';
+      try {
+        const res = await fetch('/api/logins', { headers: { 'Authorization': 'Bearer ' + token() } });
+        const data = await res.json();
+        const logins = data.logins || [];
+        tbody.innerHTML = '';
+        if (logins.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400">Nenhum login cadastrado.</td></tr>';
+          return;
+        }
+        logins.forEach(u => {
+          const isMe = u.email === localStorage.getItem('auth_email');
+          const tr = document.createElement('tr');
+          tr.className = 'border-b hover:bg-gray-50';
+          tr.innerHTML = 
+            '<td class="py-2"><p class="font-bold">' + escHtml(u.name || u.email.split('@')[0]) + '</p><p class="text-[9px] text-gray-400">' + escHtml(u.email) + '</p></td>' +
+            '<td class="py-2"><span class="px-1.5 py-0.5 bg-gray-100 rounded text-[9px] font-bold uppercase">' + escHtml(u.role) + '</span></td>' +
+            '<td class="py-2 text-right">' + (isMe ? '—' : '<button data-del-lgn="' + u.id + '" class="text-red-500 hover:underline">Remover</button>') + '</td>';
+          tbody.appendChild(tr);
+        });
+      } catch { tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-red-500">Erro ao carregar.</td></tr>'; }
+    }
+
+    document.getElementById('btn-add-login').addEventListener('click', async function() {
+      const nome = document.getElementById('lgn-nome').value.trim();
+      const email = document.getElementById('lgn-email').value.trim();
+      const senha = document.getElementById('lgn-senha').value;
+      const role = document.getElementById('lgn-role').value;
+      if (!email || !senha) return alert('Email e Senha são obrigatórios.');
+      
+      this.disabled = true;
+      try {
+        const res = await fetch('/api/logins', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
+          body: JSON.stringify({ name: nome, email, password: senha, role })
+        });
+        if (res.ok) {
+          document.getElementById('lgn-nome').value = '';
+          document.getElementById('lgn-email').value = '';
+          document.getElementById('lgn-senha').value = '';
+          loadLoginsTab();
+        } else {
+          const d = await res.json(); alert(d.error || 'Erro ao cadastrar.');
+        }
+      } finally { this.disabled = false; }
+    });
+
+    document.getElementById('lgn-list-body').addEventListener('click', async function(e) {
+      const btn = e.target.closest('[data-del-lgn]');
+      if (!btn) return;
+      if (!confirm('Deseja remover este acesso?')) return;
+      const id = btn.dataset.delLgn;
+      const res = await fetch('/api/logins', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
+        body: JSON.stringify({ id })
+      });
+      if (res.ok) loadLoginsTab();
     });
 
     /* --- WhatsApp Config Logic --- */
@@ -1715,14 +1854,23 @@
       anexoWrapper.classList.add('hidden');
     }
 
+    // Observação Técnica
+    const obsInput = document.getElementById('det-obs-input');
+    obsInput.value = ticket.observacao || '';
+    document.getElementById('det-obs-saved-badge').classList.add('hidden');
+
     // Botões de ação
     const btnAssumir  = document.getElementById('btn-assumir');
     const btnConcluir = document.getElementById('btn-concluir');
     const st = ticket.status;
     btnAssumir.classList.toggle('hidden',  st !== 'aberto');
-    btnConcluir.classList.toggle('hidden', st === 'concluido' || st === 'cancelado');
+    btnConcluir.classList.toggle('hidden', st === 'concluido' || st === 'cancelado' || st === 'arquivado');
     btnAssumir.disabled  = false;
     btnConcluir.disabled = false;
+
+    if (st === 'arquivado') {
+      document.getElementById('det-status-badge').innerHTML = '<span class="badge bg-gray-200 text-gray-700">Arquivado</span>';
+    }
 
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -1740,18 +1888,19 @@
     if (e.target === this) closeDetalhe();
   });
 
-  async function updateTicketStatus(novoStatus) {
+  async function updateTicketStatus(novoStatus, extra = {}) {
     if (!_detalheTicket) return;
     const btnAssumir  = document.getElementById('btn-assumir');
     const btnConcluir = document.getElementById('btn-concluir');
-    btnAssumir.disabled = btnConcluir.disabled = true;
+    if (btnAssumir)  btnAssumir.disabled = true;
+    if (btnConcluir) btnConcluir.disabled = true;
 
     try {
       const token = localStorage.getItem('auth_token');
       const res = await fetch('/api/tickets/' + _detalheTicket.id, {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body:    JSON.stringify({ status: novoStatus }),
+        body:    JSON.stringify(Object.assign({ status: novoStatus }, extra)),
       });
       if (res.status === 401) {
         localStorage.removeItem('auth_token');
@@ -1765,48 +1914,67 @@
         return;
       }
 
-      // Toast por tipo de ação
-      if (novoStatus === 'em_atendimento') {
-        showToast('Chamado assumido!', 'info');
-      } else if (novoStatus === 'concluido') {
-        showToast('Chamado concluído!', 'success');
-        // Toast de e-mail
-        if (data.emailResult) {
-          if (data.emailResult.ok) {
-            showToast('E-mail de conclusão enviado para ' + data.emailResult.to, 'success', 6000);
-          } else {
-            showToast('Falha ao enviar e-mail: ' + data.emailResult.error, 'error', 7000);
-          }
-        }
-      } else if (novoStatus === 'cancelado') {
-        showToast('Chamado cancelado.', 'warning');
+      if (novoStatus === 'em_atendimento') showToast('Chamado assumido!', 'info');
+      else if (novoStatus === 'concluido') showToast('Chamado concluído!', 'success');
+      else if (novoStatus === 'arquivado') showToast('Chamado arquivado.', 'info');
+
+      if (data.emailResult && data.emailResult.ok) {
+        showToast('E-mail de conclusão enviado!', 'success', 6000);
       }
 
-      // Atualiza ticket local e reabre modal com novos dados
-      _detalheTicket = data;
-      openDetalhe(data);
-      // Atualiza a linha da tabela
-      document.querySelectorAll('tr[data-ticket]').forEach(function(row) {
-        try {
-          const t = JSON.parse(row.dataset.ticket);
-          if (String(t.id) === String(data.id)) {
-            row.dataset.ticket = JSON.stringify(data);
-            row.dataset.status = data.status;
-            const tds = row.querySelectorAll('td');
-            if (tds[3]) tds[3].innerHTML = statusBadge(data.status);
-            lucide.createIcons();
-          }
-        } catch {}
-      });
+      closeDetalhe();
+      load();
     } catch (err) {
-      showToast('Erro de conexão: ' + err.message, 'error');
+      showToast('Erro de conexão.', 'error');
     } finally {
-      btnAssumir.disabled = btnConcluir.disabled = false;
+      if (btnAssumir)  btnAssumir.disabled = false;
+      if (btnConcluir) btnConcluir.disabled = false;
     }
   }
 
-  document.getElementById('btn-assumir').addEventListener('click',  function() { updateTicketStatus('em_atendimento'); });
-  document.getElementById('btn-concluir').addEventListener('click', function() { updateTicketStatus('concluido'); });
+  document.getElementById('btn-assumir').addEventListener('click',  () => updateTicketStatus('em_atendimento'));
+  document.getElementById('btn-concluir').addEventListener('click', () => {
+    const obs = document.getElementById('det-obs-input').value.trim();
+    updateTicketStatus('concluido', { observacao: obs });
+  });
+
+  document.getElementById('btn-arquivar-chamado').addEventListener('click', () => {
+    if (confirm('Deseja arquivar este chamado? Ele sairá da lista principal.')) {
+      updateTicketStatus('arquivado');
+    }
+  });
+
+  document.getElementById('btn-excluir-chamado').addEventListener('click', async () => {
+    if (!confirm('ATENÇÃO: Deseja EXCLUIR permanentemente este chamado?')) return;
+    const token = localStorage.getItem('auth_token');
+    const res = await fetch('/api/tickets/' + _detalheTicket.id, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (res.ok) {
+      showToast('Chamado excluído.', 'info');
+      closeDetalhe();
+      load();
+    } else {
+      const d = await res.json();
+      showToast(d.error || 'Erro ao excluir.', 'error');
+    }
+  });
+
+  document.getElementById('btn-editar-chamado').addEventListener('click', () => {
+    const obs = document.getElementById('det-obs-input').value.trim();
+    const token = localStorage.getItem('auth_token');
+    fetch('/api/tickets/' + _detalheTicket.id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ observacao: obs })
+    }).then(r => {
+      if (r.ok) {
+        document.getElementById('det-obs-saved-badge').classList.remove('hidden');
+        setTimeout(() => document.getElementById('det-obs-saved-badge').classList.add('hidden'), 2000);
+      }
+    });
+  });
 
   // Clique nas linhas da tabela
   document.getElementById('tbody').addEventListener('click', function(e) {
