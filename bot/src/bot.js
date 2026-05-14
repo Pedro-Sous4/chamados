@@ -3,6 +3,7 @@ const path = require('path');
 const nodemailer = require('nodemailer');
 const { getSession, updateSession, resetSession } = require('./sessions');
 const storage = require('./storage');
+const { sendToUser } = require('./context');
 
 const UPLOADS_DIR = path.resolve(__dirname, '..', '..', 'dados', 'uploads');
 
@@ -158,7 +159,7 @@ function extractNumber(from) {
 }
 
 function getName(message) {
-  return message.sender?.pushname || extractNumber(message.from);
+  return message._ns_sender_pushname || message.sender?.pushname || extractNumber(message.from);
 }
 
 function getMsgId(message) {
@@ -207,7 +208,9 @@ async function processState(client, message, userId) {
   const session = getSession(userId);
 
   async function send(msg) {
-    try { await client.sendText(userId, msg); } catch (err) {}
+    try { await sendToUser(userId, msg); } catch (err) {
+      console.error(`[bot:send] erro ao enviar para ${userId}:`, err.message);
+    }
   }
 
   // ── Diagnóstico e Captura de Anexos ────────────────────────────────────────
@@ -259,8 +262,122 @@ async function processState(client, message, userId) {
 
   // ── ESTADO: idle ───────────────────────────────────────────────────────────
   if (session.state === 'idle') {
+    // Verifica se o usuário já tem chamados abertos ou em atendimento
+    const userNumber = extractNumber(userId);
+    const ticketsAbertos = storage.find('tickets', t => 
+      t.number === userNumber && 
+      (t.status === 'aberto' || t.status === 'em_atendimento')
+    );
+
+    if (ticketsAbertos.length > 0) {
+      const t = ticketsAbertos[ticketsAbertos.length - 1]; // pega o mais recente
+      updateSession(userId, { state: 'aguardando_acao_ticket', targetTicketId: t.id });
+      await send(`Olá! Identifiquei que você já possui o chamado *#${t.id}* aberto.\n\n` +
+                 `O que você deseja fazer?\n\n` +
+                 `[1] Adicionar um comentário / anexo a este chamado\n` +
+                 `[2] Abrir um NOVO chamado\n` +
+                 `[3] Ver status dos meus chamados`);
+      return;
+    }
+
     updateSession(userId, { state: 'aguardando_nome' });
     await send('Olá! Tudo bem? Eu sou o Especialista de Suporte.\n\nPara começar, informe seu *NOME*:');
+    return;
+  }
+
+  // ── ESTADO: aguardando_acao_ticket ─────────────────────────────────────────
+  if (session.state === 'aguardando_acao_ticket') {
+    if (text === '1') {
+      updateSession(userId, { state: 'aguardando_comentario' });
+      await send(`Certo. Por favor, escreva o seu *comentário* ou envie um *anexo* (foto/arquivo) para o chamado *#${session.targetTicketId}*:`);
+      return;
+    }
+    if (text === '2') {
+      updateSession(userId, { state: 'aguardando_nome' });
+      await send('Entendido. Vamos abrir um novo chamado.\n\nPara começar, informe seu *NOME*:');
+      return;
+    }
+    if (text === '3' || text.toLowerCase().includes('status')) {
+      const userNumber = extractNumber(userId);
+      const tickets = storage.find('tickets', t => t.number === userNumber);
+      await send(formatarChamados(tickets));
+      await send(`O que mais deseja fazer?\n\n[1] Comentar no chamado #${session.targetTicketId}\n[2] Abrir novo chamado\n[0] Encerrar`);
+      return;
+    }
+    if (text === '0') {
+      resetSession(userId);
+      await send('Atendimento encerrado. Se precisar de algo, é só chamar!');
+      return;
+    }
+    await send('Opção inválida. Escolha [1], [2], [3] ou [0] para encerrar.');
+    return;
+  }
+
+  // ── ESTADO: aguardando_comentario ──────────────────────────────────────────
+  if (session.state === 'aguardando_comentario') {
+    const ticketId = session.targetTicketId;
+    const userNumber = extractNumber(userId);
+    
+    // Se enviou mídia, ela já foi registrada na sessão e salva no topo do handleMessage
+    const temAnexo = session.anexos && session.anexos.length > 0;
+    const anexoNome = temAnexo ? session.anexos[session.anexos.length - 1] : null;
+
+    if (!text && !temAnexo) {
+      await send('Por favor, escreva algo ou envie um anexo.');
+      return;
+    }
+
+    // Atualiza o chamado no banco
+    const tickets = storage.readAll('tickets');
+    const idx = tickets.findIndex(t => String(t.id) === String(ticketId));
+    
+    if (idx >= 0) {
+      const dataHora = new Date().toLocaleString('pt-BR');
+      const novoComentario = text ? `\n[Cliente ${dataHora}]: ${text}` : '';
+      
+      // Se tiver anexo, registra no histórico também
+      const anexoInfo = anexoNome ? `\n[Anexo enviado em ${dataHora}]` : '';
+      
+      tickets[idx].description += novoComentario + anexoInfo;
+      if (anexoNome) {
+        // Se o chamado não tinha anexo original, ou se queremos manter o último como principal para o site
+        tickets[idx].attachment = anexoNome; 
+      }
+      tickets[idx].updatedAt = new Date().toISOString();
+      
+      const fs = require('fs');
+      const path = require('path');
+      const ticketsPath = path.resolve(__dirname, '..', '..', 'dados', 'tickets.json');
+      fs.writeFileSync(ticketsPath, JSON.stringify(tickets, null, 2), 'utf-8');
+
+      await send(`✅ Comentário/Anexo adicionado com sucesso ao chamado *#${ticketId}*!`);
+      
+      // Notifica o site via webhook (simula o que o site faz quando o técnico comenta)
+      // Aqui poderíamos disparar uma atualização para o dashboard via socket se tivéssemos, 
+      // mas apenas salvar no JSON já faz o dashboard ver na próxima atualização.
+    } else {
+      await send(`Erro: Chamado #${ticketId} não encontrado.`);
+    }
+
+    resetSession(userId);
+    await send(`Deseja algo mais?\n\n[1] Abrir novo chamado\n[2] Ver status\n[0] Sair`);
+    updateSession(userId, { state: 'pos_comentario' });
+    return;
+  }
+
+  if (session.state === 'pos_comentario') {
+    if (text === '1') {
+       updateSession(userId, { state: 'aguardando_nome' });
+       await send('Informe seu *NOME*:');
+    } else if (text === '2') {
+       const userNumber = extractNumber(userId);
+       const tickets = storage.find('tickets', t => t.number === userNumber);
+       await send(formatarChamados(tickets));
+       await send(`[1] Abrir novo chamado\n[0] Sair`);
+    } else {
+       resetSession(userId);
+       await send('Atendimento encerrado.');
+    }
     return;
   }
 
@@ -430,6 +547,7 @@ async function processState(client, message, userId) {
     const ticket = storage.insert('tickets', {
       name: session.nome,
       number: extractNumber(userId),
+      notifWpp: userId,
       description: descFinal,
       status: 'aberto',
       origem: 'bot',

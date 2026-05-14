@@ -1,0 +1,13 @@
+{
+  "ignore": [
+    "tokens/*",
+    "**/dados/*",
+    "../../dados/*",
+    "sessions_bot.json",
+    "*.json"
+  ],
+  "watch": [
+    "src/"
+  ],
+  "ext": "js,mjs,cjs"
+}

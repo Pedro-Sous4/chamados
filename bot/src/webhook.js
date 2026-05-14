@@ -1,5 +1,5 @@
 const http = require('http');
-const { sendToUser } = require('./context');
+const { sendToUser, sendFileToUser } = require('./context');
 
 const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3000;
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
@@ -70,8 +70,8 @@ function startWebhook() {
         return;
       }
 
-      // Formata o userId no padrão do WhatsApp
-      const userId = telefone.includes('@c.us')
+      // Formata o userId no padrão do WhatsApp, preservando @c.us ou @lid
+      const userId = (telefone.includes('@c.us') || telefone.includes('@lid'))
         ? telefone
         : `${telefone.replace(/\D/g, '')}@c.us`;
 
@@ -101,12 +101,14 @@ function startWebhook() {
           
         if (anexo) {
            try {
-             const client = require('./context').getClient();
-             await client.sendFile(userId, anexo, 'solucao', mensagem);
+             await sendFileToUser(userId, anexo, 'solucao', mensagem);
              res.writeHead(200);
              res.end('Mensagem com anexo enviada');
              return;
-           } catch(e) { console.error('Erro ao enviar anexo da solução', e); }
+           } catch(e) { 
+             console.error('Erro ao enviar anexo da solução:', e.message);
+             // Prossegue para tentar enviar ao menos o texto abaixo
+           }
         }
       } else if (endpoint === '/webhook/mensagem-avulsa') {
         const id = data.id || '—';
@@ -121,12 +123,14 @@ function startWebhook() {
           
         if (anexo) {
            try {
-             const client = require('./context').getClient();
-             await client.sendFile(userId, anexo, 'anexo', mensagem);
+             await sendFileToUser(userId, anexo, 'anexo', mensagem);
              res.writeHead(200);
              res.end('Mensagem avulsa com anexo enviada');
              return;
-           } catch(e) { console.error('Erro ao enviar anexo avulso', e); }
+           } catch(e) { 
+             console.error('Erro ao enviar anexo avulso:', e.message);
+             // Prossegue para tentar enviar ao menos o texto abaixo
+           }
         }
       }
 

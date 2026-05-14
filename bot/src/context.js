@@ -66,16 +66,58 @@ async function sendToUser(userId, text) {
   try {
     await _client.sendText(userId, text);
   } catch (err) {
-    // Trata o erro "No LID for user" específico do wppconnect
-    if (err.message && err.message.toLowerCase().includes('no lid')) {
-      console.warn('[context] LID não encontrado, resolvendo número…');
-      const status = await _client.checkNumberStatus(userId);
-      const resolvedId = (status && status.id && status.id._serialized) || userId;
-      await _client.sendText(resolvedId, text);
-    } else {
-      throw err;
+    const errMsg = (err.message || '').toLowerCase();
+    if (errMsg.includes('no lid') || errMsg.includes('not found') || errMsg.includes('invalid jid')) {
+      console.warn(`[context:sendText] Problema de ID (${userId}), tentando resolver…`);
+      try {
+        const status = await _client.checkNumberStatus(userId);
+        const resolvedId = (status && status.id && status.id._serialized) || userId;
+        if (resolvedId !== userId) {
+          console.log(`[context:sendText] ID resolvido: ${userId} -> ${resolvedId}`);
+          await _client.sendText(resolvedId, text);
+          return;
+        }
+      } catch (e) {
+        console.error('[context:sendText] Falha ao resolver ID:', e.message);
+      }
     }
+    throw err;
   }
 }
 
-module.exports = { setClient, getClient, addSSEStream, removeSSEStream, pushToSSE, sendToUser };
+/**
+ * Envia arquivo com tratamento de LID.
+ */
+async function sendFileToUser(userId, filePath, fileName, caption = '') {
+  if (!_client) {
+    console.warn('[context] cliente não está pronto — anexo descartado para', userId);
+    return;
+  }
+
+  const doSend = async (id) => {
+    return await _client.sendFile(id, filePath, fileName, caption);
+  };
+
+  try {
+    await doSend(userId);
+  } catch (err) {
+    const errMsg = (err.message || '').toLowerCase();
+    if (errMsg.includes('no lid') || errMsg.includes('not found') || errMsg.includes('invalid jid')) {
+      console.warn(`[context:sendFile] Problema de ID (${userId}), tentando resolver…`);
+      try {
+        const status = await _client.checkNumberStatus(userId);
+        const resolvedId = (status && status.id && status.id._serialized) || userId;
+        if (resolvedId !== userId) {
+          console.log(`[context:sendFile] ID resolvido: ${userId} -> ${resolvedId}`);
+          await doSend(resolvedId);
+          return;
+        }
+      } catch (e) {
+        console.error('[context:sendFile] Falha ao resolver ID:', e.message);
+      }
+    }
+    throw err;
+  }
+}
+
+module.exports = { setClient, getClient, addSSEStream, removeSSEStream, pushToSSE, sendToUser, sendFileToUser };
