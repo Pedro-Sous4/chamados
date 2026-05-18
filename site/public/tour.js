@@ -120,7 +120,11 @@
         'Olá! Este tutorial vai te apresentar as principais funcionalidades do sistema ' +
         'em poucos passos simples.<br><br>' +
         'Use os botões abaixo para navegar, ou clique em <strong>"Pular tutorial"</strong> ' +
-        'se preferir explorar por conta própria.',
+        'se preferir explorar por conta própria.<br><br>' +
+        '<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#925616;cursor:pointer;margin-top:10px;" onclick="event.stopPropagation()">' +
+          '<input type="checkbox" id="tour-skip-forever" style="width:15px;height:15px;accent-color:#925616;"> ' +
+          'Não mostrar tutorial automaticamente' +
+        '</label>',
     },
 
     // ─── 1 · Lista de chamados ────────────────────────────────────────────────
@@ -464,7 +468,10 @@
 
     document.getElementById('tour-btn-next').addEventListener('click', onNext);
     document.getElementById('tour-btn-prev').addEventListener('click', onPrev);
-    document.getElementById('tour-btn-skip').addEventListener('click', function () { endTour(false); });
+    document.getElementById('tour-btn-skip').addEventListener('click', function () { 
+      var skipForever = document.getElementById('tour-skip-forever');
+      endTour(skipForever ? skipForever.checked : false); 
+    });
 
     // ESC encerra
     document.addEventListener('keydown', function (e) {

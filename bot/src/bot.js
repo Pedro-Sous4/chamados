@@ -21,7 +21,7 @@ const mailerAcesso = nodemailer.createTransport({
   tls: { rejectUnauthorized: false },
 });
 
-const MEDIA_TYPES = ['image', 'document', 'video', 'audio'];
+const MEDIA_TYPES = ['image', 'document', 'video', 'audio', 'ptt'];
 
 function mimeToExt(mime) {
   const map = {
@@ -30,6 +30,7 @@ function mimeToExt(mime) {
     'application/pdf': 'pdf',
     'video/mp4': 'mp4', 'video/3gpp': '3gp',
     'audio/ogg': 'ogg', 'audio/mpeg': 'mp3', 'audio/mp4': 'm4a',
+    'audio/ogg; codecs=opus': 'ogg',
     'application/msword': 'doc',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
     'application/vnd.ms-excel': 'xls',
@@ -47,57 +48,52 @@ const processedIds = new Set();
 // ── Proteção 3: lock por usuário — evita processar mensagens concorrentes
 const processing = new Set();
 
-// ── Menus e Opções ────────────────────────────────────────────────────────────
-const SALAS_OPCOES = {
-  '1': 'Administrativo (Jurídico, Estratégico, Financeiro, etc)',
-  '2': 'Pós-Vendas',
-  '3': 'Unique',
-  '4': 'Comercial',
-  '5': 'Captação',
-  '6': 'Sala Pedras Altas',
-  '7': 'Sala Pedras Altas Noturno',
-  '8': 'Sala NBA',
-  '9': 'Sala Golden',
-};
+// ── Configurações Softcode (Carregadas do bot_config.json) ────────────────────
+function getBotConfig() {
+  try {
+    return storage.readAll('bot_config');
+  } catch (err) {
+    console.error('[bot:config] erro ao ler bot_config:', err.message);
+    return {};
+  }
+}
 
-const SALAS_MENU = 
-  `Olá! Tudo bem? Para começar, informe de qual sala ou setor você faz parte:\n\n` +
-  Object.entries(SALAS_OPCOES).map(([k, v]) => `${k}. ${v}`).join('\n');
+function getSalasMenu(session = {}) {
+  const config = getBotConfig();
+  const template = (config.menus || {}).setores || `Olá {nome}! Informe sua sala:\n\n1. Administrativo\n2. Pós-Vendas`;
+  return template.replace(/{nome}/g, session.nome || '');
+}
 
-const AJUDA_TIPO_MENU = 
-  `Como posso te ajudar hoje?\n\n` +
-  `[A] Sistemas e Softwares (Esolution, Sienge, E-mail, etc.)\n` +
-  `[B] Equipamentos e Infraestrutura (Impressora, PC, Totem, Câmeras, Internet)`;
+function getAjudaTipoMenu(session = {}) {
+  const config = getBotConfig();
+  const template = (config.menus || {}).demanda || `Como posso ajudar, {nome}?\n\n[1] Sistemas\n[2] Equipamentos`;
+  return template.replace(/{nome}/g, session.nome || '');
+}
 
-const SETORES_LISTA = [
-  'Jurídico', 'Estratégico', 'Central de Contratos', 'Financeiro', 
-  'Contas a Receber', 'Departamento Pessoal', 'Recursos Humanos', 'Diretoria'
-];
-const SETORES_MENU = `Escolha o seu setor administrativo:\n\n` + SETORES_LISTA.map((s, i) => `${i+1}. ${s}`).join('\n');
-const SETORES_OPCOES = {};
-SETORES_LISTA.forEach((s, i) => { SETORES_OPCOES[String(i+1)] = s; });
+function getSetoresMenu(session = {}) {
+  const config = getBotConfig();
+  const template = config.menus.setores || `Olá {nome}! Para começar, informe de qual sala ou setor você faz parte:`;
+  const text = template.replace(/{nome}/g, session.nome || '');
+  
+  const setores = config.setores || [];
+  if (setores.length === 0) {
+    return text;
+  }
+  return text + `\n\n` + setores.map((s, i) => `${i+1}. ${s}`).join('\n');
+}
 
-const SISTEMAS_LISTA = [
-  'Esolution', 'E-mail Corporativo', 'Sienge', 'ASC Brasil', 
-  'DocuSign', 'ClickSign', 'GED', 'Dynamics', 'Valley', 
-  'Neo Interact', 'CobMais'
-];
-const SISTEMAS_OPCOES = {};
-SISTEMAS_LISTA.forEach((s, i) => { SISTEMAS_OPCOES[String(i+1)] = s; });
+function getSistemasMenu(session = {}) {
+  const config = getBotConfig();
+  const template = (config.menus || {}).sistemas || `Escolha o sistema, {nome}:\n\n1. Esolution\n2. Sienge`;
+  return template.replace(/{nome}/g, session.nome || '');
+}
 
-const SISTEMAS_MENU = `Escolha o sistema:\n\n` + SISTEMAS_LISTA.map((s, i) => `${i+1}. ${s}`).join('\n') + `\n\nOu descreva "Novo Usuário" para inclusão.`;
-
-const HARDWARE_OPCOES = {
-  '1': 'Impressora',
-  '2': 'Computador/Notebook',
-  '3': 'Totem de Vendas',
-  '4': 'Câmeras',
-  '5': 'Internet/Wi-Fi',
-};
-
-const HARDWARE_MENU = 
-  `Qual equipamento está com problema?\n\n` +
-  Object.entries(HARDWARE_OPCOES).map(([k, v]) => `${k}. ${v}`).join('\n');
+function getProblemasMenu() {
+  const config = getBotConfig();
+  const problemas = config.problemas || {};
+  return `Qual equipamento está com problema?\n\n` +
+         Object.entries(problemas).map(([k, v]) => `${k}. ${v}`).join('\n');
+}
 
 // ── Envio de e-mail via nodemailer ────────────────────────────────────────────
 async function enviarEmailAcesso({ nome, numero, sistema, descricao }) {
@@ -206,6 +202,7 @@ const KEYWORDS_PROBLEMA = ['impressora', 'parou', 'erro', 'problema', 'defeito',
 async function processState(client, message, userId) {
   const text = (message.body || '').replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '').trim();
   const session = getSession(userId);
+  console.log(`[bot] Mensagem de ${userId} (Push: ${getName(message)}) | Estado: ${session.state} | Texto: "${text}"`);
 
   async function send(msg) {
     try { await sendToUser(userId, msg); } catch (err) {
@@ -244,10 +241,8 @@ async function processState(client, message, userId) {
 
     if (session.state === 'idle' || session.state === 'aguardando_nome') {
        await send(`Recebi seu anexo. Vou guardá-lo para o chamado.`);
-       // Se enviou SÓ mídia na etapa de pedir nome, apenas aguarda. Não avança.
        if (!text) return;
     } else {
-       // Se for em outra etapa e enviou SÓ mídia, apenas guarda e não avança
        if (!text) return;
     }
   }
@@ -256,13 +251,14 @@ async function processState(client, message, userId) {
   const containsKeyword = KEYWORDS_PROBLEMA.some(k => text.toLowerCase().includes(k));
   if (containsKeyword && session.state === 'idle') {
       updateSession(userId, { state: 'aguardando_nome', urgencia: true });
-      await send(`Olá! Identifiquei que você precisa de suporte urgente para um problema técnico.\n\nPara agilizarmos, informe seu *NOME*:`);
+      const config = getBotConfig();
+      const msg = (config.menus || {}).saudacao || `Olá! Identifiquei que você precisa de suporte urgente.\n\nPara agilizarmos, informe seu *NOME*:`;
+      await send(msg);
       return;
   }
 
   // ── ESTADO: idle ───────────────────────────────────────────────────────────
   if (session.state === 'idle') {
-    // Verifica se o usuário já tem chamados abertos ou em atendimento
     const userNumber = extractNumber(userId);
     const ticketsAbertos = storage.find('tickets', t => 
       t.number === userNumber && 
@@ -270,7 +266,13 @@ async function processState(client, message, userId) {
     );
 
     if (ticketsAbertos.length > 0) {
-      const t = ticketsAbertos[ticketsAbertos.length - 1]; // pega o mais recente
+      const t = ticketsAbertos[ticketsAbertos.length - 1]; 
+      
+      if (t.status === 'em_atendimento') {
+        updateSession(userId, { state: 'em_atendimento', targetTicketId: t.id });
+        return await processState(client, message, userId);
+      }
+
       updateSession(userId, { state: 'aguardando_acao_ticket', targetTicketId: t.id });
       await send(`Olá! Identifiquei que você já possui o chamado *#${t.id}* aberto.\n\n` +
                  `O que você deseja fazer?\n\n` +
@@ -281,7 +283,41 @@ async function processState(client, message, userId) {
     }
 
     updateSession(userId, { state: 'aguardando_nome' });
-    await send('Olá! Tudo bem? Eu sou o Especialista de Suporte.\n\nPara começar, informe seu *NOME*:');
+    const config = getBotConfig();
+    const msg = (config.menus || {}).saudacao || 'Olá! Tudo bem? Eu sou o Especialista de Suporte.\n\nPara começar, informe seu *NOME*:';
+    await send(msg);
+    return;
+  }
+
+  // ── ESTADO: em_atendimento (MODO CHAT DIRETO) ───────────────────────────────
+  if (session.state === 'em_atendimento') {
+    const ticketId = session.targetTicketId;
+    
+    const tickets = storage.readAll('tickets');
+    const tIdx = tickets.findIndex(t => String(t.id) === String(ticketId));
+    
+    if (tIdx === -1 || (tickets[tIdx].status !== 'em_atendimento' && tickets[tIdx].status !== 'aberto')) {
+      resetSession(userId);
+      return await processState(client, message, userId);
+    }
+
+    const temAnexo = session.anexos && session.anexos.length > 0;
+    const anexoNome = temAnexo ? session.anexos[session.anexos.length - 1] : null;
+
+    if (!text && !temAnexo) return;
+
+    if (!tickets[tIdx].conversa) tickets[tIdx].conversa = [];
+    tickets[tIdx].conversa.push({
+      role: 'user',
+      text: text || '',
+      timestamp: new Date().toISOString(),
+      attachment: anexoNome || null
+    });
+    
+    tickets[tIdx].updatedAt = new Date().toISOString();
+    storage.saveAll('tickets', tickets);
+    
+    console.log(`[CHAT] Mensagem de ${userId} anexada ao chamado #${ticketId}`);
     return;
   }
 
@@ -316,9 +352,6 @@ async function processState(client, message, userId) {
   // ── ESTADO: aguardando_comentario ──────────────────────────────────────────
   if (session.state === 'aguardando_comentario') {
     const ticketId = session.targetTicketId;
-    const userNumber = extractNumber(userId);
-    
-    // Se enviou mídia, ela já foi registrada na sessão e salva no topo do handleMessage
     const temAnexo = session.anexos && session.anexos.length > 0;
     const anexoNome = temAnexo ? session.anexos[session.anexos.length - 1] : null;
 
@@ -327,20 +360,16 @@ async function processState(client, message, userId) {
       return;
     }
 
-    // Atualiza o chamado no banco
     const tickets = storage.readAll('tickets');
     const idx = tickets.findIndex(t => String(t.id) === String(ticketId));
     
     if (idx >= 0) {
       const dataHora = new Date().toLocaleString('pt-BR');
       const novoComentario = text ? `\n[Cliente ${dataHora}]: ${text}` : '';
-      
-      // Se tiver anexo, registra no histórico também
       const anexoInfo = anexoNome ? `\n[Anexo enviado em ${dataHora}]` : '';
       
       tickets[idx].description += novoComentario + anexoInfo;
       if (anexoNome) {
-        // Se o chamado não tinha anexo original, ou se queremos manter o último como principal para o site
         tickets[idx].attachment = anexoNome; 
       }
       tickets[idx].updatedAt = new Date().toISOString();
@@ -351,10 +380,6 @@ async function processState(client, message, userId) {
       fs.writeFileSync(ticketsPath, JSON.stringify(tickets, null, 2), 'utf-8');
 
       await send(`✅ Comentário/Anexo adicionado com sucesso ao chamado *#${ticketId}*!`);
-      
-      // Notifica o site via webhook (simula o que o site faz quando o técnico comenta)
-      // Aqui poderíamos disparar uma atualização para o dashboard via socket se tivéssemos, 
-      // mas apenas salvar no JSON já faz o dashboard ver na próxima atualização.
     } else {
       await send(`Erro: Chamado #${ticketId} não encontrado.`);
     }
@@ -368,7 +393,9 @@ async function processState(client, message, userId) {
   if (session.state === 'pos_comentario') {
     if (text === '1') {
        updateSession(userId, { state: 'aguardando_nome' });
-       await send('Informe seu *NOME*:');
+       const config = getBotConfig();
+       const msg = (config.menus || {}).saudacao || 'Informe seu *NOME*:';
+       await send(msg);
     } else if (text === '2') {
        const userNumber = extractNumber(userId);
        const tickets = storage.find('tickets', t => t.number === userNumber);
@@ -383,58 +410,67 @@ async function processState(client, message, userId) {
 
   // ── ESTADO: aguardando_nome ────────────────────────────────────────────────
   if (session.state === 'aguardando_nome') {
-    if (!text) { await send('Por favor, digite o seu nome para continuarmos:'); return; }
-    const nome = text; // Garante que o usuário digitou o nome
-    updateSession(userId, { state: 'aguardando_sala', nome });
-    await send(SALAS_MENU);
+    const newSession = updateSession(userId, { state: 'aguardando_setor', nome: text });
+    await send(getSetoresMenu(newSession));
     return;
   }
 
   // ── ESTADO: aguardando_sala ────────────────────────────────────────────────
   if (session.state === 'aguardando_sala') {
-    const salaNome = SALAS_OPCOES[text];
-    if (!salaNome) { await send(`Opção inválida. Escolha o número da sua sala:\n\n${SALAS_MENU}`); return; }
+    const config = getBotConfig();
+    const salaNome = (config.salas || {})[text];
+    if (!salaNome) { await send(`Opção inválida. Escolha o número da sua sala:\n\n${getSalasMenu(session)}`); return; }
     
-    // Se for Administrativo, pede o setor específico através de menu (Regra Nova)
     if (text === '1') {
       updateSession(userId, { state: 'aguardando_setor', sala: salaNome });
-      await send(SETORES_MENU);
+      await send(getSetoresMenu(session));
       return;
     }
 
     const isSalaVendas = text >= '6'; 
-    const menuDinamico = isSalaVendas 
-      ? `Identifiquei que você está em uma Sala de Vendas. Como posso ajudar?\n\n[B] Equipamentos e Hardware (Impressora, Internet, Totem)\n[A] Sistemas e Softwares`
-      : AJUDA_TIPO_MENU;
-
     updateSession(userId, { state: 'aguardando_ajuda_tipo', sala: salaNome, isSalaVendas });
-    await send(menuDinamico);
+    await send(getAjudaTipoMenu(session));
     return;
   }
 
   // ── ESTADO: aguardando_setor ───────────────────────────────────────────────
   if (session.state === 'aguardando_setor') {
-    const setorNome = SETORES_OPCOES[text];
-    if (!setorNome) { await send(`Opção inválida.\n\n${SETORES_MENU}`); return; }
+    const config = getBotConfig();
+    const setores = config.setores || [];
+    let setorNome;
+    if (setores.length === 0) {
+      setorNome = text;
+    } else {
+      setorNome = setores[parseInt(text) - 1];
+    }
+
+    if (!setorNome) { 
+      await send(`Opção inválida.\n\n${getSetoresMenu(session)}`); 
+      return; 
+    }
+
     updateSession(userId, { state: 'aguardando_ajuda_tipo', setor: setorNome });
-    await send(AJUDA_TIPO_MENU);
+    await send(getAjudaTipoMenu(session));
     return;
   }
 
   // ── ESTADO: aguardando_ajuda_tipo ──────────────────────────────────────────
   if (session.state === 'aguardando_ajuda_tipo') {
-    const opt = text.toUpperCase();
-    if (opt === 'A') {
-      updateSession(userId, { state: 'aguardando_sistema_especifico' });
-      await send(`Escolha o sistema:\n\n` + SISTEMAS_LISTA.map((s, i) => `${i+1}. ${s}`).join('\n') + `\n\nOu descreva *Novo Usuário* para inclusão.`);
+    const opt = text.toUpperCase().trim();
+    
+    if (text === '1' || opt === 'A') {
+      updateSession(userId, { state: 'aguardando_sistema_especifico', ajuda_tipo: 'Sistemas e Softwares' });
+      await send(getSistemasMenu(session));
       return;
     }
-    if (opt === 'B') {
-      updateSession(userId, { state: 'aguardando_hardware_item' });
-      await send(HARDWARE_MENU);
+    
+    if (opt === 'B' || opt === '2') {
+      updateSession(userId, { state: 'aguardando_problema_especifico' });
+      await send(getProblemasMenu());
       return;
     }
-    await send(`Opção inválida. Responda com A ou B.`);
+
+    await send(`Opção inválida. Escolha uma das opções:\n\n${getAjudaTipoMenu(session)}`);
     return;
   }
 
@@ -442,7 +478,6 @@ async function processState(client, message, userId) {
   if (session.state === 'aguardando_sistema_especifico') {
     if (text.toLowerCase().includes('novo') || text.toLowerCase().includes('inclusão')) {
       updateSession(userId, { state: 'aguardando_inclusao_bloco', sistema: 'Inclusão de Usuário' });
-      // Regra 2: Layout de Inclusão Fiel (Bloco Único)
       await send(`Para realizar o *Cadastro de Novo Usuário*, por favor, preencha o formulário abaixo em uma única mensagem:\n\n` +
                  `Nome Completo:\n` +
                  `CPF:\n` +
@@ -451,8 +486,10 @@ async function processState(client, message, userId) {
                  `Função:`);
       return;
     }
-    const sistemaNome = SISTEMAS_OPCOES[text];
-    if (!sistemaNome) { await send(`Opção inválida.\n\n${SISTEMAS_MENU}`); return; }
+    const config = getBotConfig();
+    const sistemas = config.sistemas || [];
+    const sistemaNome = sistemas[parseInt(text) - 1];
+    if (!sistemaNome) { await send(`Opção inválida.\n\n${getSistemasMenu(session)}`); return; }
 
     updateSession(userId, { state: 'aguardando_descricao', sistema: sistemaNome, type: `Sistemas - ${sistemaNome}` });
     await send(`Entendido. Por favor, escreva uma *breve descrição* do problema ou solicitação.`);
@@ -462,18 +499,18 @@ async function processState(client, message, userId) {
   // ── ESTADO: aguardando_inclusao_bloco ──────────────────────────────────────
   if (session.state === 'aguardando_inclusao_bloco') {
     updateSession(userId, { state: 'aguardando_confirmacao', dadosInclusao: text, type: 'Inclusão de Usuário' });
-    
-    // Regra 5: Confirmação Final
     const resumo = `Confirmando: Suporte para Inclusão de Usuário, Sala ${session.sala}, solicitado por ${session.nome}.\nAnexos enviados: ${session.anexos?.length ? 'Sim' : 'Não'}.\n\nPodemos gerar o chamado? (Responda *SIM* para confirmar)`;
     await send(resumo);
     return;
   }
 
-  // ── ESTADO: aguardando_hardware_item ───────────────────────────────────────
-  if (session.state === 'aguardando_hardware_item') {
-    const item = HARDWARE_OPCOES[text];
-    if (!item) { await send(`Opção inválida.\n\n${HARDWARE_MENU}`); return; }
-    updateSession(userId, { state: 'aguardando_descricao', item, type: `Hardware - ${item}` });
+  // ── ESTADO: aguardando_problema_especifico ───────────────────────────────
+  if (session.state === 'aguardando_problema_especifico') {
+    const config = getBotConfig();
+    const problemas = config.problemas || {};
+    const item = problemas[text];
+    if (!item) { await send(`Opção inválida.\n\n${getProblemasMenu()}`); return; }
+    updateSession(userId, { state: 'aguardando_descricao', item, type: `Problemas - ${item}` });
     await send(`Entendido. Por favor, escreva uma *breve descrição* do problema com o(a) ${item}.`);
     return;
   }
@@ -518,7 +555,7 @@ async function processState(client, message, userId) {
     const temAnexo = (s.anexos && s.anexos.length > 0);
 
     const resumo = `*Confirmando os dados do Chamado:*\n\n` +
-                   `🛠️ *Suporte para:* ${s.sistema || s.item}\n` +
+                    `🛠️ *Suporte para:* ${s.sistema || s.item || s.type}\n` +
                    `📍 *Local:* ${localizacao}\n` +
                    `👤 *Solicitante:* ${s.nome}\n` +
                    `📎 *Anexo:* ${temAnexo ? 'Sim' : 'Não'}\n\n` +
@@ -567,7 +604,7 @@ async function processState(client, message, userId) {
     const nomeAtual = session.nome;
     resetSession(userId);
     updateSession(userId, { state: 'aguardando_sala', nome: nomeAtual });
-    await send(SALAS_MENU);
+    await send(getSalasMenu());
     return;
   }
 }

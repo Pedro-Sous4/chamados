@@ -1,4 +1,16 @@
 {
+  "journeyOrder": [
+    "saudacao",
+    "setores",
+    "demanda",
+    "sistemas"
+  ],
+  "menus": {
+    "saudacao": "Olá! Tudo bem? Eu sou o Especialista de Suporte da LGM.\n\nPara começar, informe seu NOME:",
+    "setores": "Olá, {nome}! Para começar, informe de que setor você faz parte:\n\n1. Administrativo (Jurídico, Estratégico, Financeiro, etc)\n2. Pós-Vendas\n3. Unique\n4. Comercial\n5. Captação\n6. Sala de Vendas\n\n*(Responda apenas com o NÚMERO)*",
+    "demanda": "Como posso te ajudar hoje?\n\n1. Sistemas e Softwares (Esolution, Sienge, E-mail, etc.)\n2. Equipamentos e Infraestrutura (Impressora, PC, Totem, Câmeras, Internet)\n\n*(Responda apenas com o NÚMERO)*",
+    "sistemas": "Escolha o sistema:\n\n1. Esolution\n2. E-mail Corporativo\n3. Sienge\n4. ASC Brasil\n5. DocuSign\n6. ClickSign\n7. GED\n8. Dynamics\n9. Valley\n10. Neo Interact\n11. CobMais\n\nOu descreva Novo Usuário para inclusão.\n\n*(Responda apenas com o NÚMERO)*"
+  },
   "salas": {
     "1": "Administrativo (Jurídico, Estratégico, Financeiro, etc)",
     "2": "Pós-Vendas",
@@ -11,15 +23,12 @@
     "9": "Sala Golden"
   },
   "setores": [
-    "Jurídico",
-    "Estratégico",
-    "Central de Contratos",
-    "Financeiro",
-    "Contas a Receber",
-    "Departamento Pessoal",
-    "Recursos Humanos",
-    "Diretoria"
+    "Pedras Altas",
+    "Pedras Altas Noturno",
+    "NBA",
+    "Golden"
   ],
+  "flow": {},
   "sistemas": [
     "Esolution",
     "E-mail Corporativo",
@@ -33,15 +42,13 @@
     "Neo Interact",
     "CobMais"
   ],
-  "hardware": {
+  "problemas": {
     "1": "Impressora",
     "2": "Computador/Notebook",
     "3": "Totem de Vendas",
     "4": "Câmeras",
-    "5": "Internet/Wi-Fi"
-  },
-  "problemas": [
-    "Impressora Travou",
-    "Impressora Atolou papel"
-  ]
+    "5": "Internet/Wi-Fi",
+    "6": "Telefonia/Ramal",
+    "7": "Outros Problemas"
+  }
 }

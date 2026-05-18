@@ -95,6 +95,12 @@ async function sendFileToUser(userId, filePath, fileName, caption = '') {
   }
 
   const doSend = async (id) => {
+    const ext = fileName.split('.').pop().toLowerCase();
+    const isAudio = ['mp3', 'ogg', 'wav', 'm4a', 'oga', 'amr'].includes(ext);
+    if (isAudio) {
+       console.log(`[context] Enviando áudio (PTT) para ${id}`);
+       return await _client.sendPtt(id, filePath, fileName);
+    }
     return await _client.sendFile(id, filePath, fileName, caption);
   };
 

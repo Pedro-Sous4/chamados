@@ -91,4 +91,51 @@ function upsert(collection, keyField, keyValue, data) {
   return saved;
 }
 
-module.exports = { insert, find, readAll, upsert };
+/**
+ * Salva todos os registros de uma coleção (sobrescreve o arquivo).
+ * @param {string} collection
+ * @param {Array<object>} records
+ */
+function saveAll(collection, records) {
+  const filePath = collectionPath(collection);
+  const lockPath = path.join(BASE_DIR, `${collection}.lock`);
+  
+  let retries = 0;
+  while (fs.existsSync(lockPath) && retries < 15) {
+    retries++;
+    const end = Date.now() + 40;
+    while (Date.now() < end) {}
+  }
+
+  try {
+    fs.writeFileSync(lockPath, 'lock', 'utf-8');
+    
+    // Se for a coleção de tickets, tenta um merge simples se o arquivo mudou no disco
+    if (collection === 'tickets') {
+       try {
+          const onDisk = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+          // Merge: se o registro no disco tiver mensagens que não temos localmente, adiciona
+          records.forEach((localT, i) => {
+             const diskT = onDisk.find(d => d.id === localT.id);
+             if (diskT && diskT.conversa && diskT.conversa.length > (localT.conversa ? localT.conversa.length : 0)) {
+                // O disco tem mais mensagens (provavelmente do técnico via dashboard)
+                // Adiciona as novas mensagens do técnico ao nosso registro local antes de salvar
+                if (!localT.conversa) localT.conversa = [];
+                const localLen = localT.conversa.length;
+                diskT.conversa.slice(localLen).forEach(msg => {
+                   if (msg.role === 'technician') localT.conversa.push(msg);
+                });
+                // Também atualiza a observação se mudou
+                if (diskT.observacao) localT.observacao = diskT.observacao;
+             }
+          });
+       } catch(e) {}
+    }
+
+    fs.writeFileSync(filePath, JSON.stringify(records, null, 2), 'utf-8');
+  } finally {
+    if (fs.existsSync(lockPath)) fs.unlinkSync(lockPath);
+  }
+}
+
+module.exports = { insert, find, readAll, upsert, saveAll };

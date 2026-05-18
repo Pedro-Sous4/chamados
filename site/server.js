@@ -329,6 +329,7 @@ const ROUTES = {
     if (filterType)   tickets = tickets.filter(t => t.type   === filterType);
     if (filterQ) {
       tickets = tickets.filter(t =>
+        String(t.id).includes(filterQ) ||
         (t.name        || '').toLowerCase().includes(filterQ) ||
         (t.number      || '').toLowerCase().includes(filterQ) ||
         (t.description || '').toLowerCase().includes(filterQ)
@@ -633,6 +634,10 @@ const ROUTES = {
     // Converte tudo para um formato uniforme para o frontend: [{ key: "...", value: "..." }]
     const responseData = {};
     for (const cat in config) {
+      if (cat === 'journeyOrder') {
+        responseData[cat] = config[cat]; // Envia array limpo
+        continue;
+      }
       responseData[cat] = [];
       if (Array.isArray(config[cat])) {
         config[cat].forEach((val, i) => responseData[cat].push({ key: i, value: val }));
@@ -656,7 +661,7 @@ const ROUTES = {
     req.on('end', () => {
       let data;
       try { data = JSON.parse(body); } catch { return sendJson(res, 400, { error: 'JSON inválido' }); }
-      const { category, value } = data;
+      const { category, value, key } = data;
       if (!category || !value) return sendJson(res, 422, { error: 'Categoria e valor são obrigatórios' });
       
       let config = readCollection('bot_config');
@@ -664,12 +669,23 @@ const ROUTES = {
       
       let items = config[category];
       if (Array.isArray(items)) {
-        if (items.includes(value)) return sendJson(res, 409, { error: 'Item já existe' });
-        items.push(value);
+        if (Array.isArray(value)) {
+          // Substituição completa (ex: reordenação de journeyOrder)
+          config[category] = value;
+        } else {
+          if (items.includes(value)) return sendJson(res, 409, { error: 'Item já existe' });
+          items.push(value);
+        }
       } else if (typeof items === 'object' && items !== null) {
-        if (Object.values(items).includes(value)) return sendJson(res, 409, { error: 'Item já existe' });
-        const maxKey = Math.max(0, ...Object.keys(items).map(Number).filter(n => !isNaN(n)));
-        items[String(maxKey + 1)] = value;
+        if (key) {
+           // Atualiza ou insere chave específica (ex: para templates de menu)
+           items[key] = value;
+        } else {
+           // Comportamento legado: gera chave numérica
+           if (Object.values(items).includes(value)) return sendJson(res, 409, { error: 'Item já existe' });
+           const maxKey = Math.max(0, ...Object.keys(items).map(Number).filter(n => !isNaN(n)));
+           items[String(maxKey + 1)] = value;
+        }
       }
       
       fs.writeFileSync(path.join(DADOS_DIR, 'bot_config.json'), JSON.stringify(config, null, 2), 'utf-8');
@@ -919,16 +935,64 @@ const server = http.createServer((req, res) => {
 
       const anteriorStatus = tickets[idx].status;
       
+      const atendenteLogin = readCollection('logins').find(u => u.email.toLowerCase() === session.email.toLowerCase());
+      const atendenteNome = (atendenteLogin && atendenteLogin.name) ? atendenteLogin.name : session.email;
+
       // Atualiza campos permitidos
       if (data.status)      tickets[idx].status      = data.status;
-      if (data.observacao)    tickets[idx].observacao    = data.observacao;
-      if (data.anexo_solucao) tickets[idx].anexo_solucao = data.anexo_solucao;
+      if (data.observacao || data.anexo_solucao) {
+        if (data.observacao) tickets[idx].observacao = data.observacao;
+        if (data.anexo_solucao) tickets[idx].anexo_solucao = data.anexo_solucao;
+        
+        if (!tickets[idx].conversa) tickets[idx].conversa = [];
+        tickets[idx].conversa.push({
+          role: 'technician',
+          text: data.observacao || '',
+          timestamp: new Date().toISOString(),
+          atendente: atendenteNome,
+          attachment: data.anexo_solucao || null
+        });
+      }
       if (data.type)          tickets[idx].type          = data.type;
       if (data.description)   tickets[idx].description   = data.description;
       if (data.sala)          tickets[idx].sala          = data.sala;
       
       tickets[idx].updatedAt = new Date().toISOString();
-      require('fs').writeFileSync(ticketsPath, JSON.stringify(tickets, null, 2), 'utf-8');
+      
+      // Bloqueio simples para evitar race conditions entre site e bot
+      const lockPath = path.join(DADOS_DIR, 'tickets.lock');
+      let retries = 0;
+      while (fs.existsSync(lockPath) && retries < 10) {
+        retries++;
+        // Espera síncrona curta (aprox 50ms)
+        const end = Date.now() + 50;
+        while (Date.now() < end) {}
+      }
+      
+      try {
+        fs.writeFileSync(lockPath, 'lock', 'utf-8');
+        // Re-lê para garantir que não estamos sobrescrevendo mudanças do bot feitas nos últimos milissegundos
+        let freshTickets = readCollection('tickets');
+        const fIdx = freshTickets.findIndex(t => Number(t.id) === id);
+        if (fIdx !== -1) {
+          // Mescla as mudanças
+          freshTickets[fIdx].status = tickets[idx].status;
+          freshTickets[fIdx].observacao = tickets[idx].observacao;
+          freshTickets[fIdx].updatedAt = tickets[idx].updatedAt;
+          if (tickets[idx].conversa) {
+             if (!freshTickets[fIdx].conversa) freshTickets[fIdx].conversa = [];
+             // Adiciona apenas a última mensagem do técnico (se houver)
+             const lastMsg = tickets[idx].conversa[tickets[idx].conversa.length - 1];
+             if (lastMsg && lastMsg.role === 'technician') {
+                freshTickets[fIdx].conversa.push(lastMsg);
+             }
+          }
+          fs.writeFileSync(ticketsPath, JSON.stringify(freshTickets, null, 2), 'utf-8');
+          tickets = freshTickets;
+        }
+      } finally {
+        if (fs.existsSync(lockPath)) fs.unlinkSync(lockPath);
+      }
 
       const ticket = tickets[idx];
       const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3000;
@@ -937,8 +1001,6 @@ const server = http.createServer((req, res) => {
       const origemNotif = !!notifPhone;
 
       let emailResult = null;
-      const atendenteLogin = readCollection('logins').find(u => u.email.toLowerCase() === session.email.toLowerCase());
-      const atendenteNome = (atendenteLogin && atendenteLogin.name) ? atendenteLogin.name : session.email;
 
       if (data.status === 'concluido' && anteriorStatus !== 'concluido' && !notifPhone) {
         const destEmail = ticket.solicitanteEmail || null;
@@ -989,12 +1051,13 @@ const server = http.createServer((req, res) => {
           observacao: data.observacao,
           anexo_solucao: data.anexo_solucao ? path.join(DADOS_DIR, 'uploads', data.anexo_solucao) : null
         });
+        console.log(`[site] Chamando webhook mensagem-avulsa para ${notifPhone}...`);
         const whReq = require('http').request(
           { hostname: 'localhost', port: WEBHOOK_PORT, path: '/webhook/mensagem-avulsa', method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
-          (whRes) => { whRes.resume(); console.log(`[site] webhook mensagem-avulsa: ${whRes.statusCode}`); }
+          (whRes) => { whRes.resume(); console.log(`[site] Resposta webhook mensagem-avulsa: ${whRes.statusCode}`); }
         );
-        whReq.on('error', (e) => console.warn('[site] webhook indisponível:', e.message));
+        whReq.on('error', (e) => console.error('[site] Erro no webhook mensagem-avulsa:', e.message));
         whReq.write(payload);
         whReq.end();
       }

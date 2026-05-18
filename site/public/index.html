@@ -151,6 +151,12 @@
     /* ---------- Profile modal ---------- */
     @keyframes modalIn { from { opacity:0; transform:scale(.96) translateY(8px); } to { opacity:1; transform:none; } }
     .modal-anim { animation:modalIn .22s ease both; }
+    
+    /* ---------- Chat Bubbles ---------- */
+    .chat-msg { max-width:85%; padding:10px 14px; border-radius:14px; font-size:.82rem; line-height:1.4; position:relative; }
+    .chat-msg-user { align-self:flex-start; background:#fff; border:1px solid #e5e7eb; color:#1f2937; border-bottom-left-radius:2px; }
+    .chat-msg-tech { align-self:flex-end; background:#925616; color:#fff; border-bottom-right-radius:2px; box-shadow: 0 2px 8px rgba(146,86,22,0.2); }
+    .chat-time { font-size:10px; opacity:.6; margin-top:4px; display:block; }
   </style>
 </head>
 <body class="min-h-screen text-brand-900">
@@ -168,7 +174,7 @@
       </div>
       <div>
         <h1 class="text-white font-bold text-lg leading-none tracking-tight">Central de Chamados</h1>
-        <p class="text-white/50 text-xs mt-1 tracking-widest uppercase font-medium">Laghetto Hotéis</p>
+        <p class="text-white/50 text-xs mt-1 tracking-widest uppercase font-medium">LAGHETTO GOLDEN MULTIPROPRIEDADE</p>
       </div>
     </div>
 
@@ -566,6 +572,19 @@
         <div id="det-descricao"
              class="text-sm text-brand-800 leading-relaxed whitespace-pre-wrap bg-brand-50
                     rounded-xl px-4 py-3 border border-brand-100"></div>
+      </div>
+
+      <!-- Chat de Atendimento -->
+      <div id="det-chat-wrapper" class="hidden flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+           <p class="text-[.64rem] font-black uppercase tracking-widest text-brand-400">Mensagens / Chat</p>
+           <button onclick="loadDetalheRefresh()" class="text-[10px] font-bold text-brand-400 hover:text-brand-600 bg-transparent border-none cursor-pointer">
+             <i data-lucide="refresh-cw" class="w-3 h-3 inline"></i> Atualizar Chat
+           </button>
+        </div>
+        <div id="det-chat-container" class="flex flex-col gap-3 max-h-[350px] overflow-y-auto p-4 bg-brand-50 rounded-xl border border-brand-100">
+          <!-- Mensagens entram aqui -->
+        </div>
       </div>
 
       <!-- Observação Técnica (Novo) -->
@@ -993,25 +1012,34 @@
 
       <!-- Seletor de Categoria -->
       <div class="flex gap-2 p-1 bg-gray-100 rounded-xl">
-        <button onclick="changeBotCategory('salas')" id="cat-btn-salas" class="cat-btn flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-brand-500 shadow-sm transition-all border-none cursor-pointer">Salas</button>
-        <button onclick="changeBotCategory('setores')" id="cat-btn-setores" class="cat-btn flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Setores</button>
-        <button onclick="changeBotCategory('sistemas')" id="cat-btn-sistemas" class="cat-btn flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Sistemas</button>
-        <button onclick="changeBotCategory('problemas')" id="cat-btn-problemas" class="cat-btn flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Problemas</button>
+        <button onclick="changeBotCategory('menus')" id="cat-btn-menus" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Menu</button>
+        <button onclick="changeBotCategory('flow')" id="cat-btn-flow" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg bg-white text-brand-500 shadow-sm transition-all border-none cursor-pointer">Flow</button>
+        <button onclick="changeBotCategory('salas')" id="cat-btn-salas" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Setor</button>
+        <button onclick="changeBotCategory('setores')" id="cat-btn-setores" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Salas</button>
+        <button onclick="changeBotCategory('sistemas')" id="cat-btn-sistemas" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Sistemas</button>
+        <button onclick="changeBotCategory('problemas')" id="cat-btn-problemas" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Problemas</button>
       </div>
 
-      <!-- Formulário adicionar item -->
-      <div class="flex gap-2">
-        <input id="novo-bot-item-input" type="text" maxlength="80"
-               placeholder="Novo item..."
-               class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm
-                      outline-none focus:border-brand-400 transition-colors" />
-        <button id="btn-add-bot-item"
-                class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm
-                       font-bold text-white shadow cursor-pointer border-none transition-all
-                       hover:opacity-90 active:scale-95"
-                style="background:#925616">
-          <i data-lucide="plus" class="w-4 h-4"></i> Adicionar
-        </button>
+      <!-- Campo de adição (só aparece se não for a aba de Início) -->
+      <div id="add-bot-item-wrap" class="flex flex-col gap-3 p-4 rounded-2xl bg-gray-50 border border-gray-100 mb-2">
+        <div class="flex items-center gap-2 mb-1">
+           <span id="add-bot-item-title" class="text-[10px] font-black uppercase tracking-widest text-gray-400">Novo Item</span>
+        </div>
+        <div class="flex gap-2">
+          <input id="novo-bot-item-key" type="text" placeholder="Identificador (ex: menu_atendimento)"
+                 class="w-1/3 px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-brand-400 transition-colors hidden" />
+          <input id="novo-bot-item-input" type="text" maxlength="80"
+                 placeholder="Novo item..."
+                 class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm
+                        outline-none focus:border-brand-400 transition-colors" />
+          <button id="btn-add-bot-item"
+                  class="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-sm
+                         font-bold text-white shadow cursor-pointer border-none transition-all
+                         hover:opacity-90 active:scale-95 whitespace-nowrap"
+                  style="background:#925616">
+            <i data-lucide="plus" class="w-4 h-4"></i> Adicionar
+          </button>
+        </div>
       </div>
 
       <p id="bot-config-error" class="text-xs text-red-600 -mt-2 hidden"></p>
@@ -1131,6 +1159,36 @@
   </div> <!-- Fim modal container inner -->
 </div> <!-- Fim modal overlay -->
 
+<!-- Modal Especial para Edição de Mensagem do Bot (WhatsApp style) -->
+<div id="modal-edit-menu-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
+  <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+    <div class="p-5 flex items-center justify-between border-b border-gray-50">
+      <div>
+        <h3 id="edit-menu-title" class="text-lg font-black text-gray-800 leading-tight">Editar Menu</h3>
+        <p class="text-[10px] font-bold text-orange-500 uppercase tracking-widest mt-0.5">Configuração de Template</p>
+      </div>
+      <button id="btn-close-edit-menu" class="p-2 rounded-xl hover:bg-gray-100 transition-colors border-none bg-transparent cursor-pointer text-gray-400">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div class="p-6 flex flex-col gap-4 bg-gray-50/50">
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+        <textarea id="edit-menu-textarea" class="w-full min-h-[220px] text-sm text-gray-700 bg-transparent outline-none resize-none font-mono leading-relaxed" placeholder="Escreva a mensagem do bot aqui..."></textarea>
+      </div>
+      <div class="flex items-center gap-2 text-[10px] text-gray-400 italic px-2">
+        <i data-lucide="info" class="w-3 h-3"></i>
+        <span>Dica: Use quebras de linha para organizar as opções como no WhatsApp.</span>
+      </div>
+    </div>
+    <div class="p-5 border-t border-gray-50 bg-white flex gap-3">
+      <button id="btn-cancel-edit-menu" class="flex-1 py-3 rounded-xl text-sm font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-all border-none cursor-pointer">Cancelar</button>
+      <button id="btn-save-edit-menu" class="flex-[2] py-3 rounded-xl text-sm font-bold text-white bg-orange-600 hover:opacity-90 shadow-lg shadow-orange-200 transition-all border-none cursor-pointer flex items-center justify-center gap-2">
+        <i data-lucide="check" class="w-4 h-4"></i> Salvar Template
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
   /* ---------- Auth guard ---------- */
   (function () {
@@ -1190,8 +1248,8 @@
     const errBot      = document.getElementById('bot-config-error');
     const emptyBot    = document.getElementById('bot-config-empty');
     
-    let currentCategory = 'salas';
-    let botConfigData = { salas: [], setores: [], sistemas: [], problemas: [] };
+    let currentCategory = 'flow';
+    let botConfigData = { menus: [], flow: [], salas: [], setores: [], sistemas: [], problemas: [] };
 
     function token() { return localStorage.getItem('auth_token') || ''; }
 
@@ -1201,16 +1259,116 @@
       setTimeout(() => errBot.classList.add('hidden'), 3500);
     }
 
-    const ICONS = { salas: 'door-open', setores: 'layers', sistemas: 'monitor', problemas: 'alert-triangle' };
+    const ICONS = { menus: 'edit-3', flow: 'git-branch', salas: 'briefcase', setores: 'door-open', sistemas: 'monitor', problemas: 'alert-triangle' };
 
     function renderBotConfig() {
-      listBot.querySelectorAll('li[data-key]').forEach(el => el.remove());
+      listBot.innerHTML = '';
       const items = botConfigData[currentCategory] || [];
-      if (items.length === 0) {
-        emptyBot.classList.remove('hidden');
+      const isFlow = currentCategory === 'flow';
+
+      const wrapAdd = document.getElementById('add-bot-item-wrap');
+      const inputKey = document.getElementById('novo-bot-item-key');
+      const inputVal = document.getElementById('novo-bot-item-input');
+      const titleAdd = document.getElementById('add-bot-item-title');
+
+      if (wrapAdd) {
+        wrapAdd.style.display = currentCategory === 'flow' || currentCategory === 'menus' ? 'none' : 'flex';
+        if (currentCategory === 'flow') {
+          titleAdd.textContent = "Organizar Jornada do Usuário";
+        } else {
+          inputKey.classList.add('hidden');
+          titleAdd.textContent = "Adicionar " + (currentCategory === 'salas' ? 'Setor' : (currentCategory === 'setores' ? 'Sala' : 'Item'));
+        }
+      }
+
+      if (isFlow) {
+        // Layout de Sequência (Timeline)
+        const mainMenus = botConfigData.menus || [];
+        const order = botConfigData.journeyOrder || ['saudacao', 'setores', 'demanda', 'sistemas'];
+
+        const stepLabels = {
+          saudacao: { title: 'Boas-vindas', icon: 'hand' },
+          setores:  { title: 'Localização', icon: 'map-pin' },
+          demanda:  { title: 'Triagem de Demanda', icon: 'help-circle' },
+          sistemas: { title: 'Detalhamento', icon: 'clipboard-list' }
+        };
+
+        const journeyWrap = document.createElement('div');
+        journeyWrap.className = 'flex flex-col gap-3 mt-2';
+
+        order.forEach(function (k, idx) {
+          // No flow, k já deve ser a string da chave (ex: "saudacao")
+          const item = mainMenus.find(m => m.key === k) || { key: k, value: '' };
+          const info = stepLabels[k] || { title: k, icon: 'circle' };
+          
+          const div = document.createElement('div');
+          div.className = 'flex items-center gap-4 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm hover:border-orange-200 transition-all';
+          div.innerHTML =
+            '<div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">' +
+              '<i data-lucide="' + (info.icon || 'circle') + '" class="w-5 h-5"></i>' +
+            '</div>' +
+            '<div class="flex-1">' +
+              '<h4 class="text-sm font-bold text-gray-800">' + (idx + 1) + '. ' + info.title + '</h4>' +
+              '<p class="text-[10px] text-gray-400 font-medium truncate max-w-[200px]">' + (item.value || 'Template vazio').substring(0, 50) + '...</p>' +
+            '</div>' +
+            '<div class="flex items-center gap-1 bg-gray-50 p-1 rounded-lg">' +
+              '<button onclick="moveBotJourneyItem(' + idx + ', -1)" class="p-1.5 text-gray-500 hover:text-orange-600 hover:bg-white rounded-md transition-all cursor-pointer border-none bg-transparent ' + (idx === 0 ? 'opacity-20 pointer-events-none' : '') + '"><i data-lucide="chevron-up" class="w-4 h-4"></i></button>' +
+              '<button onclick="moveBotJourneyItem(' + idx + ', 1)" class="p-1.5 text-gray-500 hover:text-orange-600 hover:bg-white rounded-md transition-all cursor-pointer border-none bg-transparent ' + (idx === order.length - 1 ? 'opacity-20 pointer-events-none' : '') + '"><i data-lucide="chevron-down" class="w-4 h-4"></i></button>' +
+            '</div>';
+          journeyWrap.appendChild(div);
+        });
+        
+        listBot.appendChild(journeyWrap);
+        lucide.createIcons({ nodes: listBot.querySelectorAll('[data-lucide]') });
         return;
       }
-      emptyBot.classList.add('hidden');
+
+      const isMenu = currentCategory === 'menus';
+      if (isMenu) {
+        // Layout de Edição de Templates (WhatsApp Style)
+        const labels = {
+          saudacao: 'Menu Saudação (Boas-vindas)',
+          setores:  'Menu Setor de atuação (Listagem de Salas)',
+          demanda:  'Menu Demanda (Sistemas vs Hardware)',
+          sistemas: 'Menu Sistemas (Listagem de Softwares)'
+        };
+
+        items.forEach(function (item) {
+          const div = document.createElement('div');
+          div.className = 'flex flex-col gap-2 mb-6';
+          const label = labels[item.key] || item.key;
+          
+          div.innerHTML =
+            '<div class="flex items-center justify-between px-1">' +
+              '<span class="text-[10px] font-black uppercase tracking-widest text-gray-400">' + label + '</span>' +
+              '<button onclick="openEditMenuModal(\'' + item.key + '\', \'menus\')" class="flex items-center gap-1.5 text-[10px] font-bold text-brand-500 hover:text-brand-700 transition-colors border-none bg-transparent cursor-pointer">' +
+                '<i data-lucide="edit-3" class="w-3 h-3"></i> EDITAR TEMPLATE' +
+              '</button>' +
+            '</div>' +
+            '<div class="relative group">' +
+              '<div class="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-gray-100 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed relative">' +
+                '<div class="absolute -left-2 top-0 w-0 h-0 border-t-[12px] border-t-white border-l-[12px] border-l-transparent"></div>' +
+                escHtml(item.value) +
+              '</div>' +
+            '</div>';
+          listBot.appendChild(div);
+        });
+        lucide.createIcons({ nodes: listBot.querySelectorAll('[data-lucide]') });
+        return;
+      }
+
+      if (items.length === 0) {
+        const emptyLi = document.createElement('li');
+        emptyLi.className = 'text-sm text-gray-400 text-center py-6';
+        emptyLi.id = 'bot-config-empty';
+        emptyLi.innerHTML = '<i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i> Nenhum item cadastrado.';
+        listBot.appendChild(emptyLi);
+        lucide.createIcons({ nodes: listBot.querySelectorAll('[data-lucide]') });
+        return;
+      }
+      
+      const ul = document.createElement('ul');
+      ul.className = 'flex flex-col gap-2';
       items.forEach(function (item) {
         const li = document.createElement('li');
         li.dataset.key = item.key;
@@ -1227,11 +1385,73 @@
                   'transition-all opacity-0 group-hover:opacity-100 cursor-pointer border-none bg-transparent">' +
             '<i data-lucide="trash-2" class="w-4 h-4"></i>' +
           '</button>';
-        listBot.appendChild(li);
+        ul.appendChild(li);
       });
+      listBot.appendChild(ul);
       lucide.createIcons({ nodes: listBot.querySelectorAll('[data-lucide]') });
     }
 
+    let currentEditCategory = 'menus';
+    window.openEditMenuModal = function(key, category = 'menus') {
+      currentEditKey = key;
+      currentEditCategory = category;
+      const item = (botConfigData[category] || []).find(i => i.key === key);
+      if (!item) return;
+      
+      document.getElementById('edit-menu-textarea').value = item.value;
+      document.getElementById('edit-menu-title').textContent = 'Editar ' + (key.charAt(0).toUpperCase() + key.slice(1));
+      document.getElementById('modal-edit-menu-overlay').classList.remove('hidden');
+      lucide.createIcons({ nodes: document.getElementById('modal-edit-menu-overlay') });
+    };
+
+    document.getElementById('btn-close-edit-menu').onclick = () => document.getElementById('modal-edit-menu-overlay').classList.add('hidden');
+    document.getElementById('btn-cancel-edit-menu').onclick = () => document.getElementById('modal-edit-menu-overlay').classList.add('hidden');
+
+    document.getElementById('btn-save-edit-menu').onclick = async function() {
+      const value = document.getElementById('edit-menu-textarea').value;
+      const btn = this;
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Salvando...';
+      lucide.createIcons({ nodes: btn });
+
+      try {
+        const res  = await fetch('/api/config/bot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
+          body: JSON.stringify({ category: currentEditCategory, value, key: currentEditKey }),
+        });
+        if (!res.ok) { showErrorBot('Erro ao salvar.'); return; }
+        
+        document.getElementById('modal-edit-menu-overlay').classList.add('hidden');
+        loadBotConfig();
+      } catch { 
+        showErrorBot('Erro de conexão.'); 
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        lucide.createIcons({ nodes: btn });
+      }
+    };
+
+    window.moveBotJourneyItem = async function(idx, direction) {
+      const order = botConfigData.journeyOrder || ['saudacao', 'setores', 'demanda', 'sistemas'];
+      const newIdx = idx + direction;
+      if (newIdx < 0 || newIdx >= order.length) return;
+
+      // Troca de posição
+      [order[idx], order[newIdx]] = [order[newIdx], order[idx]];
+
+      try {
+        const res = await fetch('/api/config/bot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
+          body: JSON.stringify({ category: 'journeyOrder', value: order }),
+        });
+        if (!res.ok) { showErrorBot('Erro ao salvar nova ordem.'); return; }
+        loadBotConfig();
+      } catch { showErrorBot('Erro de conexão.'); }
+    };
     async function loadBotConfig() {
       try {
         const res  = await fetch('/api/config/bot', { headers: { 'Authorization': 'Bearer ' + token() } });
@@ -1243,17 +1463,22 @@
 
     async function addBotConfigItem() {
       const value = inputBot.value.trim();
+      const key = document.getElementById('novo-bot-item-key').value.trim();
+      
       if (!value) { inputBot.focus(); return; }
+      if (currentCategory === 'flow' && !key) { document.getElementById('novo-bot-item-key').focus(); return; }
+
       btnAddBot.disabled = true;
       try {
         const res  = await fetch('/api/config/bot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
-          body: JSON.stringify({ category: currentCategory, value }),
+          body: JSON.stringify({ category: currentCategory, value, key: key || undefined }),
         });
         const data = await res.json();
         if (!res.ok) { showErrorBot(data.error || 'Erro ao adicionar item'); return; }
         inputBot.value = '';
+        document.getElementById('novo-bot-item-key').value = '';
         loadBotConfig();
         if (currentCategory === 'salas' && typeof loadSalasSelect === 'function') loadSalasSelect();
       } catch { showErrorBot('Erro de conexão.'); }
@@ -1296,7 +1521,7 @@
         activeBtn.classList.remove('text-gray-400');
         activeBtn.classList.add('bg-white', 'text-brand-500', 'shadow-sm');
       }
-      inputBot.placeholder = "Novo " + (cat === 'salas' ? 'sala' : cat.slice(0, -1)) + "...";
+      inputBot.placeholder = "Novo " + (cat === 'salas' ? 'setor' : (cat === 'setores' ? 'sala' : cat.slice(0, -1))) + "...";
       renderBotConfig();
     };
 
@@ -1513,6 +1738,7 @@
   let currentOrigin  = 'site';
   let _allTickets    = [];
   let _detalheTicket = null;
+  let _pollingTimer   = null;
 
 
 
@@ -1768,6 +1994,11 @@
 
   load();
   updateTabCounts();
+  // Atualização automática da lista principal a cada 30 segundos
+  setInterval(() => {
+    if (!document.getElementById('modal-detalhe').classList.contains('hidden')) return;
+    load();
+  }, 30000);
 
   /* ─────────────────────────────────── MODAL DETALHES ─── */
 
@@ -1787,9 +2018,20 @@
 
 
   function openDetalhe(ticket) {
-    _detalheTicket = ticket;
     const modal = document.getElementById('modal-detalhe');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    lucide.createIcons();
 
+    renderDetalhe(ticket);
+
+    // Inicia atualização automática (polling) enquanto o modal estiver aberto
+    if (_pollingTimer) clearInterval(_pollingTimer);
+    _pollingTimer = setInterval(loadDetalheRefresh, 5000); 
+  }
+
+  function renderDetalhe(ticket, isUpdate = false) {
+    _detalheTicket = ticket;
     document.getElementById('det-titulo').textContent = 'Chamado #' + ticket.id;
 
     if (ticket.createdAt) {
@@ -1797,8 +2039,6 @@
       document.getElementById('det-data').textContent =
         d.toLocaleDateString('pt-BR') + ' às ' +
         d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
-    } else {
-      document.getElementById('det-data').textContent = '';
     }
 
     // Status badge
@@ -1827,18 +2067,12 @@
 
     // Solicitante
     const solNome = ticket.solicitanteNome || ticket.solicitante || ticket.name || '—';
-    const solEmail = ticket.solicitanteEmail || (ticket.solicitante ? ticket.solicitante + (ticket.solicitante.includes('@') ? '' : '') : '') || '—';
     makeAvatarEl(solNome);
     document.getElementById('det-nome').textContent   = solNome;
     document.getElementById('det-numero').textContent = ticket.solicitanteEmail || ticket.solicitante || '—';
 
     // Badge WhatsApp
-    const wppBadge = document.getElementById('det-wpp-badge');
-    if (ticket.notifWpp) {
-      wppBadge.style.display = 'inline-flex';
-    } else {
-      wppBadge.style.display = 'none';
-    }
+    document.getElementById('det-wpp-badge').style.display = ticket.notifWpp ? 'inline-flex' : 'none';
 
     // Sala
     document.getElementById('det-sala').textContent = ticket.sala || 'Não informado';
@@ -1855,11 +2089,53 @@
     } else {
       anexoWrapper.classList.add('hidden');
     }
+    
+    // Chat / Conversa
+    const chatWrapper = document.getElementById('det-chat-wrapper');
+    const chatContainer = document.getElementById('det-chat-container');
+    const oldScroll = chatContainer.scrollTop;
+    const wasAtBottom = chatContainer.scrollHeight - chatContainer.scrollTop <= chatContainer.clientHeight + 40;
+    
+    chatContainer.innerHTML = '';
+    
+    if (ticket.conversa && ticket.conversa.length > 0) {
+      chatWrapper.classList.remove('hidden');
+      ticket.conversa.forEach(msg => {
+        const div = document.createElement('div');
+        const isUser = msg.role === 'user';
+        div.className = 'chat-msg ' + (isUser ? 'chat-msg-user' : 'chat-msg-tech');
+        
+        let html = escHtml(msg.text);
+        if (msg.attachment) {
+           const ext = msg.attachment.split('.').pop().toLowerCase();
+           const isAudio = ['mp3', 'ogg', 'wav', 'm4a', 'oga', 'amr'].includes(ext);
+           
+           if (isAudio) {
+             html += `<div class="mt-2"><audio controls class="max-w-full h-8"><source src="/uploads/${encodeURIComponent(msg.attachment)}" type="audio/${ext === 'mp3' ? 'mpeg' : ext}">Seu navegador não suporta áudio.</audio></div>`;
+           } else {
+             html += `<br><a href="/uploads/${encodeURIComponent(msg.attachment)}" target="_blank" class="mt-2 inline-flex items-center gap-1 font-bold ${isUser ? 'text-brand-500' : 'text-white/80 underline'}"><i data-lucide="paperclip" class="w-3 h-3"></i> Ver Anexo</a>`;
+           }
+        }
+        html += `<span class="chat-time">${new Date(msg.timestamp).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})} ${!isUser ? ' - ' + (msg.atendente || 'Técnico') : ''}</span>`;
+        
+        div.innerHTML = html;
+        chatContainer.appendChild(div);
+      });
+      
+      if (wasAtBottom || !isUpdate) {
+        setTimeout(() => chatContainer.scrollTop = chatContainer.scrollHeight, 50);
+      } else {
+        chatContainer.scrollTop = oldScroll;
+      }
+    } else {
+      chatWrapper.classList.add('hidden');
+    }
 
-    // Observação Técnica
+    // Observação Técnica - SÓ ATUALIZA SE NÃO FOR UM UPDATE EM BACKGROUND (ou se o campo estiver vazio)
     const obsInput = document.getElementById('det-obs-input');
-    obsInput.value = ticket.observacao || '';
-    document.getElementById('det-obs-saved-badge').classList.add('hidden');
+    if (!isUpdate || !obsInput.value.trim()) {
+       obsInput.value = ticket.observacao || '';
+    }
 
     // Botões de ação
     const btnAssumir  = document.getElementById('btn-assumir');
@@ -1867,13 +2143,7 @@
     const st = ticket.status;
     btnAssumir.classList.toggle('hidden',  st !== 'aberto');
     btnConcluir.classList.toggle('hidden', st === 'concluido' || st === 'cancelado' || st === 'arquivado');
-    btnAssumir.disabled  = false;
-    btnConcluir.disabled = false;
-
-    if (st === 'arquivado') {
-      document.getElementById('det-status-badge').innerHTML = '<span class="badge bg-gray-200 text-gray-700">Arquivado</span>';
-    }
-
+    
     // Anexo da solução
     const mDetAnexoSolWrapper = document.getElementById('det-anexo-solucao-wrapper');
     const mDetAnexoSolLink = document.getElementById('det-anexo-solucao-link');
@@ -1884,22 +2154,16 @@
       mDetAnexoSolWrapper.classList.add('hidden');
     }
 
-    // Reset file input
-    const mDetObsFile  = document.getElementById('det-obs-file');
-    const mDetObsFileLabel = document.getElementById('det-obs-file-label');
-    const mDetBtnClearFile = document.getElementById('btn-clear-obs-file');
-    if (mDetObsFile) {
-      mDetObsFile.value = '';
-      mDetObsFileLabel.textContent = 'Clique para anexar imagem/arquivo...';
-      mDetBtnClearFile.classList.add('hidden');
-    }
-
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
     lucide.createIcons();
+
+    // Inicia atualização automática (polling) enquanto o modal estiver aberto
+    if (_pollingTimer) clearInterval(_pollingTimer);
+    _pollingTimer = setInterval(loadDetalheRefresh, 5000); // 5 segundos
   }
 
   function closeDetalhe() {
+    if (_pollingTimer) clearInterval(_pollingTimer);
+    _pollingTimer = null;
     document.getElementById('modal-detalhe').classList.add('hidden');
     document.body.style.overflow = '';
   }
@@ -2060,27 +2324,19 @@
       lucide.createIcons();
       
       if (data.id) {
-        // Atualiza objeto local
-        _detalheTicket.observacao = data.observacao;
-        _detalheTicket.anexo_solucao = data.anexo_solucao;
-        
-        // Se salvou anexo, mostra na UI
-        if (data.anexo_solucao) {
-           const wrap = document.getElementById('det-anexo-solucao-wrapper');
-           const link = document.getElementById('det-anexo-solucao-link');
-           wrap.classList.remove('hidden');
-           link.href = '/uploads/' + data.anexo_solucao;
-        }
+        // Atualiza a UI com os novos dados (incluindo o chat)
+        renderDetalhe(data);
 
         document.getElementById('det-obs-saved-badge').classList.remove('hidden');
         setTimeout(() => document.getElementById('det-obs-saved-badge').classList.add('hidden'), 2000);
         showToast('Resposta enviada com sucesso!', 'success');
         
-        // Limpa o anexo se houver
+        // Limpa o campo de texto e anexo
+        document.getElementById('det-obs-input').value = '';
         const mDetBtnClearFile = document.getElementById('btn-clear-obs-file');
         if (mDetBtnClearFile) mDetBtnClearFile.click();
         
-        load(); // Recarrega lista
+        load(); // Recarrega lista principal
       } else {
         showToast(data.error || 'Erro ao enviar resposta.', 'error');
       }
@@ -2091,6 +2347,18 @@
       showToast('Erro de conexão.', 'error');
     });
   });
+
+  /* Atualiza apenas o modal de detalhe */
+  async function loadDetalheRefresh() {
+    if (!_detalheTicket) return;
+    try {
+      const res = await fetch('/api/tickets/' + _detalheTicket.id, {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('auth_token') }
+      });
+      const t = await res.json();
+      if (t && t.id) renderDetalhe(t, true);
+    } catch {}
+  }
 
   // Clique nas linhas da tabela
   document.getElementById('tbody').addEventListener('click', function(e) {

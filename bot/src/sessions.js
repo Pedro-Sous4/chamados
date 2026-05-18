@@ -70,4 +70,17 @@ function resetSession(userId) {
   saveSessions();
 }
 
-module.exports = { getSession, updateSession, resetSession };
+/**
+ * Procura o ID de sessão real (com @c.us ou @lid) a partir de um número ou ID parcial.
+ * @param {string} identifier 
+ * @returns {string} ID completo encontrado ou o próprio identificador
+ */
+function findSessionId(identifier) {
+  if (sessions[identifier]) return identifier;
+  const clean = identifier.replace(/\D/g, '');
+  if (!clean) return identifier;
+  const found = Object.keys(sessions).find(k => k.startsWith(clean));
+  return found || identifier;
+}
+
+module.exports = { getSession, updateSession, resetSession, findSessionId };

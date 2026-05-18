@@ -1,0 +1,62 @@
+{
+  "63359894454336@lid": {
+    "state": "chamado_criado",
+    "type": "Sistemas - Sienge",
+    "anexos": [
+      "1778777928443_63359894454336.jpg"
+    ],
+    "nome": "Teste",
+    "sala": "Administrativo (Jurídico, Estratégico, Financeiro, etc)",
+    "setor": "Jurídico",
+    "sistema": "Sienge",
+    "descricao": "Tresdf"
+  },
+  "275354681876729@lid": {
+    "state": "aguardando_sala",
+    "type": null,
+    "anexos": [],
+    "nome": "ta serto, perdoa eu"
+  },
+  "43108804854015@lid": {
+    "state": "aguardando_nome",
+    "type": null,
+    "anexos": []
+  },
+  "191581395144895@lid": {
+    "state": "aguardando_sala",
+    "type": null,
+    "anexos": [],
+    "nome": "Opa boa tarde"
+  },
+  "174547605176546@lid": {
+    "state": "aguardando_anexo",
+    "type": "Sistemas - Esolution",
+    "anexos": [],
+    "nome": "Pode falar?",
+    "sala": "Pós-Vendas",
+    "isSalaVendas": false,
+    "sistema": "Esolution",
+    "descricao": "Preciso que vc crie um Voucher de Upgrade de Diárias ... os líderes de sala vão gerar esse Voucher dentroda ficha do cliente,  fazer download e enviar por e-mail o PDF com cópia para o Márcio, para mim ... trata-se de um brinde extra que tem custo para LGM onde os Líderes usam esse curso para ajudar a fechar uma venda"
+  },
+  "74895740424253@lid": {
+    "state": "em_atendimento",
+    "type": "Sistemas - ASC Brasil",
+    "anexos": [],
+    "nome": "Keki",
+    "sala": "Sala Golden",
+    "isSalaVendas": true,
+    "sistema": "ASC Brasil",
+    "descricao": "Oikarai",
+    "targetTicketId": 1778828642262
+  },
+  "224150148894793@lid": {
+    "state": "aguardando_nome",
+    "type": null,
+    "anexos": []
+  },
+  "260425375580210@lid": {
+    "state": "aguardando_nome",
+    "type": null,
+    "anexos": []
+  }
+}

@@ -1,5 +1,6 @@
 const http = require('http');
 const { sendToUser, sendFileToUser } = require('./context');
+const { updateSession, resetSession, findSessionId } = require('./sessions');
 
 const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3000;
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
@@ -70,10 +71,9 @@ function startWebhook() {
         return;
       }
 
-      // Formata o userId no padrão do WhatsApp, preservando @c.us ou @lid
-      const userId = (telefone.includes('@c.us') || telefone.includes('@lid'))
-        ? telefone
-        : `${telefone.replace(/\D/g, '')}@c.us`;
+      // Formata o userId no padrão do WhatsApp, resolvendo conflitos @lid/@c.us
+      const userId = findSessionId(telefone);
+      console.log(`[webhook] Resolvido userId: ${userId} (entrada: ${telefone})`);
 
       let mensagem;
 
@@ -87,6 +87,9 @@ function startWebhook() {
           `*#${id}* — ${tipo}\n` +
           `👤 Assumido por: ${atendente}\n\n` +
           `Em breve você receberá o atendimento.`;
+          
+        // Sincroniza estado do bot para Chat Direto
+        updateSession(userId, { state: 'em_atendimento', targetTicketId: id });
       } else if (endpoint === '/webhook/chamado-concluido') {
         const id   = data.id   || '—';
         const tipo = data.tipo || data.type || '—';
@@ -121,6 +124,9 @@ function startWebhook() {
           `*De:* ${atendente}\n\n` +
           `${obs}`;
           
+        // Se o chamado foi atualizado, garantimos que o usuário está no modo chat
+        updateSession(userId, { state: 'em_atendimento', targetTicketId: id });
+          
         if (anexo) {
            try {
              await sendFileToUser(userId, anexo, 'anexo', mensagem);
@@ -136,6 +142,12 @@ function startWebhook() {
 
       try {
         await sendToUser(userId, mensagem);
+        
+        // Se for conclusão, reseta a sessão após enviar a mensagem
+        if (endpoint === '/webhook/chamado-concluido') {
+           resetSession(userId);
+        }
+
         res.writeHead(200);
         res.end('Mensagem enviada');
       } catch (err) {
