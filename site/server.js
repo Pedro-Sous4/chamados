@@ -459,69 +459,6 @@ const ROUTES = {
     sendJson(res, 200, { email: session.email, role: session.role || 'usuario' });
   },
 
-  // ── Gerenciamento de logins ──────────────────────────────────────────────────
-
-  'GET /api/logins': (req, res) => {
-    if (!requireAuth(req, res)) return;
-    const logins = readCollection('logins').map(({ password, ...rest }) => rest);
-    sendJson(res, 200, { logins });
-  },
-
-  'POST /api/logins': (req, res) => {
-    const session = requireAuth(req, res);
-    if (!session) return;
-    let body = '';
-    req.on('data', chunk => (body += chunk));
-    req.on('end', () => {
-      let data;
-      try { data = JSON.parse(body); } catch {
-        return sendJson(res, 400, { error: 'JSON inválido' });
-      }
-      const { email, password, name, role } = data;
-      if (!email || !password) return sendJson(res, 422, { error: 'Email e senha são obrigatórios' });
-      const ALLOWED_ROLES = ['administrador', 'supervisor', 'usuario'];
-      const normalizedRole = role ? String(role).toLowerCase() : 'usuario';
-      if (!ALLOWED_ROLES.includes(normalizedRole)) return sendJson(res, 422, { error: 'Nível de permissão inválido' });
-      const logins = readCollection('logins');
-      if (logins.find(u => u.email.toLowerCase() === String(email).toLowerCase())) {
-        return sendJson(res, 409, { error: 'Email já cadastrado' });
-      }
-      const record = {
-        email: String(email).toLowerCase().slice(0, 120),
-        password: hashPassword(String(password)),
-        role: normalizedRole,
-      };
-      if (name) record.name = String(name).slice(0, 120);
-      const saved = insertCollection('logins', record);
-      const { password: _pw, ...safeUser } = saved;
-      sendJson(res, 201, safeUser);
-    });
-  },
-
-  'DELETE /api/logins': (req, res) => {
-    const session = requireAuth(req, res);
-    if (!session) return;
-    let body = '';
-    req.on('data', chunk => (body += chunk));
-    req.on('end', () => {
-      let data;
-      try { data = JSON.parse(body); } catch {
-        return sendJson(res, 400, { error: 'JSON inválido' });
-      }
-      const { id } = data;
-      if (!id) return sendJson(res, 422, { error: 'id é obrigatório' });
-      let logins = readCollection('logins');
-      const target = logins.find(u => String(u.id) === String(id));
-      if (!target) return sendJson(res, 404, { error: 'Usuário não encontrado' });
-      if (target.email.toLowerCase() === session.email.toLowerCase()) {
-        return sendJson(res, 400, { error: 'Não é possível remover o próprio usuário' });
-      }
-      logins = logins.filter(u => String(u.id) !== String(id));
-      const loginsPath = path.join(DADOS_DIR, 'logins.json');
-      fs.writeFileSync(loginsPath, JSON.stringify(logins, null, 2), 'utf-8');
-      sendJson(res, 200, { ok: true });
-    });
-  },
 
   /**
    * GET /api/tipos
@@ -594,9 +531,14 @@ const ROUTES = {
       if (logins.some(u => u.email.toLowerCase() === data.email.toLowerCase())) {
         return sendJson(res, 409, { error: 'E-mail já cadastrado' });
       }
-      const crypto = require('crypto');
-      const hash = crypto.createHash('sha512').update(data.password).digest('hex');
-      const novo = { id: Date.now(), name: data.name || '', email: data.email, password: hash, role: data.role || 'usuario' };
+      const novo = { 
+        id: Date.now(), 
+        name: data.name || '', 
+        email: data.email.toLowerCase(), 
+        password: hashPassword(data.password), 
+        role: data.role || 'usuario',
+        createdAt: new Date().toISOString()
+      };
       logins.push(novo);
       fs.writeFileSync(path.join(DADOS_DIR, 'logins.json'), JSON.stringify(logins, null, 2), 'utf-8');
       sendJson(res, 201, { ok: true });
@@ -834,7 +776,12 @@ const ROUTES = {
       try { data = JSON.parse(body); } catch {
         return sendJson(res, 400, { error: 'JSON inválido' });
       }
-      const numero = (data.numero || '').replace(/\D/g, '');
+      const config = readCollection('config');
+      if (data.numero !== undefined) {
+        config.whatsapp = config.whatsapp || {};
+        config.whatsapp.numero = String(data.numero).replace(/\D/g, '');
+      }
+      const configPath = path.join(DADOS_DIR, 'config.json');
       fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
       sendJson(res, 200, { ok: true, whatsapp: config.whatsapp });
     });

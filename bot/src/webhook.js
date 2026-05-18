@@ -1,4 +1,5 @@
 const http = require('http');
+const path = require('path');
 const { sendToUser, sendFileToUser } = require('./context');
 const { updateSession, resetSession, findSessionId } = require('./sessions');
 
@@ -104,7 +105,7 @@ function startWebhook() {
           
         if (anexo) {
            try {
-             await sendFileToUser(userId, anexo, 'solucao', mensagem);
+             await sendFileToUser(userId, anexo, path.basename(anexo), mensagem);
              res.writeHead(200);
              res.end('Mensagem com anexo enviada');
              return;
@@ -129,7 +130,7 @@ function startWebhook() {
           
         if (anexo) {
            try {
-             await sendFileToUser(userId, anexo, 'anexo', mensagem);
+             await sendFileToUser(userId, anexo, path.basename(anexo), mensagem);
              res.writeHead(200);
              res.end('Mensagem avulsa com anexo enviada');
              return;

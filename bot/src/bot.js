@@ -31,12 +31,20 @@ function mimeToExt(mime) {
     'video/mp4': 'mp4', 'video/3gpp': '3gp',
     'audio/ogg': 'ogg', 'audio/mpeg': 'mp3', 'audio/mp4': 'm4a',
     'audio/ogg; codecs=opus': 'ogg',
+    'audio/webm': 'webm', 'audio/webm; codecs=opus': 'webm',
+    'audio/aac': 'aac', 'audio/wav': 'wav', 'audio/amr': 'amr',
     'application/msword': 'doc',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
     'application/vnd.ms-excel': 'xls',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
   };
-  return map[mime] || null;
+  let ext = map[mime];
+  if (!ext && mime) {
+    if (mime.startsWith('audio/')) return 'ogg';
+    if (mime.startsWith('video/')) return 'mp4';
+    if (mime.startsWith('image/')) return 'jpg';
+  }
+  return ext || null;
 }
 
 // ── Proteção 1: ignora mensagens com mais de 2 minutos (replay ao reconectar)
@@ -216,7 +224,7 @@ async function processState(client, message, userId) {
   if (isMedia) {
     const rawExt = mimeToExt(message.mimetype || '') || 'jpg';
     const filename = `${Date.now()}_${userId.replace(/\D/g, '')}.${rawExt}`;
-    const absoluteDadosDir = 'D:\\PROJETOS SISTEMAS\\workspace chamados\\workspace chamados\\dados';
+    const absoluteDadosDir = path.resolve(__dirname, '..', '..', 'dados');
     const filePath = path.join(absoluteDadosDir, 'uploads', filename);
 
     // 1. REGISTRA NA SESSÃO AGORA (Prioridade Máxima)
@@ -243,7 +251,9 @@ async function processState(client, message, userId) {
        await send(`Recebi seu anexo. Vou guardá-lo para o chamado.`);
        if (!text) return;
     } else {
-       if (!text) return;
+       if (session.state !== 'em_atendimento' && session.state !== 'aguardando_comentario') {
+          if (!text) return;
+       }
     }
   }
 
@@ -316,6 +326,12 @@ async function processState(client, message, userId) {
     
     tickets[tIdx].updatedAt = new Date().toISOString();
     storage.saveAll('tickets', tickets);
+    
+    // Limpa anexos da sessão após salvar para evitar duplicação em envios seguintes
+    if (temAnexo) {
+      session.anexos = [];
+      updateSession(userId, session);
+    }
     
     console.log(`[CHAT] Mensagem de ${userId} anexada ao chamado #${ticketId}`);
     return;

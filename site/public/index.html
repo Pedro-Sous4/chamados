@@ -585,6 +585,68 @@
         <div id="det-chat-container" class="flex flex-col gap-3 max-h-[350px] overflow-y-auto p-4 bg-brand-50 rounded-xl border border-brand-100">
           <!-- Mensagens entram aqui -->
         </div>
+
+        <!-- NOVO: Barra de entrada no estilo WhatsApp Premium -->
+        <div id="det-chat-input-wrapper" class="flex flex-col gap-1.5 mt-2 relative w-full">
+          <!-- Pré-visualização de anexo pendente -->
+          <div id="chat-preview-bar" class="hidden flex items-center justify-between px-3.5 py-2 rounded-xl bg-orange-50 border border-orange-200 text-xs text-orange-800 animate-in fade-in duration-200">
+            <div class="flex items-center gap-2 min-w-0">
+              <i data-lucide="paperclip" class="w-4 h-4 text-orange-500 shrink-0"></i>
+              <span id="chat-preview-filename" class="font-bold truncate">arquivo.ext</span>
+            </div>
+            <button type="button" id="btn-chat-clear-preview" class="p-1 text-red-500 hover:text-red-700 bg-transparent border-none cursor-pointer">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+          
+          <!-- Seletor de Emojis Flutuante -->
+          <div id="chat-emoji-drawer" class="hidden absolute bottom-full left-2 mb-2 p-3 bg-white border border-brand-100 rounded-2xl shadow-xl z-50 grid grid-cols-8 gap-2 w-64 max-w-full animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <!-- Emojis preenchidos via JS -->
+          </div>
+          
+          <div class="flex items-center gap-2.5 w-full">
+            <!-- Campo de entrada arredondado (estilo WhatsApp) -->
+            <div class="flex items-center gap-2 flex-1 bg-brand-50 border border-brand-100 rounded-full px-4 py-2 relative min-w-0">
+              <!-- Botão Emoji -->
+              <button type="button" id="btn-chat-emoji" class="text-brand-400 hover:text-brand-600 transition-all p-1 bg-transparent border-none cursor-pointer shrink-0">
+                <i data-lucide="smile" class="w-5 h-5"></i>
+              </button>
+              
+              <!-- Input de Texto -->
+              <input type="text" id="chat-text-input" placeholder="Mensagem" autocomplete="off"
+                     class="flex-1 bg-transparent outline-none border-none text-brand-900 text-sm py-1 placeholder-brand-300 min-w-0" />
+              
+              <!-- Indicador de Gravação de Áudio -->
+              <div id="chat-recording-indicator" class="hidden flex-1 flex items-center justify-between text-red-600 text-xs py-1">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0"></span>
+                  <span class="font-bold uppercase tracking-wider">Gravando...</span>
+                  <span id="chat-recording-timer" class="font-mono font-bold">00:00</span>
+                </div>
+                <button type="button" id="btn-chat-cancel-recording" class="flex items-center gap-1 text-[10px] font-bold text-gray-400 hover:text-red-500 transition-colors bg-transparent border-none cursor-pointer mr-2">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Cancelar
+                </button>
+              </div>
+              
+              <!-- Botão Anexar Arquivo -->
+              <label for="chat-file-input" id="lbl-chat-file" class="text-brand-400 hover:text-brand-600 transition-all p-1 bg-transparent border-none cursor-pointer shrink-0">
+                <i data-lucide="paperclip" class="w-5 h-5"></i>
+                <input type="file" id="chat-file-input" class="hidden" />
+              </label>
+              
+              <!-- Botão Capturar Câmera/Foto -->
+              <label for="chat-camera-input" id="lbl-chat-camera" class="text-brand-400 hover:text-brand-600 transition-all p-1 bg-transparent border-none cursor-pointer shrink-0">
+                <i data-lucide="camera" class="w-5 h-5"></i>
+                <input type="file" id="chat-camera-input" class="hidden" accept="image/*" capture="environment" />
+              </label>
+            </div>
+            
+            <!-- Botão circular flutuante externo (Microfone / Enviar) -->
+            <button type="button" id="btn-chat-action" class="w-11 h-11 rounded-full flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.12)] transition-all bg-white border border-brand-100 cursor-pointer text-brand-500 hover:scale-105 active:scale-95">
+              <i id="chat-action-icon" data-lucide="mic" class="w-5 h-5"></i>
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Observação Técnica (Novo) -->
@@ -2098,29 +2160,35 @@
     
     chatContainer.innerHTML = '';
     
-    if (ticket.conversa && ticket.conversa.length > 0) {
+    const isWpp = ticket.origem !== 'site';
+    if ((ticket.conversa && ticket.conversa.length > 0) || isWpp) {
       chatWrapper.classList.remove('hidden');
-      ticket.conversa.forEach(msg => {
-        const div = document.createElement('div');
-        const isUser = msg.role === 'user';
-        div.className = 'chat-msg ' + (isUser ? 'chat-msg-user' : 'chat-msg-tech');
-        
-        let html = escHtml(msg.text);
-        if (msg.attachment) {
-           const ext = msg.attachment.split('.').pop().toLowerCase();
-           const isAudio = ['mp3', 'ogg', 'wav', 'm4a', 'oga', 'amr'].includes(ext);
-           
-           if (isAudio) {
-             html += `<div class="mt-2"><audio controls class="max-w-full h-8"><source src="/uploads/${encodeURIComponent(msg.attachment)}" type="audio/${ext === 'mp3' ? 'mpeg' : ext}">Seu navegador não suporta áudio.</audio></div>`;
-           } else {
-             html += `<br><a href="/uploads/${encodeURIComponent(msg.attachment)}" target="_blank" class="mt-2 inline-flex items-center gap-1 font-bold ${isUser ? 'text-brand-500' : 'text-white/80 underline'}"><i data-lucide="paperclip" class="w-3 h-3"></i> Ver Anexo</a>`;
-           }
-        }
-        html += `<span class="chat-time">${new Date(msg.timestamp).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})} ${!isUser ? ' - ' + (msg.atendente || 'Técnico') : ''}</span>`;
-        
-        div.innerHTML = html;
-        chatContainer.appendChild(div);
-      });
+      
+      if (ticket.conversa && ticket.conversa.length > 0) {
+        ticket.conversa.forEach(msg => {
+          const div = document.createElement('div');
+          const isUser = msg.role === 'user';
+          div.className = 'chat-msg ' + (isUser ? 'chat-msg-user' : 'chat-msg-tech');
+          
+          let html = escHtml(msg.text);
+          if (msg.attachment) {
+             const ext = msg.attachment.split('.').pop().toLowerCase();
+             const isAudio = ['mp3', 'ogg', 'wav', 'm4a', 'oga', 'amr', 'webm'].includes(ext);
+             
+             if (isAudio) {
+               html += `<div class="mt-2"><audio controls class="max-w-full h-8"><source src="/uploads/${encodeURIComponent(msg.attachment)}" type="audio/${ext === 'mp3' ? 'mpeg' : ext === 'webm' ? 'webm' : ext}">Seu navegador não suporta áudio.</audio></div>`;
+             } else {
+               html += `<br><a href="/uploads/${encodeURIComponent(msg.attachment)}" target="_blank" class="mt-2 inline-flex items-center gap-1 font-bold ${isUser ? 'text-brand-500' : 'text-white/80 underline'}"><i data-lucide="paperclip" class="w-3 h-3"></i> Ver Anexo</a>`;
+             }
+          }
+          html += `<span class="chat-time">${new Date(msg.timestamp).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})} ${!isUser ? ' - ' + (msg.atendente || 'Técnico') : ''}</span>`;
+          
+          div.innerHTML = html;
+          chatContainer.appendChild(div);
+        });
+      } else {
+        chatContainer.innerHTML = '<div class="text-center py-8 text-brand-300/80 text-xs font-semibold">Nenhuma mensagem no chat ainda. Envie uma mensagem abaixo!</div>';
+      }
       
       if (wasAtBottom || !isUpdate) {
         setTimeout(() => chatContainer.scrollTop = chatContainer.scrollHeight, 50);
@@ -2129,6 +2197,18 @@
       }
     } else {
       chatWrapper.classList.add('hidden');
+    }
+
+    // Gerencia a exibição dos painéis de entrada conforme origem do chamado
+    const obsWrapper = document.getElementById('det-obs-wrapper');
+    const chatInputWrapper = document.getElementById('det-chat-input-wrapper');
+    
+    if (isWpp) {
+      if (obsWrapper) obsWrapper.classList.add('hidden');
+      if (chatInputWrapper) chatInputWrapper.classList.remove('hidden');
+    } else {
+      if (obsWrapper) obsWrapper.classList.remove('hidden');
+      if (chatInputWrapper) chatInputWrapper.classList.add('hidden');
     }
 
     // Observação Técnica - SÓ ATUALIZA SE NÃO FOR UM UPDATE EM BACKGROUND (ou se o campo estiver vazio)
@@ -2610,6 +2690,295 @@
     el.className = 'hidden';
     el.textContent = '';
   }
+
+  // ── NOVO: Funcionalidades Premium do Chat (WhatsApp-Style) ───────────────────
+  let selectedChatFile = null;
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let recordingStartTime = 0;
+  let recordingInterval = null;
+  let isRecording = false;
+
+  // Inicialização do Painel de Emojis
+  const CHAT_EMOJIS = ['😊', '😂', '🥰', '😍', '👍', '🙏', '❤️', '🎉', '🤔', '😢', '🔥', '👏', '👌', '🚀', '👀', '✨'];
+  const chatEmojiDrawer = document.getElementById('chat-emoji-drawer');
+  if (chatEmojiDrawer) {
+    chatEmojiDrawer.innerHTML = CHAT_EMOJIS.map(e => `
+      <button type="button" class="emoji-btn text-lg p-1.5 hover:bg-brand-50 rounded-lg bg-transparent border-none cursor-pointer text-center transition-all hover:scale-115" data-emoji="${e}">
+        ${e}
+      </button>
+    `).join('');
+    
+    chatEmojiDrawer.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-emoji]');
+      if (!btn) return;
+      const emoji = btn.dataset.emoji;
+      const input = document.getElementById('chat-text-input');
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const val = input.value;
+      input.value = val.slice(0, start) + emoji + val.slice(end);
+      input.focus();
+      input.selectionStart = input.selectionEnd = start + emoji.length;
+      triggerChatActionIconUpdate();
+    });
+  }
+
+  // Abre/fecha painel de emojis
+  document.getElementById('btn-chat-emoji').addEventListener('click', (e) => {
+    e.stopPropagation();
+    chatEmojiDrawer.classList.toggle('hidden');
+  });
+  document.addEventListener('click', () => {
+    if (chatEmojiDrawer) chatEmojiDrawer.classList.add('hidden');
+  });
+  if (chatEmojiDrawer) {
+    chatEmojiDrawer.addEventListener('click', (e) => e.stopPropagation());
+  }
+
+  // Toggle do ícone do botão de ação (Microfone vs Enviar)
+  function triggerChatActionIconUpdate() {
+    const text = document.getElementById('chat-text-input').value.trim();
+    const hasTextOrFile = text.length > 0 || selectedChatFile !== null;
+    const iconEl = document.getElementById('chat-action-icon');
+    
+    if (hasTextOrFile) {
+      iconEl.setAttribute('data-lucide', 'send');
+    } else {
+      iconEl.setAttribute('data-lucide', 'mic');
+    }
+    lucide.createIcons({ nodes: [document.getElementById('btn-chat-action')] });
+  }
+
+  document.getElementById('chat-text-input').addEventListener('input', triggerChatActionIconUpdate);
+
+  // Seleção de Arquivos (Paperclip & Camera)
+  function handleChatFileSelect(input) {
+    const file = input.files[0];
+    if (file) {
+      selectedChatFile = file;
+      document.getElementById('chat-preview-filename').textContent = file.name;
+      document.getElementById('chat-preview-bar').classList.remove('hidden');
+      triggerChatActionIconUpdate();
+    }
+  }
+
+  document.getElementById('chat-file-input').addEventListener('change', function() {
+    handleChatFileSelect(this);
+  });
+  document.getElementById('chat-camera-input').addEventListener('change', function() {
+    handleChatFileSelect(this);
+  });
+
+  // Limpar anexo pendente
+  document.getElementById('btn-chat-clear-preview').addEventListener('click', function() {
+    selectedChatFile = null;
+    document.getElementById('chat-file-input').value = '';
+    document.getElementById('chat-camera-input').value = '';
+    document.getElementById('chat-preview-bar').classList.add('hidden');
+    triggerChatActionIconUpdate();
+  });
+
+  // Gravação de Áudio Nativa (MediaRecorder)
+  async function startRecording() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showToast('Seu navegador não suporta gravação de áudio.', 'error');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunks = [];
+      
+      let options = { mimeType: 'audio/webm' };
+      if (!MediaRecorder.isTypeSupported('audio/webm')) {
+        options = { mimeType: 'audio/ogg' };
+      }
+      
+      mediaRecorder = new MediaRecorder(stream, options);
+      
+      mediaRecorder.ondataavailable = function(e) {
+        if (e.data && e.data.size > 0) {
+          audioChunks.push(e.data);
+        }
+      };
+      
+      mediaRecorder.onstop = async function() {
+        stream.getTracks().forEach(track => track.stop());
+        
+        if (audioChunks.length === 0) return;
+        if (!isRecording) return; // Cancelado
+        
+        const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+        const ext = mediaRecorder.mimeType.includes('ogg') ? 'ogg' : 'webm';
+        const file = new File([blob], `audio_${Date.now()}.${ext}`, { type: mediaRecorder.mimeType });
+        
+        await sendChatVoiceMessage(file);
+      };
+      
+      mediaRecorder.start();
+      isRecording = true;
+      recordingStartTime = Date.now();
+      
+      // UI de Gravação
+      document.getElementById('chat-text-input').classList.add('hidden');
+      document.getElementById('lbl-chat-file').classList.add('hidden');
+      document.getElementById('lbl-chat-camera').classList.add('hidden');
+      document.getElementById('btn-chat-emoji').classList.add('hidden');
+      document.getElementById('chat-recording-indicator').classList.remove('hidden');
+      
+      recordingInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+        const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+        const s = String(elapsed % 60).padStart(2, '0');
+        document.getElementById('chat-recording-timer').textContent = `${m}:${s}`;
+      }, 1000);
+      
+      const iconEl = document.getElementById('chat-action-icon');
+      iconEl.setAttribute('data-lucide', 'check');
+      lucide.createIcons({ nodes: [document.getElementById('btn-chat-action')] });
+      
+      const btnAction = document.getElementById('btn-chat-action');
+      btnAction.classList.add('bg-red-500', 'text-white');
+      btnAction.classList.remove('bg-white', 'text-brand-500');
+      
+    } catch (err) {
+      console.error('Erro ao acessar microfone:', err);
+      showToast('Permissão de microfone negada ou indisponível.', 'error');
+    }
+  }
+
+  function stopRecording(save = true) {
+    if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+    
+    clearInterval(recordingInterval);
+    isRecording = save;
+    mediaRecorder.stop();
+    
+    // UI Normal
+    document.getElementById('chat-text-input').classList.remove('hidden');
+    document.getElementById('lbl-chat-file').classList.remove('hidden');
+    document.getElementById('lbl-chat-camera').classList.remove('hidden');
+    document.getElementById('btn-chat-emoji').classList.remove('hidden');
+    document.getElementById('chat-recording-indicator').classList.add('hidden');
+    document.getElementById('chat-recording-timer').textContent = '00:00';
+    
+    const btnAction = document.getElementById('btn-chat-action');
+    btnAction.classList.remove('bg-red-500', 'text-white');
+    btnAction.classList.add('bg-white', 'text-brand-500');
+    
+    triggerChatActionIconUpdate();
+  }
+
+  document.getElementById('btn-chat-cancel-recording').addEventListener('click', function(e) {
+    e.stopPropagation();
+    stopRecording(false);
+  });
+
+  // Envio de Mensagem de Voz (PTT)
+  async function sendChatVoiceMessage(file) {
+    const token = localStorage.getItem('auth_token');
+    const btnAction = document.getElementById('btn-chat-action');
+    btnAction.disabled = true;
+    
+    try {
+      const uploadRes = await fetch('/api/upload?filename=' + encodeURIComponent(file.name), {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: file
+      });
+      if (!uploadRes.ok) throw new Error('Falha no upload do áudio');
+      const uploadData = await uploadRes.json();
+      
+      const patchRes = await fetch('/api/tickets/' + _detalheTicket.id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({
+          observacao: '',
+          anexo_solucao: uploadData.filename
+        })
+      });
+      if (!patchRes.ok) throw new Error('Falha ao enviar áudio');
+      const updatedTicket = await patchRes.json();
+      
+      renderDetalhe(updatedTicket);
+      showToast('Mensagem de voz enviada!', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Erro ao enviar áudio.', 'error');
+    } finally {
+      btnAction.disabled = false;
+    }
+  }
+
+  // Envio de Mensagem Padrão (Texto + Anexo)
+  async function handleChatSend() {
+    const textInput = document.getElementById('chat-text-input');
+    const text = textInput.value.trim();
+    
+    if (!text && !selectedChatFile) return;
+    
+    const token = localStorage.getItem('auth_token');
+    const btnAction = document.getElementById('btn-chat-action');
+    btnAction.disabled = true;
+    
+    try {
+      let uploadedFilename = null;
+      
+      if (selectedChatFile) {
+        const uploadRes = await fetch('/api/upload?filename=' + encodeURIComponent(selectedChatFile.name), {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token },
+          body: selectedChatFile
+        });
+        if (!uploadRes.ok) throw new Error('Falha no upload do arquivo');
+        const uploadData = await uploadRes.json();
+        uploadedFilename = uploadData.filename;
+      }
+      
+      const body = { observacao: text };
+      if (uploadedFilename) body.anexo_solucao = uploadedFilename;
+      
+      const patchRes = await fetch('/api/tickets/' + _detalheTicket.id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(body)
+      });
+      if (!patchRes.ok) throw new Error('Falha ao enviar mensagem');
+      const updatedTicket = await patchRes.json();
+      
+      textInput.value = '';
+      document.getElementById('btn-chat-clear-preview').click();
+      renderDetalhe(updatedTicket);
+      showToast('Mensagem enviada!', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Erro ao enviar mensagem.', 'error');
+    } finally {
+      btnAction.disabled = false;
+    }
+  }
+
+  // Evento do botão de ação circular
+  document.getElementById('btn-chat-action').addEventListener('click', function() {
+    const text = document.getElementById('chat-text-input').value.trim();
+    const hasTextOrFile = text.length > 0 || selectedChatFile !== null;
+    
+    if (isRecording) {
+      stopRecording(true);
+    } else if (hasTextOrFile) {
+      handleChatSend();
+    } else {
+      startRecording();
+    }
+  });
+
+  // Enviar com Enter no input
+  document.getElementById('chat-text-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleChatSend();
+    }
+  });
 
   // Modal form submit
   document.getElementById('modal-form').addEventListener('submit', async function(e) {
