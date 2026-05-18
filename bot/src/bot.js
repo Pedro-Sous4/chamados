@@ -80,7 +80,7 @@ function getAjudaTipoMenu(session = {}) {
 
 function getSetoresMenu(session = {}) {
   const config = getBotConfig();
-  const template = config.menus.setores || `Olá {nome}! Para começar, informe de qual sala ou setor você faz parte:`;
+  const template = `Olá {nome}! Informe o seu setor específico:`;
   const text = template.replace(/{nome}/g, session.nome || '');
   
   const setores = config.setores || [];
@@ -426,8 +426,8 @@ async function processState(client, message, userId) {
 
   // ── ESTADO: aguardando_nome ────────────────────────────────────────────────
   if (session.state === 'aguardando_nome') {
-    const newSession = updateSession(userId, { state: 'aguardando_setor', nome: text });
-    await send(getSetoresMenu(newSession));
+    const newSession = updateSession(userId, { state: 'aguardando_sala', nome: text });
+    await send(getSalasMenu(newSession));
     return;
   }
 
