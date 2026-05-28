@@ -262,10 +262,12 @@ const ROUTES = {
       const ori = t.origem === 'site' ? 'site' : 'bot';
       stats.porOrigem[ori]++;
 
-      // Setor (Sala) - Pega apenas o sub-setor final se for Administrativo
+      // Setor (Sala) - Pega apenas o sub-setor final
       const salaStr = t.sala || 'Não Informado';
       let salaBase = salaStr;
-      if (salaStr.includes('Administrativo')) {
+      if (salaStr.includes(' - ')) {
+        salaBase = salaStr.split(' - ')[1];
+      } else if (salaStr.includes('Administrativo')) {
         const matches = salaStr.match(/\(([^)]+)\)$/);
         if (matches && matches[1]) {
           salaBase = matches[1];
@@ -378,7 +380,7 @@ const ROUTES = {
         return sendJson(res, 400, { error: 'JSON inválido' });
       }
 
-      const { name, number, type, description, notifWpp, solicitante, origem } = data;
+      const { name, number, type, description, notifWpp, solicitante, origem, sala } = data;
       if (!name || !number || !type || !description) {
         return sendJson(res, 422, { error: 'Campos obrigatórios: name, number, type, description' });
       }
@@ -390,6 +392,7 @@ const ROUTES = {
         description: String(description).slice(0, 1000),
         status: 'aberto',
         origem: origem ? String(origem).slice(0, 20) : 'site',
+        sala: sala ? String(sala).slice(0, 120) : 'Não informado',
       };
       if (notifWpp) record.notifWpp = String(notifWpp).replace(/\D/g, '').slice(0, 20);
 
@@ -664,17 +667,19 @@ const ROUTES = {
     });
   },
 
-  // ── Salas (Retrocompatibilidade para o modal de Novo Chamado) ──────────────
+  // ── Salas (Modal de Novo Chamado no site) ──────────────
 
   'GET /api/salas': (req, res) => {
     if (!requireAuth(req, res)) return;
-    const botConfig = readCollection('bot_config');
-    let salas = [];
-    if (Array.isArray(botConfig.salas)) {
-      salas = botConfig.salas.map((nome, i) => ({ id: i, nome }));
-    } else if (typeof botConfig.salas === 'object' && botConfig.salas !== null) {
-      salas = Object.entries(botConfig.salas).map(([k, nome]) => ({ id: k, nome }));
-    }
+    
+    // Lista unificada baseada na nova UX do Bot
+    const locais = [
+      ...['Jurídico', 'Financeiro', 'Estratégico', 'Controladoria', 'Contas a Receber', 'Central de Contratos', 'Diretoria'].map(s => 'VITA - ' + s),
+      ...['Conexão Laghetto', 'RH', 'DP', 'Unique'].map(s => 'AVA - ' + s),
+      ...['Pedras Altas', 'Pedras Altas Noturno', 'NBA Park', 'Golden Resort'].map(s => 'Vendas - ' + s)
+    ];
+
+    const salas = locais.map((nome, i) => ({ id: i + 1, nome }));
     sendJson(res, 200, { salas });
   },
 

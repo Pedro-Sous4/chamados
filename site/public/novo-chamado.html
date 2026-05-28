@@ -113,6 +113,23 @@
         </div>
       </div>
 
+      <!-- Setor / Sala -->
+      <div class="flex flex-col gap-1.5">
+        <label for="sala" class="text-xs font-bold uppercase tracking-wider text-brand-500">
+          Setor / Sala <span class="text-brand-400">*</span>
+        </label>
+        <div class="relative">
+          <i data-lucide="map-pin" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-300 pointer-events-none"></i>
+          <select id="sala" required
+                  class="w-full pl-9 pr-3 py-2.5 border-[1.5px] border-brand-100 rounded-lg
+                         text-sm text-brand-900 bg-white outline-none
+                         focus:border-brand-400 focus:ring-2 focus:ring-brand-400/10
+                         transition-all appearance-none">
+            <option value="">Carregando…</option>
+          </select>
+        </div>
+      </div>
+
       <!-- Descrição -->
       <div class="flex flex-col gap-1.5">
         <label for="description" class="text-xs font-bold uppercase tracking-wider text-brand-500">
@@ -169,6 +186,23 @@
     }
   })();
 
+  // Carrega salas/setores do servidor
+  (async function () {
+    const sel = document.getElementById('sala');
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res   = await fetch('/api/salas', { headers: { 'Authorization': 'Bearer ' + token } });
+      const data  = await res.json();
+      const salas = data.salas || [];
+      sel.innerHTML = '<option value="">Selecione…</option>' +
+        salas.map(function(s) {
+          return '<option value="' + s.nome + '">' + s.nome + '</option>';
+        }).join('');
+    } catch {
+      sel.innerHTML = '<option value="">Erro ao carregar setores/salas</option>';
+    }
+  })();
+
   document.getElementById('btn-logout').addEventListener('click', async function () {
     const t = localStorage.getItem('auth_token');
     await fetch('/api/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(() => {});
@@ -202,9 +236,10 @@
     const name        = document.getElementById('name').value.trim();
     const number      = document.getElementById('number').value.trim();
     const type        = document.getElementById('type').value;
+    const sala        = document.getElementById('sala').value;
     const description = document.getElementById('description').value.trim();
 
-    if (!name || !number || !type || !description) {
+    if (!name || !number || !type || !sala || !description) {
       showAlert('Preencha todos os campos obrigatórios.', 'error');
       return;
     }
@@ -218,7 +253,7 @@
       const res = await fetch('/api/tickets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ name, number, type, description, origem: 'site', notifWpp: number.replace(/\D/g, '') }),
+        body: JSON.stringify({ name, number, type, sala, description, origem: 'site', notifWpp: number.replace(/\D/g, '') }),
       });
       const data = await res.json();
 

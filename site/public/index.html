@@ -1074,12 +1074,9 @@
 
       <!-- Seletor de Categoria -->
       <div class="flex gap-2 p-1 bg-gray-100 rounded-xl">
-        <button onclick="changeBotCategory('menus')" id="cat-btn-menus" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Menu</button>
-        <button onclick="changeBotCategory('flow')" id="cat-btn-flow" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg bg-white text-brand-500 shadow-sm transition-all border-none cursor-pointer">Flow</button>
-        <button onclick="changeBotCategory('salas')" id="cat-btn-salas" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Setor</button>
-        <button onclick="changeBotCategory('setores')" id="cat-btn-setores" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Salas</button>
+        <button onclick="changeBotCategory('menus')" id="cat-btn-menus" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg bg-white text-brand-500 shadow-sm transition-all border-none cursor-pointer">Menus</button>
         <button onclick="changeBotCategory('sistemas')" id="cat-btn-sistemas" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Sistemas</button>
-        <button onclick="changeBotCategory('problemas')" id="cat-btn-problemas" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Problemas</button>
+        <button onclick="changeBotCategory('problemas')" id="cat-btn-problemas" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Problemas/Infra</button>
       </div>
 
       <!-- Campo de adição (só aparece se não for a aba de Início) -->
@@ -1315,8 +1312,8 @@
     const errBot      = document.getElementById('bot-config-error');
     const emptyBot    = document.getElementById('bot-config-empty');
     
-    let currentCategory = 'flow';
-    let botConfigData = { menus: [], flow: [], salas: [], setores: [], sistemas: [], problemas: [] };
+    let currentCategory = 'menus';
+    let botConfigData = { menus: [], sistemas: [], problemas: [] };
 
     function token() { return localStorage.getItem('auth_token') || ''; }
 
@@ -1974,7 +1971,8 @@
     }
     const ICONS = { 'Nome':'user', 'CPF':'id-card', 'E-mail':'mail', 'Sala':'building-2', 'Função':'briefcase', 'Anexo':'paperclip' };
     let html = '<div class="flex flex-col gap-1">';
-    lines.forEach(function(line) {
+    const displayLines = lines.slice(0, 2);
+    displayLines.forEach(function(line) {
       const sep = line.indexOf(':');
       if (sep === -1) return;
       const key = line.slice(0, sep).trim();
@@ -1987,6 +1985,9 @@
           '<span class="text-[.68rem] text-brand-700 truncate" title="' + escHtml(val) + '">' + escHtml(val) + '</span>' +
         '</div>';
     });
+    if (lines.length > 2) {
+      html += '<span class="text-[9px] text-brand-300 font-semibold mt-0.5">… ver mais</span>';
+    }
     html += '</div>';
     return html;
   }
@@ -2149,9 +2150,42 @@
 
     // Anexo
     const anexoWrapper = document.getElementById('det-anexo-wrapper');
-    const anexoLink    = document.getElementById('det-anexo-link');
-    if (ticket.attachment) {
-      anexoLink.href = '/uploads/' + encodeURIComponent(ticket.attachment);
+    if (ticket.attachments && ticket.attachments.length > 0) {
+      let html = '';
+      ticket.attachments.forEach((att, idx) => {
+        html += `<div class="flex items-center justify-between p-2 bg-white rounded-lg border border-orange-100 mb-2 last:mb-0">
+          <div class="flex items-center gap-2">
+            <i data-lucide="paperclip" class="w-4 h-4 text-orange-600"></i>
+            <span class="text-xs text-orange-950 font-medium">Anexo ${idx + 1}</span>
+          </div>
+          <a href="/uploads/${encodeURIComponent(att)}" target="_blank" class="px-3 py-1 bg-orange-600 text-white rounded text-xs font-bold hover:bg-orange-700 transition-all">
+            Visualizar
+          </a>
+        </div>`;
+      });
+      anexoWrapper.innerHTML = `<div class="w-full">
+        <p class="text-xs font-bold text-orange-900 mb-2">Anexos disponíveis (${ticket.attachments.length}):</p>
+        ${html}
+      </div>`;
+      anexoWrapper.classList.remove('hidden');
+      anexoWrapper.className = "mt-4 p-4 bg-orange-50 border border-orange-200 rounded-xl flex flex-col";
+    } else if (ticket.attachment) {
+      anexoWrapper.innerHTML = `<div class="flex items-center justify-between w-full">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600">
+            <i data-lucide="paperclip"></i>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-orange-900">Anexo disponível</p>
+            <p class="text-xs text-orange-700">A foto foi enviada pelo WhatsApp</p>
+          </div>
+        </div>
+        <a id="det-anexo-link" href="/uploads/${encodeURIComponent(ticket.attachment)}" target="_blank" class="px-5 py-2 bg-orange-600 text-white rounded-lg text-sm font-bold hover:bg-orange-700 transition-all shadow-md">
+          Ver Anexo
+        </a>
+      </div>`;
+      anexoWrapper.classList.remove('hidden');
+      anexoWrapper.className = "hidden mt-4 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between";
       anexoWrapper.classList.remove('hidden');
     } else {
       anexoWrapper.classList.add('hidden');
@@ -2176,15 +2210,18 @@
           div.className = 'chat-msg ' + (isUser ? 'chat-msg-user' : 'chat-msg-tech');
           
           let html = escHtml(msg.text);
-          if (msg.attachment) {
-             const ext = msg.attachment.split('.').pop().toLowerCase();
-             const isAudio = ['mp3', 'ogg', 'wav', 'm4a', 'oga', 'amr', 'webm'].includes(ext);
-             
-             if (isAudio) {
-               html += `<div class="mt-2"><audio controls class="max-w-full h-8"><source src="/uploads/${encodeURIComponent(msg.attachment)}" type="audio/${ext === 'mp3' ? 'mpeg' : ext === 'webm' ? 'webm' : ext}">Seu navegador não suporta áudio.</audio></div>`;
-             } else {
-               html += `<br><a href="/uploads/${encodeURIComponent(msg.attachment)}" target="_blank" class="mt-2 inline-flex items-center gap-1 font-bold ${isUser ? 'text-brand-500' : 'text-white/80 underline'}"><i data-lucide="paperclip" class="w-3 h-3"></i> Ver Anexo</a>`;
-             }
+          
+          const attachments = msg.attachments || (msg.attachment ? [msg.attachment] : []);
+          if (attachments.length > 0) {
+             attachments.forEach(att => {
+                const ext = att.split('.').pop().toLowerCase();
+                const isAudio = ['mp3', 'ogg', 'wav', 'm4a', 'oga', 'amr', 'webm'].includes(ext);
+                if (isAudio) {
+                  html += `<div class="mt-2"><audio controls class="max-w-full h-8"><source src="/uploads/${encodeURIComponent(att)}" type="audio/${ext === 'mp3' ? 'mpeg' : ext === 'webm' ? 'webm' : ext}">Seu navegador não suporta áudio.</audio></div>`;
+                } else {
+                  html += `<br><a href="/uploads/${encodeURIComponent(att)}" target="_blank" class="mt-2 inline-flex items-center gap-1 font-bold ${isUser ? 'text-brand-500' : 'text-white/80 underline'}"><i data-lucide="paperclip" class="w-3 h-3"></i> Ver Anexo</a>`;
+                }
+             });
           }
           html += `<span class="chat-time">${new Date(msg.timestamp).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})} ${!isUser ? ' - ' + (msg.atendente || 'Técnico') : ''}</span>`;
           
