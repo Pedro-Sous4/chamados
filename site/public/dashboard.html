@@ -99,9 +99,15 @@
 
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
             margin-bottom: 2rem;
+        }
+
+        @media (min-width: 1200px) {
+            .kpi-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
         }
 
         .card {
@@ -111,6 +117,10 @@
             border-radius: 1.5rem;
             box-shadow: 0 8px 30px rgba(146,86,22,0.06);
             position: relative;
+        }
+
+        .kpi-card {
+            padding: 1.2rem 1rem;
         }
 
         .kpi-card h3 { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
@@ -237,6 +247,10 @@
             <div class="value" id="valAberto" style="color: #b45309;">0</div>
         </div>
         <div class="card kpi-card">
+            <h3>Em Atendimento</h3>
+            <div class="value" id="valEmAtendimento" style="color: #3b82f6;">0</div>
+        </div>
+        <div class="card kpi-card">
             <h3>Concluídos</h3>
             <div class="value" id="valConcluido" style="color: #16a34a;">0</div>
         </div>
@@ -308,6 +322,7 @@
         document.getElementById('valWhatsApp').innerText = data.porOrigem.bot || 0;
         document.getElementById('valSite').innerText = data.porOrigem.site || 0;
         document.getElementById('valAberto').innerText = data.status.aberto;
+        document.getElementById('valEmAtendimento').innerText = data.status.em_atendimento || 0;
         document.getElementById('valConcluido').innerText = data.status.concluido;
 
         renderCharts(data);

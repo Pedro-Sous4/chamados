@@ -329,14 +329,6 @@ const ROUTES = {
       tickets = tickets.filter(t => t.status !== 'arquivado');
     }
     if (filterType)   tickets = tickets.filter(t => t.type   === filterType);
-    if (filterQ) {
-      tickets = tickets.filter(t =>
-        String(t.id).includes(filterQ) ||
-        (t.name        || '').toLowerCase().includes(filterQ) ||
-        (t.number      || '').toLowerCase().includes(filterQ) ||
-        (t.description || '').toLowerCase().includes(filterQ)
-      );
-    }
 
     // Enriquece tickets com nome/email do solicitante a partir de logins
     const logins = readCollection('logins');
@@ -361,6 +353,19 @@ const ROUTES = {
         solicitanteEmail: match.email || t.solicitanteEmail || '',
       });
     });
+
+    if (filterQ) {
+      tickets = tickets.filter(t =>
+        String(t.id).includes(filterQ) ||
+        (t.name             || '').toLowerCase().includes(filterQ) ||
+        (t.number           || '').toLowerCase().includes(filterQ) ||
+        (t.description      || '').toLowerCase().includes(filterQ) ||
+        (t.solicitanteNome  || '').toLowerCase().includes(filterQ) ||
+        (t.solicitanteEmail || '').toLowerCase().includes(filterQ) ||
+        (t.solicitante      || '').toLowerCase().includes(filterQ) ||
+        (t.sala             || '').toLowerCase().includes(filterQ)
+      );
+    }
 
     sendJson(res, 200, { total: tickets.length, tickets });
   },
@@ -575,6 +580,9 @@ const ROUTES = {
     if (!config.setores) config.setores = [];
     if (!config.sistemas) config.sistemas = [];
     if (!config.problemas) config.problemas = [];
+    if (!config.setores_vita) config.setores_vita = [];
+    if (!config.setores_ava) config.setores_ava = [];
+    if (!config.salas_vendas) config.salas_vendas = [];
     
     // Converte tudo para um formato uniforme para o frontend: [{ key: "...", value: "..." }]
     const responseData = {};
@@ -617,6 +625,13 @@ const ROUTES = {
         if (Array.isArray(value)) {
           // Substituição completa (ex: reordenação de journeyOrder)
           config[category] = value;
+        } else if (key !== undefined && key !== null && key !== '') {
+          const index = Number(key);
+          if (index >= 0 && index < items.length) {
+            items[index] = value;
+          } else {
+            return sendJson(res, 404, { error: 'Item não encontrado' });
+          }
         } else {
           if (items.includes(value)) return sendJson(res, 409, { error: 'Item já existe' });
           items.push(value);
@@ -672,11 +687,15 @@ const ROUTES = {
   'GET /api/salas': (req, res) => {
     if (!requireAuth(req, res)) return;
     
-    // Lista unificada baseada na nova UX do Bot
+    const config = readCollection('bot_config');
+    const setoresVita = config.setores_vita || ['Jurídico', 'Financeiro', 'Estratégico', 'Controladoria', 'Contas a Receber', 'Central de Contratos', 'Diretoria', 'Backoffice'];
+    const setoresAva = config.setores_ava || ['Conexão Laghetto', 'RH', 'DP', 'Unique'];
+    const salasVendas = config.salas_vendas || ['Pedras Altas', 'Pedras Altas Noturno', 'NBA Park', 'Golden Resort'];
+
     const locais = [
-      ...['Jurídico', 'Financeiro', 'Estratégico', 'Controladoria', 'Contas a Receber', 'Central de Contratos', 'Diretoria'].map(s => 'VITA - ' + s),
-      ...['Conexão Laghetto', 'RH', 'DP', 'Unique'].map(s => 'AVA - ' + s),
-      ...['Pedras Altas', 'Pedras Altas Noturno', 'NBA Park', 'Golden Resort'].map(s => 'Vendas - ' + s)
+      ...setoresVita.map(s => 'VITA - ' + s),
+      ...setoresAva.map(s => 'AVA - ' + s),
+      ...salasVendas.map(s => 'Vendas - ' + s)
     ];
 
     const salas = locais.map((nome, i) => ({ id: i + 1, nome }));

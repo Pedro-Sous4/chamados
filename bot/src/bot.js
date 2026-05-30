@@ -78,21 +78,33 @@ function getLocalPrincipalMenu(session = {}) {
   return withFooter(text.replace(/{nome}/g, session.nome || ''), true);
 }
 
-const SETORES_VITA = ['Jurídico', 'Financeiro', 'Estratégico', 'Controladoria', 'Contas a Receber', 'Central de Contratos', 'Diretoria'];
+function getSectoresVita() {
+  const config = getBotConfig();
+  return config.setores_vita || ['Jurídico', 'Financeiro', 'Estratégico', 'Controladoria', 'Contas a Receber', 'Central de Contratos', 'Diretoria', 'Backoffice'];
+}
 function getSetorVitaMenu() {
-  const text = `Você está no *VITA*. Qual o seu setor?\n\n` + SETORES_VITA.map((s, i) => `${i+1}. ${s}`).join('\n');
+  const setores = getSectoresVita();
+  const text = `Você está no *VITA*. Qual o seu setor?\n\n` + setores.map((s, i) => `${i+1}. ${s}`).join('\n');
   return withFooter(text, true);
 }
 
-const SETORES_AVA = ['Conexão Laghetto', 'RH', 'DP', 'Unique'];
+function getSectoresAva() {
+  const config = getBotConfig();
+  return config.setores_ava || ['Conexão Laghetto', 'RH', 'DP', 'Unique'];
+}
 function getSetorAvaMenu() {
-  const text = `Você está no *AVA*. Qual o seu setor?\n\n` + SETORES_AVA.map((s, i) => `${i+1}. ${s}`).join('\n');
+  const setores = getSectoresAva();
+  const text = `Você está no *AVA*. Qual o seu setor?\n\n` + setores.map((s, i) => `${i+1}. ${s}`).join('\n');
   return withFooter(text, true);
 }
 
-const SALAS_VENDAS = ['Pedras Altas', 'Pedras Altas Noturno', 'NBA Park', 'Golden Resort'];
+function getSalasVendas() {
+  const config = getBotConfig();
+  return config.salas_vendas || ['Pedras Altas', 'Pedras Altas Noturno', 'NBA Park', 'Golden Resort'];
+}
 function getSalaVendasMenu() {
-  const text = `Você está em *Vendas*. Qual a sua sala?\n\n` + SALAS_VENDAS.map((s, i) => `${i+1}. ${s}`).join('\n');
+  const salas = getSalasVendas();
+  const text = `Você está em *Vendas*. Qual a sua sala?\n\n` + salas.map((s, i) => `${i+1}. ${s}`).join('\n');
   return withFooter(text, true);
 }
 
@@ -555,7 +567,8 @@ async function processState(client, message, userId) {
 
   // ── ESTADO: aguardando_setor_vita ──────────────────────────────────────────
   if (session.state === 'aguardando_setor_vita') {
-    const sName = SETORES_VITA[parseInt(text) - 1];
+    const setores = getSectoresVita();
+    const sName = setores[parseInt(text) - 1];
     if (!sName) { await send(`Opção inválida.\n\n${getSetorVitaMenu()}`); return; }
     updateSession(userId, { state: 'aguardando_demanda_tipo', local: `VITA - ${sName}` });
     await send(getDemandaTipoMenu());
@@ -564,7 +577,8 @@ async function processState(client, message, userId) {
 
   // ── ESTADO: aguardando_setor_ava ───────────────────────────────────────────
   if (session.state === 'aguardando_setor_ava') {
-    const sName = SETORES_AVA[parseInt(text) - 1];
+    const setores = getSectoresAva();
+    const sName = setores[parseInt(text) - 1];
     if (!sName) { await send(`Opção inválida.\n\n${getSetorAvaMenu()}`); return; }
     updateSession(userId, { state: 'aguardando_demanda_tipo', local: `AVA - ${sName}` });
     await send(getDemandaTipoMenu());
@@ -573,7 +587,8 @@ async function processState(client, message, userId) {
 
   // ── ESTADO: aguardando_sala_vendas ─────────────────────────────────────────
   if (session.state === 'aguardando_sala_vendas') {
-    const sName = SALAS_VENDAS[parseInt(text) - 1];
+    const salas = getSalasVendas();
+    const sName = salas[parseInt(text) - 1];
     if (!sName) { await send(`Opção inválida.\n\n${getSalaVendasMenu()}`); return; }
     updateSession(userId, { state: 'aguardando_demanda_tipo', local: `Vendas - ${sName}` });
     await send(getDemandaTipoMenu());
