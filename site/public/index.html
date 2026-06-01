@@ -277,7 +277,7 @@
 
     <div class="relative flex-1 min-w-[220px] max-w-xs">
       <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-300 pointer-events-none"></i>
-      <input type="search" id="q" placeholder="Buscar nome, número, descrição…"
+      <input type="search" id="q" autocomplete="off" placeholder="Buscar nome, número, descrição…"
              class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-brand-100
                     bg-brand-50 text-sm text-brand-900 outline-none
                     focus:bg-white focus:border-brand-400 focus:ring-2 focus:ring-brand-400/15
@@ -384,6 +384,21 @@
         </thead>
         <tbody id="tbody"></tbody>
       </table>
+    </div>
+
+    <!-- Paginação -->
+    <div id="pagination-controls" class="flex items-center justify-between px-6 py-4 border-t border-brand-100 bg-white" style="display:none">
+      <div class="text-xs text-brand-400 font-semibold">
+        Exibindo <span id="pag-info-start">0</span> a <span id="pag-info-end">0</span> de <span id="pag-info-total">0</span> chamados
+      </div>
+      <div class="flex gap-2">
+        <button id="btn-pag-prev" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-brand-200 text-xs font-bold text-brand-600 bg-white hover:bg-brand-50 transition-all cursor-pointer disabled:opacity-40 disabled:pointer-events-none">
+          <i data-lucide="chevron-left" class="w-4 h-4"></i> Anterior
+        </button>
+        <button id="btn-pag-next" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-brand-200 text-xs font-bold text-brand-600 bg-white hover:bg-brand-50 transition-all cursor-pointer disabled:opacity-40 disabled:pointer-events-none">
+          Próximo <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Empty state -->
@@ -1073,13 +1088,13 @@
     <div id="tab-config-bot" class="flex flex-col flex-1 overflow-hidden p-6 gap-4">
 
       <!-- Seletor de Categoria -->
-      <div class="flex gap-2 p-1 bg-gray-100 rounded-xl">
-        <button onclick="changeBotCategory('menus')" id="cat-btn-menus" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Menu</button>
-        <button onclick="changeBotCategory('flow')" id="cat-btn-flow" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg bg-white text-brand-500 shadow-sm transition-all border-none cursor-pointer">Flow</button>
-        <button onclick="changeBotCategory('salas')" id="cat-btn-salas" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Setor</button>
-        <button onclick="changeBotCategory('setores')" id="cat-btn-setores" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Salas</button>
-        <button onclick="changeBotCategory('sistemas')" id="cat-btn-sistemas" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Sistemas</button>
-        <button onclick="changeBotCategory('problemas')" id="cat-btn-problemas" class="cat-btn flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer">Problemas</button>
+      <div class="flex gap-1.5 p-1 bg-gray-100 rounded-xl overflow-x-auto">
+        <button onclick="changeBotCategory('menus')" id="cat-btn-menus" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg bg-white text-brand-500 shadow-sm transition-all border-none cursor-pointer whitespace-nowrap">Menus</button>
+        <button onclick="changeBotCategory('setores_vita')" id="cat-btn-setores_vita" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer whitespace-nowrap">VITA</button>
+        <button onclick="changeBotCategory('setores_ava')" id="cat-btn-setores_ava" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer whitespace-nowrap">AVA</button>
+        <button onclick="changeBotCategory('salas_vendas')" id="cat-btn-salas_vendas" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer whitespace-nowrap">Vendas</button>
+        <button onclick="changeBotCategory('sistemas')" id="cat-btn-sistemas" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer whitespace-nowrap">Sistemas</button>
+        <button onclick="changeBotCategory('problemas')" id="cat-btn-problemas" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer whitespace-nowrap">Problemas</button>
       </div>
 
       <!-- Campo de adição (só aparece se não for a aba de Início) -->
@@ -1315,8 +1330,8 @@
     const errBot      = document.getElementById('bot-config-error');
     const emptyBot    = document.getElementById('bot-config-empty');
     
-    let currentCategory = 'flow';
-    let botConfigData = { menus: [], flow: [], salas: [], setores: [], sistemas: [], problemas: [] };
+    let currentCategory = 'menus';
+    let botConfigData = { menus: [], sistemas: [], problemas: [] };
 
     function token() { return localStorage.getItem('auth_token') || ''; }
 
@@ -1326,7 +1341,7 @@
       setTimeout(() => errBot.classList.add('hidden'), 3500);
     }
 
-    const ICONS = { menus: 'edit-3', flow: 'git-branch', salas: 'briefcase', setores: 'door-open', sistemas: 'monitor', problemas: 'alert-triangle' };
+    const ICONS = { menus: 'edit-3', flow: 'git-branch', salas: 'briefcase', setores_vita: 'briefcase', setores_ava: 'briefcase', salas_vendas: 'briefcase', setores: 'door-open', sistemas: 'monitor', problemas: 'alert-triangle' };
 
     function renderBotConfig() {
       listBot.innerHTML = '';
@@ -1344,7 +1359,13 @@
           titleAdd.textContent = "Organizar Jornada do Usuário";
         } else {
           inputKey.classList.add('hidden');
-          titleAdd.textContent = "Adicionar " + (currentCategory === 'salas' ? 'Setor' : (currentCategory === 'setores' ? 'Sala' : 'Item'));
+          let label = 'Item';
+          if (currentCategory === 'setores_vita') label = 'Setor VITA';
+          else if (currentCategory === 'setores_ava') label = 'Setor AVA';
+          else if (currentCategory === 'salas_vendas') label = 'Sala de Vendas';
+          else if (currentCategory === 'sistemas') label = 'Sistema';
+          else if (currentCategory === 'problemas') label = 'Problema';
+          titleAdd.textContent = "Adicionar " + label;
         }
       }
 
@@ -1441,17 +1462,24 @@
         li.dataset.key = item.key;
         li.className = 'flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 hover:bg-orange-50 transition-colors group';
         li.innerHTML =
-          '<div class="flex items-center gap-2.5">' +
+          '<div class="flex items-center gap-2.5 flex-1 min-w-0">' +
             '<div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style="background:#f5eccb">' +
               '<i data-lucide="' + (ICONS[currentCategory] || 'hash') + '" class="w-3.5 h-3.5" style="color:#925616"></i>' +
             '</div>' +
-            '<span class="text-sm font-medium text-gray-700">' + escHtml(item.value) + '</span>' +
+            '<span class="text-sm font-medium text-gray-700 truncate">' + escHtml(item.value) + '</span>' +
           '</div>' +
-          '<button data-del="' + escHtml(item.key) + '" title="Excluir" ' +
-                  'class="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 ' +
-                  'transition-all opacity-0 group-hover:opacity-100 cursor-pointer border-none bg-transparent">' +
-            '<i data-lucide="trash-2" class="w-4 h-4"></i>' +
-          '</button>';
+          '<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">' +
+            '<button data-edit-item="' + escHtml(item.key) + '" title="Editar" ' +
+                    'class="p-1.5 rounded-lg text-gray-300 hover:text-brand-500 hover:bg-brand-50 ' +
+                    'cursor-pointer border-none bg-transparent">' +
+              '<i data-lucide="edit-3" class="w-4 h-4"></i>' +
+            '</button>' +
+            '<button data-del="' + escHtml(item.key) + '" title="Excluir" ' +
+                    'class="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 ' +
+                    'cursor-pointer border-none bg-transparent">' +
+              '<i data-lucide="trash-2" class="w-4 h-4"></i>' +
+            '</button>' +
+          '</div>';
         ul.appendChild(li);
       });
       listBot.appendChild(ul);
@@ -1546,8 +1574,8 @@
         if (!res.ok) { showErrorBot(data.error || 'Erro ao adicionar item'); return; }
         inputBot.value = '';
         document.getElementById('novo-bot-item-key').value = '';
-        loadBotConfig();
         if (currentCategory === 'salas' && typeof loadSalasSelect === 'function') loadSalasSelect();
+        if (['salas', 'setores_vita', 'setores_ava', 'salas_vendas'].includes(currentCategory) && typeof loadSalasSelect === 'function') loadSalasSelect();
       } catch { showErrorBot('Erro de conexão.'); }
       finally { btnAddBot.disabled = false; }
     }
@@ -1562,14 +1590,43 @@
         const data = await res.json();
         if (!res.ok) { showErrorBot(data.error || 'Erro ao excluir item'); return; }
         loadBotConfig();
-        if (currentCategory === 'salas' && typeof loadSalasSelect === 'function') loadSalasSelect();
+        if (['salas', 'setores_vita', 'setores_ava', 'salas_vendas'].includes(currentCategory) && typeof loadSalasSelect === 'function') loadSalasSelect();
+      } catch { showErrorBot('Erro de conexão.'); }
+    }
+
+    async function updateBotConfigItem(key, value) {
+      try {
+        const res  = await fetch('/api/config/bot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
+          body: JSON.stringify({ category: currentCategory, value: value, key: String(key) }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showErrorBot(data.error || 'Erro ao atualizar item'); return; }
+        loadBotConfig();
+        if (['salas', 'setores_vita', 'setores_ava', 'salas_vendas'].includes(currentCategory) && typeof loadSalasSelect === 'function') loadSalasSelect();
       } catch { showErrorBot('Erro de conexão.'); }
     }
 
     listBot.addEventListener('click', function (e) {
+      const editBtn = e.target.closest('[data-edit-item]');
+      if (editBtn) {
+        const key = editBtn.dataset.editItem;
+        const items = botConfigData[currentCategory] || [];
+        const item = items.find(i => String(i.key) === String(key));
+        if (item) {
+          const newVal = prompt("Editar valor:", item.value);
+          if (newVal !== null) {
+            const val = newVal.trim();
+            if (val) updateBotConfigItem(key, val);
+          }
+        }
+        return;
+      }
       const btn = e.target.closest('[data-del]');
-      if (!btn) return;
-      deleteBotConfigItem(btn.dataset.del);
+      if (btn) {
+        deleteBotConfigItem(btn.dataset.del);
+      }
     });
 
     btnAddBot.addEventListener('click', addBotConfigItem);
@@ -1588,7 +1645,13 @@
         activeBtn.classList.remove('text-gray-400');
         activeBtn.classList.add('bg-white', 'text-brand-500', 'shadow-sm');
       }
-      inputBot.placeholder = "Novo " + (cat === 'salas' ? 'setor' : (cat === 'setores' ? 'sala' : cat.slice(0, -1))) + "...";
+      let label = 'item';
+      if (cat === 'setores_vita') label = 'setor VITA';
+      else if (cat === 'setores_ava') label = 'setor AVA';
+      else if (cat === 'salas_vendas') label = 'sala de vendas';
+      else if (cat === 'sistemas') label = 'sistema';
+      else if (cat === 'problemas') label = 'problema';
+      inputBot.placeholder = "Novo " + label + "...";
       renderBotConfig();
     };
 
@@ -1806,6 +1869,8 @@
   let _allTickets    = [];
   let _detalheTicket = null;
   let _pollingTimer   = null;
+  let _currentPage   = 1;
+  const _pageSize    = 10;
 
 
 
@@ -1854,6 +1919,7 @@
     emptyEl.style.display = 'none';
     statsStrip.style.display = 'none';
     countWrap.style.display = 'none';
+    document.getElementById('pagination-controls').style.display = 'none';
     subtitleMeta.textContent = 'Carregando…';
 
     try {
@@ -1861,8 +1927,6 @@
       const data    = await res.json();
       const tickets = data.tickets || [];
       _allTickets   = tickets;
-
-      tbody.innerHTML = '';
 
       /* Stats (sem filtros) */
       const noFilter = !qInput.value.trim() && !statusSel.value;
@@ -1882,64 +1946,7 @@
       countLabel.textContent = data.total + ' chamado' + (data.total !== 1 ? 's' : '');
       countWrap.style.display = 'flex';
 
-      if (tickets.length === 0) {
-        emptyEl.style.display = 'flex';
-        subtitleMeta.textContent = 'Nenhum resultado';
-        lucide.createIcons();
-      } else {
-        table.style.display = 'table';
-        subtitleMeta.textContent = data.total + ' chamado' + (data.total !== 1 ? 's' : '') + ' encontrado' + (data.total !== 1 ? 's' : '');
-
-        const STATUS_ORDER = { aberto: 0, em_atendimento: 1, concluido: 2, cancelado: 3 };
-        tickets.slice().sort(function(a, b) {
-          const sa = STATUS_ORDER[a.status] ?? 2;
-          const sb = STATUS_ORDER[b.status] ?? 2;
-          if (sa !== sb) return sa - sb;
-          // Dentro do mesmo status, mais recente primeiro
-          return b.id - a.id;
-        }).forEach(function(t, i) {
-          const tr = document.createElement('tr');
-          tr.className = 'trow anim-row border-b border-brand-100/60 cursor-pointer';
-          tr.style.animationDelay = (i * 30) + 'ms';
-          tr.dataset.status = t.status || '';
-          tr.dataset.ticket = JSON.stringify(t);
-
-          const rawSol = t.solicitanteNome
-            ? t.solicitanteNome
-            : (t.solicitante
-              ? t.solicitante
-              : (t.origem !== 'site' ? (t.name || 'Bot') : '—'));
-          const solLabel = rawSol.includes('@') ? rawSol.split('@')[0] : rawSol;
-
-          tr.innerHTML =
-            /* Solicitante (login) */
-            '<td class="pl-7 pr-3 py-4 sol-cell" data-cell="profile">' +
-              '<div class="flex items-center gap-3">' +
-                makeAvatar(solLabel) +
-                '<div class="min-w-0">' +
-                  '<p class="sol-name font-bold text-brand-900 text-sm truncate max-w-[140px]" style="transition:color .15s" title="' + escHtml(solLabel) + '">' + escHtml(solLabel) + '</p>' +
-                  '<p class="sol-hint">ver perfil →</p>' +
-                '</div>' +
-              '</div>' +
-            '</td>' +
-            /* Tipo */
-            '<td class="px-3 py-4"><span class="badge-tipo">' + escHtml(t.type || '—') + '</span></td>' +
-            /* Descrição */
-            '<td class="px-3 py-4 max-w-[260px]">' + 
-              '<div class="flex items-center gap-2">' +
-                fmtDesc(t.description) + 
-                (t.attachment ? '<span class="p-1 bg-orange-100 text-orange-600 rounded shrink-0" title="Possui anexo"><i data-lucide="paperclip" style="width:12px;height:12px"></i></span>' : '') +
-              '</div>' +
-            '</td>' +
-            /* Status */
-            '<td class="px-3 py-4">' + statusBadge(t.status) + '</td>' +
-            /* Data */
-            '<td class="px-3 pr-7 py-4 whitespace-nowrap">' + fmtDate(t.createdAt) + '</td>';
-
-          tbody.appendChild(tr);
-        });
-        lucide.createIcons();
-      }
+      renderTicketsList();
 
       const now = new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
       metaEl.textContent = 'Atualizado às ' + now;
@@ -1960,6 +1967,105 @@
     }
   }
 
+  function renderTicketsList() {
+    tbody.innerHTML = '';
+    const tickets = _allTickets || [];
+
+    if (tickets.length === 0) {
+      emptyEl.style.display = 'flex';
+      table.style.display = 'none';
+      document.getElementById('pagination-controls').style.display = 'none';
+      subtitleMeta.textContent = 'Nenhum resultado';
+      lucide.createIcons();
+      return;
+    }
+
+    emptyEl.style.display = 'none';
+    table.style.display = 'table';
+    subtitleMeta.textContent = tickets.length + ' chamado' + (tickets.length !== 1 ? 's' : '') + ' encontrado' + (tickets.length !== 1 ? 's' : '');
+
+    const STATUS_ORDER = { aberto: 0, em_atendimento: 1, concluido: 2, cancelado: 3 };
+    const sortedTickets = tickets.slice().sort(function(a, b) {
+      const sa = STATUS_ORDER[a.status] ?? 2;
+      const sb = STATUS_ORDER[b.status] ?? 2;
+      if (sa !== sb) return sa - sb;
+      // Dentro do mesmo status, mais recente primeiro
+      return b.id - a.id;
+    });
+
+    const totalPages = Math.ceil(sortedTickets.length / _pageSize) || 1;
+    if (_currentPage > totalPages) _currentPage = totalPages;
+    if (_currentPage < 1) _currentPage = 1;
+
+    const startIdx = (_currentPage - 1) * _pageSize;
+    const endIdx = startIdx + _pageSize;
+    const paginatedTickets = sortedTickets.slice(startIdx, endIdx);
+
+    paginatedTickets.forEach(function(t, i) {
+      const tr = document.createElement('tr');
+      tr.className = 'trow anim-row border-b border-brand-100/60 cursor-pointer';
+      tr.style.animationDelay = (i * 30) + 'ms';
+      tr.dataset.status = t.status || '';
+      tr.dataset.ticket = JSON.stringify(t);
+
+      const rawSol = t.solicitanteNome
+        ? t.solicitanteNome
+        : (t.solicitante
+          ? t.solicitante
+          : (t.origem !== 'site' ? (t.name || 'Bot') : '—'));
+      const solLabel = rawSol.includes('@') ? rawSol.split('@')[0] : rawSol;
+
+      tr.innerHTML =
+        /* Solicitante (login) */
+        '<td class="pl-7 pr-3 py-4 sol-cell" data-cell="profile">' +
+          '<div class="flex items-center gap-3">' +
+            makeAvatar(solLabel) +
+            '<div class="min-w-0">' +
+              '<p class="sol-name font-bold text-brand-900 text-sm truncate max-w-[140px]" style="transition:color .15s" title="' + escHtml(solLabel) + '">' + escHtml(solLabel) + '</p>' +
+              '<p class="sol-hint">ver perfil →</p>' +
+            '</div>' +
+          '</div>' +
+        '</td>' +
+        /* Tipo */
+        '<td class="px-3 py-4"><span class="badge-tipo">' + escHtml(t.type || '—') + '</span></td>' +
+        /* Descrição */
+        '<td class="px-3 py-4 max-w-[260px]">' + 
+          '<div class="flex items-center gap-2">' +
+            fmtDesc(t.description) + 
+            (t.attachment ? '<span class="p-1 bg-orange-100 text-orange-600 rounded shrink-0" title="Possui anexo"><i data-lucide="paperclip" style="width:12px;height:12px"></i></span>' : '') +
+          '</div>' +
+        '</td>' +
+        /* Status */
+        '<td class="px-3 py-4">' + statusBadge(t.status) + '</td>' +
+        /* Data */
+        '<td class="px-3 pr-7 py-4 whitespace-nowrap">' + fmtDate(t.createdAt) + '</td>';
+
+      tbody.appendChild(tr);
+    });
+
+    lucide.createIcons();
+
+    // Atualiza controles de paginação
+    const pagControls = document.getElementById('pagination-controls');
+    const infoStart = document.getElementById('pag-info-start');
+    const infoEnd = document.getElementById('pag-info-end');
+    const infoTotal = document.getElementById('pag-info-total');
+    const btnPrev = document.getElementById('btn-pag-prev');
+    const btnNext = document.getElementById('btn-pag-next');
+
+    pagControls.style.display = 'flex';
+    
+    const startItem = startIdx + 1;
+    const endItem = Math.min(endIdx, sortedTickets.length);
+
+    infoStart.textContent = startItem;
+    infoEnd.textContent = endItem;
+    infoTotal.textContent = sortedTickets.length;
+
+    btnPrev.disabled = _currentPage === 1;
+    btnNext.disabled = _currentPage === totalPages;
+  }
+
   /* ---------- Helpers ---------- */
 
   /* Renderiza descrição estruturada (linhas "Chave: valor") como pills */
@@ -1974,7 +2080,8 @@
     }
     const ICONS = { 'Nome':'user', 'CPF':'id-card', 'E-mail':'mail', 'Sala':'building-2', 'Função':'briefcase', 'Anexo':'paperclip' };
     let html = '<div class="flex flex-col gap-1">';
-    lines.forEach(function(line) {
+    const displayLines = lines.slice(0, 2);
+    displayLines.forEach(function(line) {
       const sep = line.indexOf(':');
       if (sep === -1) return;
       const key = line.slice(0, sep).trim();
@@ -1987,6 +2094,9 @@
           '<span class="text-[.68rem] text-brand-700 truncate" title="' + escHtml(val) + '">' + escHtml(val) + '</span>' +
         '</div>';
     });
+    if (lines.length > 2) {
+      html += '<span class="text-[9px] text-brand-300 font-semibold mt-0.5">… ver mais</span>';
+    }
     html += '</div>';
     return html;
   }
@@ -2027,10 +2137,25 @@
 
 
   let debTimer;
-  qInput.addEventListener('input', function() { clearTimeout(debTimer); debTimer = setTimeout(load, 300); });
-  statusSel.addEventListener('change', load);
-  btn.addEventListener('click',        load);
+  qInput.addEventListener('input', function() { _currentPage = 1; clearTimeout(debTimer); debTimer = setTimeout(load, 300); });
+  statusSel.addEventListener('change', function() { _currentPage = 1; load(); });
+  btn.addEventListener('click',        function() { _currentPage = 1; load(); });
   /* setInterval removido conforme solicitado pelo usuário */
+
+  /* ---------- Pagination Events ---------- */
+  document.getElementById('btn-pag-prev').addEventListener('click', function() {
+    if (_currentPage > 1) {
+      _currentPage--;
+      renderTicketsList();
+    }
+  });
+  document.getElementById('btn-pag-next').addEventListener('click', function() {
+    const totalPages = Math.ceil(_allTickets.length / _pageSize) || 1;
+    if (_currentPage < totalPages) {
+      _currentPage++;
+      renderTicketsList();
+    }
+  });
 
   /* ---------- Tab switch ---------- */
   document.getElementById('tabs-container').addEventListener('click', function(e) {
@@ -2043,6 +2168,7 @@
     });
     qInput.value    = '';
     statusSel.value = '';
+    _currentPage    = 1;
     load();
   });
 
@@ -2149,9 +2275,42 @@
 
     // Anexo
     const anexoWrapper = document.getElementById('det-anexo-wrapper');
-    const anexoLink    = document.getElementById('det-anexo-link');
-    if (ticket.attachment) {
-      anexoLink.href = '/uploads/' + encodeURIComponent(ticket.attachment);
+    if (ticket.attachments && ticket.attachments.length > 0) {
+      let html = '';
+      ticket.attachments.forEach((att, idx) => {
+        html += `<div class="flex items-center justify-between p-2 bg-white rounded-lg border border-orange-100 mb-2 last:mb-0">
+          <div class="flex items-center gap-2">
+            <i data-lucide="paperclip" class="w-4 h-4 text-orange-600"></i>
+            <span class="text-xs text-orange-950 font-medium">Anexo ${idx + 1}</span>
+          </div>
+          <a href="/uploads/${encodeURIComponent(att)}" target="_blank" class="px-3 py-1 bg-orange-600 text-white rounded text-xs font-bold hover:bg-orange-700 transition-all">
+            Visualizar
+          </a>
+        </div>`;
+      });
+      anexoWrapper.innerHTML = `<div class="w-full">
+        <p class="text-xs font-bold text-orange-900 mb-2">Anexos disponíveis (${ticket.attachments.length}):</p>
+        ${html}
+      </div>`;
+      anexoWrapper.classList.remove('hidden');
+      anexoWrapper.className = "mt-4 p-4 bg-orange-50 border border-orange-200 rounded-xl flex flex-col";
+    } else if (ticket.attachment) {
+      anexoWrapper.innerHTML = `<div class="flex items-center justify-between w-full">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600">
+            <i data-lucide="paperclip"></i>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-orange-900">Anexo disponível</p>
+            <p class="text-xs text-orange-700">A foto foi enviada pelo WhatsApp</p>
+          </div>
+        </div>
+        <a id="det-anexo-link" href="/uploads/${encodeURIComponent(ticket.attachment)}" target="_blank" class="px-5 py-2 bg-orange-600 text-white rounded-lg text-sm font-bold hover:bg-orange-700 transition-all shadow-md">
+          Ver Anexo
+        </a>
+      </div>`;
+      anexoWrapper.classList.remove('hidden');
+      anexoWrapper.className = "hidden mt-4 p-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center justify-between";
       anexoWrapper.classList.remove('hidden');
     } else {
       anexoWrapper.classList.add('hidden');
@@ -2176,15 +2335,18 @@
           div.className = 'chat-msg ' + (isUser ? 'chat-msg-user' : 'chat-msg-tech');
           
           let html = escHtml(msg.text);
-          if (msg.attachment) {
-             const ext = msg.attachment.split('.').pop().toLowerCase();
-             const isAudio = ['mp3', 'ogg', 'wav', 'm4a', 'oga', 'amr', 'webm'].includes(ext);
-             
-             if (isAudio) {
-               html += `<div class="mt-2"><audio controls class="max-w-full h-8"><source src="/uploads/${encodeURIComponent(msg.attachment)}" type="audio/${ext === 'mp3' ? 'mpeg' : ext === 'webm' ? 'webm' : ext}">Seu navegador não suporta áudio.</audio></div>`;
-             } else {
-               html += `<br><a href="/uploads/${encodeURIComponent(msg.attachment)}" target="_blank" class="mt-2 inline-flex items-center gap-1 font-bold ${isUser ? 'text-brand-500' : 'text-white/80 underline'}"><i data-lucide="paperclip" class="w-3 h-3"></i> Ver Anexo</a>`;
-             }
+          
+          const attachments = msg.attachments || (msg.attachment ? [msg.attachment] : []);
+          if (attachments.length > 0) {
+             attachments.forEach(att => {
+                const ext = att.split('.').pop().toLowerCase();
+                const isAudio = ['mp3', 'ogg', 'wav', 'm4a', 'oga', 'amr', 'webm'].includes(ext);
+                if (isAudio) {
+                  html += `<div class="mt-2"><audio controls class="max-w-full h-8"><source src="/uploads/${encodeURIComponent(att)}" type="audio/${ext === 'mp3' ? 'mpeg' : ext === 'webm' ? 'webm' : ext}">Seu navegador não suporta áudio.</audio></div>`;
+                } else {
+                  html += `<br><a href="/uploads/${encodeURIComponent(att)}" target="_blank" class="mt-2 inline-flex items-center gap-1 font-bold ${isUser ? 'text-brand-500' : 'text-white/80 underline'}"><i data-lucide="paperclip" class="w-3 h-3"></i> Ver Anexo</a>`;
+                }
+             });
           }
           html += `<span class="chat-time">${new Date(msg.timestamp).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})} ${!isUser ? ' - ' + (msg.atendente || 'Técnico') : ''}</span>`;
           
@@ -2979,7 +3141,7 @@
 
   // Enviar com Enter no input
   document.getElementById('chat-text-input').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleChatSend();
     }

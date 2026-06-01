@@ -9,12 +9,13 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <style>
         :root {
-            --bg: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --accent: #38bdf8;
-            --text: #f1f5f9;
-            --text-muted: #94a3b8;
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --bg: #f0ebe0;
+            --card-bg: #ffffff;
+            --accent: #925616;
+            --accent-light: #c9a882;
+            --text: #3b2008;
+            --text-muted: #9c8a70;
+            --glass-border: #e8d5b0;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -22,7 +23,7 @@
         body {
             font-family: 'Outfit', sans-serif;
             background-color: var(--bg);
-            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            background-image: radial-gradient(circle at top right, #fdf8f0, #f0ebe0);
             color: var(--text);
             min-height: 100vh;
             padding: 2rem;
@@ -51,21 +52,28 @@
             padding: 0.8rem 1.5rem;
             border-radius: 1rem;
             border: 1px solid var(--glass-border);
-            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(146, 86, 22, 0.05);
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text);
         }
 
         input[type="date"] {
-            background: rgba(0,0,0,0.2);
+            background: #fdf8f0;
             border: 1px solid var(--glass-border);
-            color: white;
+            color: var(--text);
             padding: 0.5rem;
             border-radius: 0.5rem;
             font-family: inherit;
+            outline: none;
         }
 
         .btn-action {
             background: var(--accent);
-            color: #000;
+            color: #fff;
             border: none;
             padding: 0.5rem 1rem;
             border-radius: 0.5rem;
@@ -76,35 +84,46 @@
             align-items: center;
             gap: 0.5rem;
         }
-        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3); }
-        .btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 1px solid var(--glass-border); }
+        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(146, 86, 22, 0.25); }
+        .btn-secondary { background: #fdf8f0; color: var(--accent); border: 1px solid var(--glass-border); }
+        .btn-secondary:hover { background: #f5eccb; color: var(--text); }
 
         .btn-back {
             text-decoration: none;
             color: var(--text-muted);
             font-size: 0.9rem;
+            font-weight: 600;
             transition: 0.3s;
         }
         .btn-back:hover { color: var(--accent); }
 
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
             margin-bottom: 2rem;
+        }
+
+        @media (min-width: 1200px) {
+            .kpi-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
         }
 
         .card {
             background: var(--card-bg);
-            border: 1px solid var(--glass-border);
-            backdrop-filter: blur(12px);
+            border: 1.5px solid var(--glass-border);
             padding: 1.5rem;
             border-radius: 1.5rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 30px rgba(146,86,22,0.06);
             position: relative;
         }
 
-        .kpi-card h3 { font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
+        .kpi-card {
+            padding: 1.2rem 1rem;
+        }
+
+        .kpi-card h3 { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
         .kpi-card .value { font-size: 2.5rem; font-weight: 700; color: var(--accent); }
 
         .chart-grid {
@@ -115,25 +134,80 @@
         }
 
         .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-        .chart-header h4 { font-size: 1.1rem; font-weight: 600; }
-        .btn-download { background: none; border: none; color: var(--accent); cursor: pointer; transition: 0.3s; font-size: 0.8rem; font-weight: 700; padding: 4px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.1); }
-        .btn-download:hover { background: var(--accent); color: #000; }
+        .chart-header h4 { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+        .chart-card h4 { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+        .btn-download { background: none; border: none; color: var(--accent); cursor: pointer; transition: 0.3s; font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: #FDF8F0; border: 1px solid var(--glass-border); }
+        .btn-download:hover { background: var(--accent); color: #fff; }
 
-        .chart-container { position: relative; height: 350px; background: rgba(0,0,0,0.1); border-radius: 1rem; padding: 1rem; }
+        .chart-container { position: relative; height: 350px; background: #fdf8f0; border-radius: 1rem; padding: 1rem; border: 1px dashed var(--glass-border); }
 
         .ranking-list { list-style: none; }
         .ranking-item {
             display: flex;
             justify-content: space-between;
             padding: 1rem 0;
-            border-bottom: 1px solid var(--glass-border);
+            border-bottom: 1.5px solid #f5eccb;
         }
         .ranking-item:last-child { border: none; }
-        .ranking-name { font-weight: 600; }
+        .ranking-name { font-weight: 600; color: var(--text); }
         .ranking-count { color: var(--accent); font-weight: 700; }
 
         @media (max-width: 1024px) {
             .chart-grid { grid-template-columns: 1fr; }
+        }
+
+        /* --- Ajustes Responsivos para Celulares --- */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1.5rem;
+                margin-bottom: 2rem;
+            }
+
+            header h1 {
+                font-size: 1.6rem;
+                text-align: center;
+            }
+
+            header .btn-back {
+                display: block;
+                text-align: center;
+                margin-bottom: 0.5rem;
+            }
+
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 1.2rem;
+                gap: 0.8rem;
+                width: 100%;
+            }
+
+            .filters label {
+                text-align: center;
+            }
+
+            .filters span {
+                text-align: center;
+                font-size: 0.85rem;
+                font-weight: 600;
+            }
+
+            .filters input[type="date"] {
+                width: 100%;
+                text-align: center;
+            }
+
+            .filters .btn-action {
+                width: 100%;
+                justify-content: center;
+                padding: 0.7rem;
+            }
         }
     </style>
 </head>
@@ -162,19 +236,23 @@
         </div>
         <div class="card kpi-card">
             <h3>Via WhatsApp</h3>
-            <div class="value" id="valWhatsApp" style="color: #22c55e;">0</div>
+            <div class="value" id="valWhatsApp" style="color: #15803d;">0</div>
         </div>
         <div class="card kpi-card">
             <h3>Via Painel Web</h3>
-            <div class="value" id="valSite" style="color: #6366f1;">0</div>
+            <div class="value" id="valSite" style="color: #1d4ed8;">0</div>
         </div>
         <div class="card kpi-card">
             <h3>Em Aberto</h3>
-            <div class="value" id="valAberto" style="color: #fbbf24;">0</div>
+            <div class="value" id="valAberto" style="color: #b45309;">0</div>
+        </div>
+        <div class="card kpi-card">
+            <h3>Em Atendimento</h3>
+            <div class="value" id="valEmAtendimento" style="color: #3b82f6;">0</div>
         </div>
         <div class="card kpi-card">
             <h3>Concluídos</h3>
-            <div class="value" id="valConcluido" style="color: #4ade80;">0</div>
+            <div class="value" id="valConcluido" style="color: #16a34a;">0</div>
         </div>
     </div>
 
@@ -244,6 +322,7 @@
         document.getElementById('valWhatsApp').innerText = data.porOrigem.bot || 0;
         document.getElementById('valSite').innerText = data.porOrigem.site || 0;
         document.getElementById('valAberto').innerText = data.status.aberto;
+        document.getElementById('valEmAtendimento').innerText = data.status.em_atendimento || 0;
         document.getElementById('valConcluido').innerText = data.status.concluido;
 
         renderCharts(data);
@@ -263,7 +342,7 @@
                 datasets: [{
                     label: 'Quantidade',
                     data: Object.values(data.porSetor),
-                    backgroundColor: '#38bdf8',
+                    backgroundColor: '#925616',
                     borderRadius: 12,
                     barThickness: 60
                 }]
@@ -273,11 +352,11 @@
                 maintainAspectRatio: false,
                 plugins: { 
                     legend: { display: false },
-                    title: { display: true, text: 'Distribuição por Setor / Sala', color: '#f1f5f9', font: { size: 16, weight: 'bold' }, padding: 20 }
+                    title: { display: true, text: 'Distribuição por Setor / Sala', color: '#3b2008', font: { size: 16, weight: 'bold' }, padding: 20 }
                 },
                 scales: {
-                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', stepSize: 1 } },
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 13, weight: '600' } } }
+                    y: { beginAtZero: true, grid: { color: 'rgba(146,86,22,0.06)' }, ticks: { color: '#9c8a70', stepSize: 1 } },
+                    x: { grid: { display: false }, ticks: { color: '#3b2008', font: { size: 13, weight: '600' } } }
                 }
             }
         });
@@ -290,9 +369,9 @@
                 labels: Object.keys(data.porTipo),
                 datasets: [{
                     data: Object.values(data.porTipo),
-                    backgroundColor: ['#38bdf8', '#818cf8', '#fb7185', '#fbbf24', '#34d399'],
+                    backgroundColor: ['#925616', '#c9a882', '#b45309', '#e8d5b0', '#f5eccb'],
                     borderWidth: 2,
-                    borderColor: '#1e293b',
+                    borderColor: '#ffffff',
                     hoverOffset: 15
                 }]
             },
@@ -301,8 +380,8 @@
                 maintainAspectRatio: false,
                 cutout: '70%',
                 plugins: { 
-                    legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 12 } } },
-                    title: { display: true, text: 'Tipos de Problemas', color: '#f1f5f9', font: { size: 16, weight: 'bold' }, padding: 20 }
+                    legend: { position: 'right', labels: { color: '#3b2008', font: { size: 12, weight: '600' } } },
+                    title: { display: true, text: 'Tipos de Problemas', color: '#3b2008', font: { size: 16, weight: 'bold' }, padding: 20 }
                 }
             }
         });
@@ -315,7 +394,7 @@
                 labels: ['WhatsApp (Bot)', 'Painel (Site)'],
                 datasets: [{
                     data: [data.porOrigem.bot, data.porOrigem.site],
-                    backgroundColor: ['#22c55e', '#6366f1'],
+                    backgroundColor: ['#16a34a', '#1d4ed8'],
                     borderWidth: 0
                 }]
             },
@@ -323,8 +402,8 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { 
-                    legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 14 } } },
-                    title: { display: true, text: 'Volume por Origem', color: '#f1f5f9', font: { size: 16, weight: 'bold' }, padding: 20 }
+                    legend: { position: 'right', labels: { color: '#3b2008', font: { size: 14, weight: '600' } } },
+                    title: { display: true, text: 'Volume por Origem', color: '#3b2008', font: { size: 16, weight: 'bold' }, padding: 20 }
                 }
             }
         });
@@ -352,7 +431,7 @@
         const container = document.getElementById('keywordCloud');
         container.innerHTML = sorted.map(([word, count]) => {
             const size = Math.min(1.4, 0.9 + (count * 0.15));
-            return `<span style="font-size: ${size}rem; background: rgba(56, 189, 248, 0.1); padding: 0.4rem 0.9rem; border-radius: 2rem; border: 1px solid rgba(56, 189, 248, 0.2); text-transform: capitalize; color: #fff;">${word}</span>`;
+            return `<span style="font-size: ${size}rem; background: #FDF8F0; padding: 0.4rem 0.9rem; border-radius: 2rem; border: 1px solid var(--glass-border); text-transform: capitalize; color: var(--accent); font-weight: 600;">${word}</span>`;
         }).join('') || '<p style="color:var(--text-muted)">Aguardando dados...</p>';
     }
 
@@ -380,14 +459,14 @@
     function downloadChart(chartId, filename) {
         const canvas = document.getElementById(chartId);
         
-        // Criar um canvas temporário para o fundo escuro (para o PNG não ficar transparente/estranho)
+        // Criar um canvas temporário para o fundo claro (para o PNG não ficar transparente/estranho)
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = canvas.width;
         tempCanvas.height = canvas.height;
         const tempCtx = tempCanvas.getContext('2d');
         
-        // Fundo escuro igual ao Dashboard
-        tempCtx.fillStyle = '#1e293b';
+        // Fundo claro igual ao Dashboard
+        tempCtx.fillStyle = '#f0ebe0';
         tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
         
         // Desenha o gráfico por cima

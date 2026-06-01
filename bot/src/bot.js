@@ -73,40 +73,60 @@ function withFooter(text, allowBack = true) {
   return text + footer;
 }
 
-function getSalasMenu(session = {}) {
-  const config = getBotConfig();
-  const template = (config.menus || {}).setores || `Olá {nome}! Informe sua sala:\n\n1. Administrativo\n2. Pós-Vendas`;
-  return withFooter(template.replace(/{nome}/g, session.nome || ''), true);
+function getLocalPrincipalMenu(session = {}) {
+  const text = `Olá {nome}! Qual é o seu local de trabalho atual?\n\n1. Escritório VITA (Administrativo)\n2. Escritório AVA (RH, DP, Conexão, Unique)\n3. Salas de Vendas (Comercial/Captação)`;
+  return withFooter(text.replace(/{nome}/g, session.nome || ''), true);
 }
 
-function getAjudaTipoMenu(session = {}) {
+function getSectoresVita() {
   const config = getBotConfig();
-  const template = (config.menus || {}).demanda || `Como posso ajudar, {nome}?\n\n[1] Sistemas\n[2] Equipamentos`;
-  return withFooter(template.replace(/{nome}/g, session.nome || ''), true);
+  return config.setores_vita || ['Jurídico', 'Financeiro', 'Estratégico', 'Controladoria', 'Contas a Receber', 'Central de Contratos', 'Diretoria', 'Backoffice'];
+}
+function getSetorVitaMenu() {
+  const setores = getSectoresVita();
+  const text = `Você está no *VITA*. Qual o seu setor?\n\n` + setores.map((s, i) => `${i+1}. ${s}`).join('\n');
+  return withFooter(text, true);
 }
 
-function getSetoresMenu(session = {}) {
+function getSectoresAva() {
   const config = getBotConfig();
-  const template = `Olá {nome}! Informe o seu setor específico:`;
-  const text = template.replace(/{nome}/g, session.nome || '');
-  
-  const setores = config.setores || [];
-  let menu = text;
-  if (setores.length > 0) menu += `\n\n` + setores.map((s, i) => `${i+1}. ${s}`).join('\n');
-  return withFooter(menu, true);
+  return config.setores_ava || ['Conexão Laghetto', 'RH', 'DP', 'Unique'];
+}
+function getSetorAvaMenu() {
+  const setores = getSectoresAva();
+  const text = `Você está no *AVA*. Qual o seu setor?\n\n` + setores.map((s, i) => `${i+1}. ${s}`).join('\n');
+  return withFooter(text, true);
 }
 
-function getSistemasMenu(session = {}) {
+function getSalasVendas() {
   const config = getBotConfig();
-  const template = (config.menus || {}).sistemas || `Escolha o sistema, {nome}:\n\n1. Esolution\n2. Sienge`;
-  return withFooter(template.replace(/{nome}/g, session.nome || ''), true);
+  return config.salas_vendas || ['Pedras Altas', 'Pedras Altas Noturno', 'NBA Park', 'Golden Resort'];
+}
+function getSalaVendasMenu() {
+  const salas = getSalasVendas();
+  const text = `Você está em *Vendas*. Qual a sua sala?\n\n` + salas.map((s, i) => `${i+1}. ${s}`).join('\n');
+  return withFooter(text, true);
 }
 
-function getProblemasMenu() {
+function getDemandaTipoMenu() {
+  const text = `Como posso te ajudar hoje?\n\n1. Equipamentos e Internet (Impressora, Computador, Wi-Fi, Totem)\n2. Suporte em Sistemas (Erro, dúvida, lentidão)\n3. Criação de Acessos (Novo usuário para sistema)`;
+  return withFooter(text, true);
+}
+
+function getSistemasMenu(session = {}, isAcesso = false) {
+  const config = getBotConfig();
+  const sistemas = config.sistemas || [];
+  let text = isAcesso 
+    ? `Para qual sistema você precisa de *Novo Acesso*?` 
+    : `Qual sistema está apresentando problema ou dúvida?`;
+  if (sistemas.length > 0) text += `\n\n` + sistemas.map((s, i) => `${i+1}. ${s}`).join('\n');
+  return withFooter(text, true);
+}
+
+function getEquipamentosMenu() {
   const config = getBotConfig();
   const problemas = config.problemas || {};
-  const text = `Qual equipamento está com problema?\n\n` +
-         Object.entries(problemas).map(([k, v]) => `${k}. ${v}`).join('\n');
+  const text = `Qual equipamento ou infraestrutura?\n\n` + Object.entries(problemas).map(([k, v]) => `${k}. ${v}`).join('\n');
   return withFooter(text, true);
 }
 
@@ -229,33 +249,43 @@ async function processState(client, message, userId) {
   const isMedia = message.isMedia || MEDIA_TYPES.includes(message.type) || !!message.mimetype;
   
   if (isMedia) {
-    const rawExt = mimeToExt(message.mimetype || '') || 'jpg';
-    const filename = `${Date.now()}_${userId.replace(/\D/g, '')}.${rawExt}`;
-    const absoluteDadosDir = path.resolve(__dirname, '..', '..', 'dados');
-    const filePath = path.join(absoluteDadosDir, 'uploads', filename);
-
-    // 1. REGISTRA NA SESSÃO AGORA (Prioridade Máxima)
+    const mediaItems = message.mediaBatch || [message];
     if (!session.anexos) session.anexos = [];
-    session.anexos.push(filename);
-    console.log(`[BOT] Anexo registrado: ${filename} (Total: ${session.anexos.length})`);
+    const absoluteDadosDir = path.resolve(__dirname, '..', '..', 'dados');
 
-    // 2. SALVA NO DISCO EM SEGUNDO PLANO
-    setImmediate(async () => {
-      try {
-        const mediaData = await client.downloadMedia(message);
-        if (mediaData) {
-          const base64Data = typeof mediaData === 'string' ? mediaData.replace(/^data:.*?base64,/, '') : mediaData;
-          const buffer = Buffer.isBuffer(base64Data) ? base64Data : Buffer.from(base64Data, 'base64');
-          fs.writeFileSync(filePath, buffer);
-          console.log(`[DISK] Arquivo salvo: ${filename}`);
+    for (let i = 0; i < mediaItems.length; i++) {
+      const item = mediaItems[i];
+      const rawExt = mimeToExt(item.mimetype || '') || 'jpg';
+      const filename = `${Date.now()}_${Math.floor(Math.random() * 1000)}_${userId.replace(/\D/g, '')}.${rawExt}`;
+      const filePath = path.join(absoluteDadosDir, 'uploads', filename);
+
+      // 1. REGISTRA NA SESSÃO AGORA (Prioridade Máxima)
+      session.anexos.push(filename);
+      console.log(`[BOT] Anexo registrado: ${filename} (Total: ${session.anexos.length})`);
+
+      // 2. SALVA NO DISCO EM SEGUNDO PLANO
+      setImmediate(async () => {
+        try {
+          const mediaData = await client.downloadMedia(item);
+          if (mediaData) {
+            const base64Data = typeof mediaData === 'string' ? mediaData.replace(/^data:.*?base64,/, '') : mediaData;
+            const buffer = Buffer.isBuffer(base64Data) ? base64Data : Buffer.from(base64Data, 'base64');
+            fs.writeFileSync(filePath, buffer);
+            console.log(`[DISK] Arquivo salvo: ${filename}`);
+          }
+        } catch (err) {
+          console.error(`[DISK ERROR]`, err);
         }
-      } catch (err) {
-        console.error(`[DISK ERROR]`, err);
-      }
-    });
+      });
+    }
 
     if (session.state === 'idle' || session.state === 'aguardando_nome') {
-       await send(`Recebi seu anexo. Vou guardá-lo para o chamado.`);
+       const qtd = mediaItems.length;
+       if (qtd > 1) {
+         await send(`Recebi seus ${qtd} anexos. Vou guardá-los para o chamado.`);
+       } else {
+         await send(`Recebi seu anexo. Vou guardá-lo para o chamado.`);
+       }
        if (!text) return;
     } else {
        if (session.state !== 'em_atendimento' && session.state !== 'aguardando_comentario') {
@@ -284,46 +314,62 @@ async function processState(client, message, userId) {
   }
 
   if ((opt === 'V' || opt === 'VOLTAR') && session.state !== 'idle' && session.state !== 'em_atendimento') {
-     if (session.state === 'aguardando_sala') {
+     if (session.state === 'aguardando_local_principal') {
         updateSession(userId, { state: 'aguardando_nome' });
         const config = getBotConfig();
         const msg = (config.menus || {}).saudacao || 'Olá! Tudo bem? Eu sou o Especialista de Suporte.\n\nPara começar, informe seu *NOME*:';
         await send(msg);
         return;
      }
-     if (session.state === 'aguardando_setor' || session.state === 'aguardando_ajuda_tipo') {
-        if (session.state === 'aguardando_ajuda_tipo' && session.sala && session.sala.toLowerCase().includes('administrativo')) {
-           updateSession(userId, { state: 'aguardando_setor' });
-           await send(getSetoresMenu(session));
-           return;
-        }
-        updateSession(userId, { state: 'aguardando_sala' });
-        await send(getSalasMenu(session));
+     if (session.state === 'aguardando_setor_vita' || session.state === 'aguardando_setor_ava' || session.state === 'aguardando_sala_vendas') {
+        updateSession(userId, { state: 'aguardando_local_principal' });
+        await send(getLocalPrincipalMenu(session));
         return;
      }
-     if (session.state === 'aguardando_sistema_especifico' || session.state === 'aguardando_problema_especifico') {
-        updateSession(userId, { state: 'aguardando_ajuda_tipo' });
-        await send(getAjudaTipoMenu(session));
-        return;
-     }
-     if (session.state === 'aguardando_inclusao_bloco' || session.state === 'aguardando_descricao') {
-        if (session.sistema) {
-           updateSession(userId, { state: 'aguardando_sistema_especifico' });
-           await send(getSistemasMenu(session));
+     if (session.state === 'aguardando_demanda_tipo') {
+        if (session.local_type === 'VITA') {
+           updateSession(userId, { state: 'aguardando_setor_vita' });
+           await send(getSetorVitaMenu());
+        } else if (session.local_type === 'AVA') {
+           updateSession(userId, { state: 'aguardando_setor_ava' });
+           await send(getSetorAvaMenu());
         } else {
-           updateSession(userId, { state: 'aguardando_problema_especifico' });
-           await send(getProblemasMenu());
+           updateSession(userId, { state: 'aguardando_sala_vendas' });
+           await send(getSalaVendasMenu());
+        }
+        return;
+     }
+     if (session.state === 'aguardando_sistema' || session.state === 'aguardando_equipamento' || session.state === 'aguardando_sistema_acesso') {
+        updateSession(userId, { state: 'aguardando_demanda_tipo' });
+        await send(getDemandaTipoMenu());
+        return;
+     }
+     if (session.state === 'aguardando_dados_acesso' || session.state === 'aguardando_descricao') {
+        if (session.isAcesso) {
+           updateSession(userId, { state: 'aguardando_sistema_acesso' });
+           await send(getSistemasMenu(session, true));
+        } else if (session.sistema) {
+           updateSession(userId, { state: 'aguardando_sistema' });
+           await send(getSistemasMenu(session, false));
+        } else {
+           updateSession(userId, { state: 'aguardando_equipamento' });
+           await send(getEquipamentosMenu());
         }
         return;
      }
      if (session.state === 'aguardando_anexo') {
-        updateSession(userId, { state: 'aguardando_descricao' });
-        await send(`Por favor, reescreva uma *breve descrição* do problema.`);
+        if (session.isAcesso) {
+           updateSession(userId, { state: 'aguardando_dados_acesso' });
+           await send(`Por favor, preencha novamente os dados do colaborador.`);
+        } else {
+           updateSession(userId, { state: 'aguardando_descricao' });
+           await send(`Por favor, reescreva uma *breve descrição* do problema.`);
+        }
         return;
      }
      if (session.state === 'aguardando_confirmacao') {
         updateSession(userId, { state: 'aguardando_anexo' });
-        await send(`Deseja enviar alguma *FOTO*? Se sim, envie agora. Se não tiver, responda *NÃO* para pular.`);
+        await send(`Deseja enviar alguma *FOTO ou ANEXO*? Se sim, envie agora. Se não tiver, responda *NÃO* para pular.`);
         return;
      }
   }
@@ -374,6 +420,7 @@ async function processState(client, message, userId) {
 
     const temAnexo = session.anexos && session.anexos.length > 0;
     const anexoNome = temAnexo ? session.anexos[session.anexos.length - 1] : null;
+    const anexosList = temAnexo ? [...session.anexos] : [];
 
     if (!text && !temAnexo) return;
 
@@ -382,7 +429,8 @@ async function processState(client, message, userId) {
       role: 'user',
       text: text || '',
       timestamp: new Date().toISOString(),
-      attachment: anexoNome || null
+      attachment: anexoNome || null,
+      attachments: anexosList
     });
     
     tickets[tIdx].updatedAt = new Date().toISOString();
@@ -431,6 +479,7 @@ async function processState(client, message, userId) {
     const ticketId = session.targetTicketId;
     const temAnexo = session.anexos && session.anexos.length > 0;
     const anexoNome = temAnexo ? session.anexos[session.anexos.length - 1] : null;
+    const anexosList = temAnexo ? [...session.anexos] : [];
 
     if (!text && !temAnexo) {
       await send('Por favor, escreva algo ou envie um anexo.');
@@ -443,11 +492,13 @@ async function processState(client, message, userId) {
     if (idx >= 0) {
       const dataHora = new Date().toLocaleString('pt-BR');
       const novoComentario = text ? `\n[Cliente ${dataHora}]: ${text}` : '';
-      const anexoInfo = anexoNome ? `\n[Anexo enviado em ${dataHora}]` : '';
+      const anexoInfo = temAnexo ? `\n[Anexo(s) enviado(s) em ${dataHora}]` : '';
       
       tickets[idx].description += novoComentario + anexoInfo;
       if (anexoNome) {
-        tickets[idx].attachment = anexoNome; 
+        tickets[idx].attachment = anexoNome;
+        if (!tickets[idx].attachments) tickets[idx].attachments = [];
+        tickets[idx].attachments.push(...anexosList);
       }
       tickets[idx].updatedAt = new Date().toISOString();
       
@@ -487,111 +538,124 @@ async function processState(client, message, userId) {
 
   // ── ESTADO: aguardando_nome ────────────────────────────────────────────────
   if (session.state === 'aguardando_nome') {
-    const newSession = { ...session, state: 'aguardando_sala', nome: text };
+    const newSession = { ...session, state: 'aguardando_local_principal', nome: text };
     updateSession(userId, newSession);
-    await send(getSalasMenu(newSession));
+    await send(getLocalPrincipalMenu(newSession));
     return;
   }
 
-  // ── ESTADO: aguardando_sala ────────────────────────────────────────────────
-  if (session.state === 'aguardando_sala') {
-    const config = getBotConfig();
-    const salaNome = (config.salas || {})[text];
-    if (!salaNome) { await send(`Opção inválida. Escolha o número da sua sala:\n\n${getSalasMenu(session)}`); return; }
-    
+  // ── ESTADO: aguardando_local_principal ─────────────────────────────────────
+  if (session.state === 'aguardando_local_principal') {
     if (text === '1') {
-      updateSession(userId, { state: 'aguardando_setor', sala: salaNome });
-      await send(getSetoresMenu(session));
+      updateSession(userId, { state: 'aguardando_setor_vita', local_type: 'VITA' });
+      await send(getSetorVitaMenu());
       return;
     }
-
-    const isSalaVendas = text >= '6'; 
-    updateSession(userId, { state: 'aguardando_ajuda_tipo', sala: salaNome, isSalaVendas });
-    await send(getAjudaTipoMenu(session));
-    return;
-  }
-
-  // ── ESTADO: aguardando_setor ───────────────────────────────────────────────
-  if (session.state === 'aguardando_setor') {
-    const config = getBotConfig();
-    const setores = config.setores || [];
-    let setorNome;
-    if (setores.length === 0) {
-      setorNome = text;
-    } else {
-      setorNome = setores[parseInt(text) - 1];
-    }
-
-    if (!setorNome) { 
-      await send(`Opção inválida.\n\n${getSetoresMenu(session)}`); 
-      return; 
-    }
-
-    updateSession(userId, { state: 'aguardando_ajuda_tipo', setor: setorNome });
-    await send(getAjudaTipoMenu(session));
-    return;
-  }
-
-  // ── ESTADO: aguardando_ajuda_tipo ──────────────────────────────────────────
-  if (session.state === 'aguardando_ajuda_tipo') {
-    const opt = text.toUpperCase().trim();
-    
-    if (text === '1' || opt === 'A') {
-      updateSession(userId, { state: 'aguardando_sistema_especifico', ajuda_tipo: 'Sistemas e Softwares' });
-      await send(getSistemasMenu(session));
+    if (text === '2') {
+      updateSession(userId, { state: 'aguardando_setor_ava', local_type: 'AVA' });
+      await send(getSetorAvaMenu());
       return;
     }
-    
-    if (opt === 'B' || opt === '2') {
-      updateSession(userId, { state: 'aguardando_problema_especifico' });
-      await send(getProblemasMenu());
+    if (text === '3') {
+      updateSession(userId, { state: 'aguardando_sala_vendas', local_type: 'VENDAS' });
+      await send(getSalaVendasMenu());
       return;
     }
-
-    await send(`Opção inválida. Escolha uma das opções:\n\n${getAjudaTipoMenu(session)}`);
+    await send(`Opção inválida.\n\n${getLocalPrincipalMenu(session)}`);
     return;
   }
 
-  // ── ESTADO: aguardando_sistema_especifico ──────────────────────────────────
-  if (session.state === 'aguardando_sistema_especifico') {
-    if (text.toLowerCase().includes('novo') || text.toLowerCase().includes('inclusão')) {
-      updateSession(userId, { state: 'aguardando_inclusao_bloco', sistema: 'Inclusão de Usuário' });
-      await send(`Para realizar o *Cadastro de Novo Usuário*, por favor, preencha o formulário abaixo em uma única mensagem:\n\n` +
-                 `Nome Completo:\n` +
-                 `CPF:\n` +
-                 `E-mail:\n` +
-                 `Sala:\n` +
-                 `Função:`);
+  // ── ESTADO: aguardando_setor_vita ──────────────────────────────────────────
+  if (session.state === 'aguardando_setor_vita') {
+    const setores = getSectoresVita();
+    const sName = setores[parseInt(text) - 1];
+    if (!sName) { await send(`Opção inválida.\n\n${getSetorVitaMenu()}`); return; }
+    updateSession(userId, { state: 'aguardando_demanda_tipo', local: `VITA - ${sName}` });
+    await send(getDemandaTipoMenu());
+    return;
+  }
+
+  // ── ESTADO: aguardando_setor_ava ───────────────────────────────────────────
+  if (session.state === 'aguardando_setor_ava') {
+    const setores = getSectoresAva();
+    const sName = setores[parseInt(text) - 1];
+    if (!sName) { await send(`Opção inválida.\n\n${getSetorAvaMenu()}`); return; }
+    updateSession(userId, { state: 'aguardando_demanda_tipo', local: `AVA - ${sName}` });
+    await send(getDemandaTipoMenu());
+    return;
+  }
+
+  // ── ESTADO: aguardando_sala_vendas ─────────────────────────────────────────
+  if (session.state === 'aguardando_sala_vendas') {
+    const salas = getSalasVendas();
+    const sName = salas[parseInt(text) - 1];
+    if (!sName) { await send(`Opção inválida.\n\n${getSalaVendasMenu()}`); return; }
+    updateSession(userId, { state: 'aguardando_demanda_tipo', local: `Vendas - ${sName}` });
+    await send(getDemandaTipoMenu());
+    return;
+  }
+
+  // ── ESTADO: aguardando_demanda_tipo ────────────────────────────────────────
+  if (session.state === 'aguardando_demanda_tipo') {
+    if (text === '1') {
+      updateSession(userId, { state: 'aguardando_equipamento', type: 'Equipamento/Infra' });
+      await send(getEquipamentosMenu());
       return;
     }
-    const config = getBotConfig();
-    const sistemas = config.sistemas || [];
-    const sistemaNome = sistemas[parseInt(text) - 1];
-    if (!sistemaNome) { await send(`Opção inválida.\n\n${getSistemasMenu(session)}`); return; }
-
-    updateSession(userId, { state: 'aguardando_descricao', sistema: sistemaNome, type: `Sistemas - ${sistemaNome}` });
-    await send(`Entendido. Por favor, escreva uma *breve descrição* do problema ou solicitação.`);
+    if (text === '2') {
+      updateSession(userId, { state: 'aguardando_sistema', type: 'Sistemas', isAcesso: false });
+      await send(getSistemasMenu(session, false));
+      return;
+    }
+    if (text === '3') {
+      updateSession(userId, { state: 'aguardando_sistema_acesso', type: 'Acesso', isAcesso: true });
+      await send(getSistemasMenu(session, true));
+      return;
+    }
+    await send(`Opção inválida.\n\n${getDemandaTipoMenu()}`);
     return;
   }
 
-  // ── ESTADO: aguardando_inclusao_bloco ──────────────────────────────────────
-  if (session.state === 'aguardando_inclusao_bloco') {
-    updateSession(userId, { state: 'aguardando_confirmacao', dadosInclusao: text, type: 'Inclusão de Usuário' });
-    const resumo = `Confirmando: Suporte para Inclusão de Usuário, Sala ${session.sala}, solicitado por ${session.nome}.\nAnexos enviados: ${session.anexos?.length ? 'Sim' : 'Não'}.\n\nPodemos gerar o chamado? (Responda *SIM* para confirmar)`;
-    await send(resumo);
-    return;
-  }
-
-  // ── ESTADO: aguardando_problema_especifico ───────────────────────────────
-  if (session.state === 'aguardando_problema_especifico') {
+  // ── ESTADO: aguardando_equipamento ─────────────────────────────────────────
+  if (session.state === 'aguardando_equipamento') {
     const config = getBotConfig();
     const problemas = config.problemas || {};
     const item = problemas[text];
-    if (!item) { await send(`Opção inválida.\n\n${getProblemasMenu()}`); return; }
-    updateSession(userId, { state: 'aguardando_descricao', item, type: `Problemas - ${item}` });
-    await send(`Entendido. Por favor, escreva uma *breve descrição* do problema com o(a) ${item}.`);
+    if (!item) { await send(`Opção inválida.\n\n${getEquipamentosMenu()}`); return; }
+    updateSession(userId, { state: 'aguardando_descricao', item, type: `Equipamento - ${item}` });
+    await send(`Entendido. Por favor, escreva uma *breve descrição* do problema com: ${item}.`);
     return;
   }
+
+  // ── ESTADO: aguardando_sistema ─────────────────────────────────────────────
+  if (session.state === 'aguardando_sistema') {
+    const config = getBotConfig();
+    const sistemas = config.sistemas || [];
+    const item = sistemas[parseInt(text) - 1];
+    if (!item) { await send(`Opção inválida.\n\n${getSistemasMenu(session, false)}`); return; }
+    updateSession(userId, { state: 'aguardando_descricao', sistema: item, type: `Sistema - ${item}` });
+    await send(`Entendido. Por favor, escreva uma *breve descrição* do problema ou dúvida no ${item}.`);
+    return;
+  }
+
+  // ── ESTADO: aguardando_sistema_acesso ──────────────────────────────────────
+  if (session.state === 'aguardando_sistema_acesso') {
+    const config = getBotConfig();
+    const sistemas = config.sistemas || [];
+    const item = sistemas[parseInt(text) - 1];
+    if (!item) { await send(`Opção inválida.\n\n${getSistemasMenu(session, true)}`); return; }
+    updateSession(userId, { state: 'aguardando_dados_acesso', sistema: item, type: `Criação de Acesso - ${item}` });
+    await send(`Certo, vamos criar o acesso para o sistema *${item}*.\n\nResponda em uma *única mensagem* os dados do colaborador:\n\n- Nome Completo:\n- CPF:\n- E-mail:\n- Função:`);
+    return;
+  }
+
+  // ── ESTADO: aguardando_dados_acesso ────────────────────────────────────────
+  if (session.state === 'aguardando_dados_acesso') {
+    updateSession(userId, { state: 'aguardando_anexo', descricao: text || '(Sem dados informados)' });
+    await send(`Perfeito. Se houver alguma aprovação do gestor ou formulário necessário, envie o *ANEXO/FOTO* agora. Se não tiver, responda *NÃO* para pular.`);
+    return;
+  }
+
   // ── ESTADO: aguardando_descricao ───────────────────────────────────────────
   if (session.state === 'aguardando_descricao') {
     const isBase64 = text.length > 200 && (text.includes('/9j/') || text.startsWith('data:'));
@@ -615,28 +679,27 @@ async function processState(client, message, userId) {
     const skip = text.toUpperCase() === 'NÃO' || text.toUpperCase() === 'NAO';
     
     if (!skip && !isMedia) {
-      await send('Por favor, envie a *FOTO* ou responda *NÃO* para pular.');
+      await send('Por favor, envie a *FOTO/ANEXO* ou responda *NÃO* para pular.');
       return;
     }
 
     if (isMedia) {
        console.log(`[bot] anexo adicional recebido.`);
-       // A lógica global no topo já salvou o arquivo. 
-       // Podemos até perguntar se quer mais, mas para simplificar o fluxo do usuário, vamos avançar.
     }
 
     updateSession(userId, { state: 'aguardando_confirmacao' });
     
-    // Força a leitura do objeto de sessão mais recente para o resumo
     const s = getSession(userId);
-    const localizacao = s.setor ? `Setor ${s.setor}` : `Sala ${s.sala}`;
+    const localizacao = s.local || 'Local não especificado';
     const temAnexo = (s.anexos && s.anexos.length > 0);
+    const qtdAnexos = temAnexo ? s.anexos.length : 0;
+    const anexoLabel = temAnexo ? `Sim (${qtdAnexos} arquivo${qtdAnexos > 1 ? 's' : ''})` : 'Não';
 
     const resumo = `*Confirmando os dados do Chamado:*\n\n` +
-                    `🛠️ *Suporte para:* ${s.sistema || s.item || s.type}\n` +
+                   `🛠️ *Suporte para:* ${s.type || s.sistema || s.item}\n` +
                    `📍 *Local:* ${localizacao}\n` +
                    `👤 *Solicitante:* ${s.nome}\n` +
-                   `📎 *Anexo:* ${temAnexo ? 'Sim' : 'Não'}\n\n` +
+                   `📎 *Anexo:* ${anexoLabel}\n\n` +
                    `Podemos gerar o chamado? (Responda *SIM* para confirmar ou *NÃO* para reiniciar)`;
     await send(resumo);
     return;
@@ -645,8 +708,8 @@ async function processState(client, message, userId) {
   // ── ESTADO: aguardando_confirmacao ─────────────────────────────────────────
   if (session.state === 'aguardando_confirmacao') {
     if (text.toUpperCase() === 'NÃO' || text.toUpperCase() === 'NAO') {
-      updateSession(userId, { state: 'aguardando_ajuda_tipo' });
-      await send('Entendido. Vamos recomeçar a triagem. O que você deseja solicitar?\n\n[A] Sistemas\n[B] Hardware');
+      updateSession(userId, { state: 'aguardando_demanda_tipo' });
+      await send('Entendido. Vamos recomeçar a triagem.\n\n' + getDemandaTipoMenu());
       return;
     }
 
@@ -655,9 +718,7 @@ async function processState(client, message, userId) {
       return;
     }
 
-    const descFinal = session.dadosInclusao 
-      ? `--- DADOS DE INCLUSÃO ---\n${session.dadosInclusao}` 
-      : session.descricao;
+    const descFinal = session.descricao || '';
 
     const ticket = storage.insert('tickets', {
       name: session.nome,
@@ -668,8 +729,9 @@ async function processState(client, message, userId) {
       origem: 'bot',
       solicitante: session.nome,
       type: session.type || 'Suporte',
-      sala: session.setor ? `${session.sala} (${session.setor})` : session.sala,
-      attachment: (session.anexos && session.anexos.length > 0) ? session.anexos[session.anexos.length - 1] : null
+      sala: session.local || 'Não informado',
+      attachment: (session.anexos && session.anexos.length > 0) ? session.anexos[session.anexos.length - 1] : null,
+      attachments: (session.anexos && session.anexos.length > 0) ? [...session.anexos] : []
     });
 
     updateSession(userId, { state: 'chamado_criado' });
@@ -681,8 +743,8 @@ async function processState(client, message, userId) {
   if (session.state === 'chamado_criado') {
     const nomeAtual = session.nome;
     resetSession(userId);
-    updateSession(userId, { state: 'aguardando_sala', nome: nomeAtual });
-    await send(getSalasMenu());
+    updateSession(userId, { state: 'aguardando_local_principal', nome: nomeAtual });
+    await send(getLocalPrincipalMenu({ nome: nomeAtual }));
     return;
   }
 }

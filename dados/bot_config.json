@@ -40,7 +40,30 @@
     "Dynamics",
     "Valley",
     "Neo Interact",
-    "CobMais"
+    "CobMais",
+    "Amplifique.Me"
+  ],
+  "setores_vita": [
+    "Jurídico",
+    "Financeiro",
+    "Estratégico",
+    "Controladoria",
+    "Contas a Receber",
+    "Central de Contratos",
+    "Diretoria",
+    "Backoffice"
+  ],
+  "setores_ava": [
+    "Conexão Laghetto",
+    "RH",
+    "DP",
+    "Unique"
+  ],
+  "salas_vendas": [
+    "Pedras Altas",
+    "Pedras Altas Noturno",
+    "NBA Park",
+    "Golden Resort"
   ],
   "problemas": {
     "1": "Impressora",
