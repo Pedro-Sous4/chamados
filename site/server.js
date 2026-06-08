@@ -559,6 +559,50 @@ const ROUTES = {
     });
   },
 
+  'POST /api/contatos/import': (req, res) => {
+    const session = requireAuth(req, res);
+    if (!session) return;
+    const ALLOWED = ['administrador', 'supervisor'];
+    if (!ALLOWED.includes(session.role || 'usuario')) {
+      return sendJson(res, 403, { error: 'Sem permissão' });
+    }
+
+    // Chama o bot local para importar todos os contatos ativos
+    const data = JSON.stringify({ secret: process.env.WEBHOOK_SECRET || '' });
+    const botReq = http.request({
+      hostname: 'localhost',
+      port: process.env.WEBHOOK_PORT || 3000,
+      path: '/webhook/import-contacts',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': data.length
+      }
+    }, (botRes) => {
+      let body = '';
+      botRes.on('data', chunk => (body += chunk));
+      botRes.on('end', () => {
+        try {
+          const parsed = JSON.parse(body);
+          if (botRes.statusCode === 200) {
+            sendJson(res, 200, parsed);
+          } else {
+            sendJson(res, botRes.statusCode, { error: parsed.error || 'Erro do bot ao importar' });
+          }
+        } catch {
+          sendJson(res, 500, { error: 'Resposta inválida do bot' });
+        }
+      });
+    });
+
+    botReq.on('error', () => {
+      sendJson(res, 503, { error: 'Bot offline. O bot do WhatsApp precisa estar rodando para importar contatos.' });
+    });
+
+    botReq.write(data);
+    botReq.end();
+  },
+
   /**
    * GET /api/me/contato
    * Retorna o telefone salvo no perfil do usuário logado.

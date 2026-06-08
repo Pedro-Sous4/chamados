@@ -13,7 +13,7 @@ const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
  * Endpoint:  POST /webhook/chamado-concluido
  * Body JSON: { "telefone": "5511999999999", "secret": "..." }
  */
-const ALLOWED_URLS = ['/webhook/chamado-concluido', '/webhook/chamado-assumido', '/webhook/logout', '/webhook/mensagem-avulsa'];
+const ALLOWED_URLS = ['/webhook/chamado-concluido', '/webhook/chamado-assumido', '/webhook/logout', '/webhook/mensagem-avulsa', '/webhook/import-contacts'];
 
 function startWebhook() {
   const server = http.createServer((req, res) => {
@@ -63,6 +63,64 @@ function startWebhook() {
         res.writeHead(400);
         res.end('Bot não disponível para logout');
         return;
+      }
+ 
+      // Rota de Importação de Contatos
+      if (endpoint === '/webhook/import-contacts') {
+        const client = require('./context').getClient();
+        if (!client) {
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ error: 'Sessão do WhatsApp não ativa' }));
+          return;
+        }
+        try {
+          const wppContacts = await client.getAllContacts();
+          const storage = require('./storage');
+          let contatos = storage.readAll('contatos');
+          let importedCount = 0;
+
+          wppContacts.forEach(wc => {
+            if (!wc.id || !wc.id.user) return;
+            const num = wc.id.user;
+            // Ignora grupos e outros identificadores não numéricos
+            if (!/^\d+$/.test(num)) return;
+            
+            // Pega o nome mais qualificado disponível
+            const nome = wc.name || wc.formattedName || wc.pushname || '';
+            if (!nome) return;
+
+            const idx = contatos.findIndex(c => String(c.numero).replace(/\D/g, '') === num);
+            if (idx === -1) {
+              contatos.push({
+                id: Date.now() + Math.floor(Math.random() * 1000),
+                createdAt: new Date().toISOString(),
+                numero: num,
+                nome: nome
+              });
+              importedCount++;
+            } else if (!contatos[idx].nome) {
+              contatos[idx].nome = nome;
+              contatos[idx].updatedAt = new Date().toISOString();
+              importedCount++;
+            }
+          });
+
+          if (importedCount > 0) {
+            const fs = require('fs');
+            const path = require('path');
+            const contatosPath = path.resolve(__dirname, '..', '..', 'dados', 'contatos.json');
+            fs.writeFileSync(contatosPath, JSON.stringify(contatos, null, 2), 'utf-8');
+          }
+
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ ok: true, imported: importedCount }));
+          return;
+        } catch (err) {
+          console.error('[webhook] erro ao importar contatos:', err.message);
+          res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ error: err.message }));
+          return;
+        }
       }
 
       const telefone = data.telefone;
