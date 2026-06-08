@@ -734,6 +734,27 @@ async function processState(client, message, userId) {
       attachments: (session.anexos && session.anexos.length > 0) ? [...session.anexos] : []
     });
 
+    // Garante o cadastro do contato
+    try {
+      const contatos = storage.readAll('contatos');
+      const normalizedNum = extractNumber(userId);
+      const exists = contatos.some(c => String(c.numero).replace(/\D/g, '') === normalizedNum);
+      if (!exists) {
+        contatos.push({
+          id: Date.now(),
+          createdAt: new Date().toISOString(),
+          numero: normalizedNum,
+          nome: session.nome
+        });
+        const fs = require('fs');
+        const path = require('path');
+        const contatosPath = path.resolve(__dirname, '..', '..', 'dados', 'contatos.json');
+        fs.writeFileSync(contatosPath, JSON.stringify(contatos, null, 2), 'utf-8');
+      }
+    } catch (err) {
+      console.error('[bot] erro ao salvar contato:', err.message);
+    }
+
     updateSession(userId, { state: 'chamado_criado' });
     await send(`✅ Gerando chamado...\n\nProtocolo *#${ticket.id}* aberto com sucesso!`);
     return;

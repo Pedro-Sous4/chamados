@@ -15,6 +15,32 @@ if (process.argv.includes('--off')) {
 }
 
 // ── Modo normal: wppconnect ──────────────────────────────────────────────────
+const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+
+// Limpa processos zumbis do Chrome e arquivos de trava (locks) que causam crash loop no PM2
+try {
+  console.log('[Bot] Limpando processos Chrome anteriores e arquivos de trava...');
+  execSync(`powershell -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -like '*chrom*' -and $_.CommandLine -like '*wpp-bot-session*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"`);
+} catch (e) {
+  console.warn('[Bot] Erro ao limpar processos Chrome:', e.message);
+}
+
+const sessionDir = path.resolve(__dirname, '..', 'tokens', 'wpp-bot-session-v16');
+const lockFiles = ['SingletonLock', 'SingletonCookie', 'SingletonSocket'];
+lockFiles.forEach(file => {
+  const filePath = path.join(sessionDir, file);
+  if (fs.existsSync(filePath)) {
+    try {
+      fs.unlinkSync(filePath);
+      console.log(`[Bot] Trava removida: ${file}`);
+    } catch (e) {
+      console.warn(`[Bot] Não foi possível remover ${file}:`, e.message);
+    }
+  }
+});
+
 const wppconnect = require('@wppconnect-team/wppconnect');
 const { handleMessage } = require('./bot');
 const { startWebhook } = require('./webhook');

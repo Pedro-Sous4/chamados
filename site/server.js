@@ -330,27 +330,37 @@ const ROUTES = {
     }
     if (filterType)   tickets = tickets.filter(t => t.type   === filterType);
 
-    // Enriquece tickets com nome/email do solicitante a partir de logins
+    // Enriquece tickets com nome/email do solicitante a partir de logins e resolve o nome de referência dos contatos
     const logins = readCollection('logins');
     const contatos = readCollection('contatos');
     tickets = tickets.map(t => {
-      if (t.solicitanteNome && t.solicitanteEmail) return t;
+      let resolvedName = t.name;
+      if (t.number) {
+        const contato = contatos.find(c => String(c.numero).replace(/\D/g, '') === String(t.number).replace(/\D/g, ''));
+        if (contato && contato.nome) {
+          resolvedName = contato.nome;
+        }
+      }
+      
+      let enrichedTicket = Object.assign({}, t, { name: resolvedName });
+
+      if (enrichedTicket.solicitanteNome && enrichedTicket.solicitanteEmail) return enrichedTicket;
       // Tenta casar pelo email completo ou pelo prefixo (campo solicitante legado)
       let match = logins.find(u =>
-        (t.solicitanteEmail && u.email.toLowerCase() === t.solicitanteEmail.toLowerCase()) ||
-        (t.solicitante && u.email.toLowerCase().startsWith(t.solicitante.toLowerCase() + '@'))
+        (enrichedTicket.solicitanteEmail && u.email.toLowerCase() === enrichedTicket.solicitanteEmail.toLowerCase()) ||
+        (enrichedTicket.solicitante && u.email.toLowerCase().startsWith(enrichedTicket.solicitante.toLowerCase() + '@'))
       );
       // Para tickets de bot: tenta via contato vinculado (id_login)
-      if (!match && t.number) {
-        const contato = contatos.find(c => c.numero === t.number);
+      if (!match && enrichedTicket.number) {
+        const contato = contatos.find(c => String(c.numero).replace(/\D/g, '') === String(enrichedTicket.number).replace(/\D/g, ''));
         if (contato && contato.id_login) {
           match = logins.find(u => String(u.id) === String(contato.id_login));
         }
       }
-      if (!match) return t;
-      return Object.assign({}, t, {
-        solicitanteNome:  match.name  || t.solicitanteNome  || t.solicitante || '',
-        solicitanteEmail: match.email || t.solicitanteEmail || '',
+      if (!match) return enrichedTicket;
+      return Object.assign({}, enrichedTicket, {
+        solicitanteNome:  match.name  || enrichedTicket.solicitanteNome  || enrichedTicket.solicitante || '',
+        solicitanteEmail: match.email || enrichedTicket.solicitanteEmail || '',
       });
     });
 
@@ -425,6 +435,23 @@ const ROUTES = {
 
       const saved = insertCollection('tickets', record);
 
+      // Cria o contato automaticamente se não existir
+      if (record.number) {
+        const contatosPath = path.join(DADOS_DIR, 'contatos.json');
+        const contatos = readCollection('contatos');
+        const normalizedNum = String(record.number).replace(/\D/g, '');
+        const exists = contatos.some(c => String(c.numero).replace(/\D/g, '') === normalizedNum);
+        if (!exists) {
+          contatos.push({
+            id: Date.now(),
+            createdAt: new Date().toISOString(),
+            numero: normalizedNum,
+            nome: record.name
+          });
+          fs.writeFileSync(contatosPath, JSON.stringify(contatos, null, 2), 'utf-8');
+        }
+      }
+
       sendJson(res, 201, saved);
     });
   },
@@ -494,6 +521,42 @@ const ROUTES = {
       });
     });
     sendJson(res, 200, { contatos: enriched });
+  },
+
+  'PUT /api/contatos': (req, res) => {
+    const session = requireAuth(req, res);
+    if (!session) return;
+    const ALLOWED = ['administrador', 'supervisor'];
+    if (!ALLOWED.includes(session.role || 'usuario')) {
+      return sendJson(res, 403, { error: 'Sem permissão' });
+    }
+    let body = '';
+    req.on('data', chunk => (body += chunk));
+    req.on('end', () => {
+      let data;
+      try { data = JSON.parse(body); } catch { return sendJson(res, 400, { error: 'JSON inválido' }); }
+      const { numero, nome } = data;
+      if (!numero || !nome) return sendJson(res, 422, { error: 'Número e nome são obrigatórios' });
+
+      const contatosPath = path.join(DADOS_DIR, 'contatos.json');
+      let contatos = readCollection('contatos');
+      const normalizedNum = String(numero).replace(/\D/g, '');
+      const idx = contatos.findIndex(c => String(c.numero).replace(/\D/g, '') === normalizedNum);
+
+      if (idx >= 0) {
+        contatos[idx].nome = nome;
+        contatos[idx].updatedAt = new Date().toISOString();
+      } else {
+        contatos.push({
+          id: Date.now(),
+          createdAt: new Date().toISOString(),
+          numero: normalizedNum,
+          nome: nome
+        });
+      }
+      fs.writeFileSync(contatosPath, JSON.stringify(contatos, null, 2), 'utf-8');
+      sendJson(res, 200, { ok: true });
+    });
   },
 
   /**
@@ -866,6 +929,16 @@ const server = http.createServer((req, res) => {
     const tickets = readCollection('tickets');
     let ticket = tickets.find(t => Number(t.id) === id);
     if (!ticket) return sendJson(res, 404, { error: 'Chamado não encontrado' });
+
+    // Resolve o nome de referência em contatos.json
+    if (ticket.number) {
+      const contatos = readCollection('contatos');
+      const contato = contatos.find(c => String(c.numero).replace(/\D/g, '') === String(ticket.number).replace(/\D/g, ''));
+      if (contato && contato.nome) {
+        ticket = Object.assign({}, ticket, { name: contato.nome });
+      }
+    }
+
     if (!ticket.solicitanteNome || !ticket.solicitanteEmail) {
       const logins = readCollection('logins');
       const match = logins.find(u =>

@@ -1082,6 +1082,12 @@
               style="color:#6b7280; border-bottom-color:transparent">
         <i data-lucide="users" class="w-4 h-4 inline-block mr-1.5 -mt-0.5"></i>Logins
       </button>
+      <button data-tab="contatos"
+              class="config-tab px-4 py-3 text-sm font-semibold border-b-2 transition-colors
+                     cursor-pointer bg-transparent border-x-0 border-t-0"
+              style="color:#6b7280; border-bottom-color:transparent">
+        <i data-lucide="contact" class="w-4 h-4 inline-block mr-1.5 -mt-0.5"></i>Contatos
+      </button>
     </div>
 
     <!-- Painel: Configuração Bot -->
@@ -1232,6 +1238,40 @@
       </div>
     </div>
     </div> <!-- Fim tab-logins -->
+
+    <!-- Painel: Contatos (Novo) -->
+    <div id="tab-contatos" class="flex flex-col flex-1 overflow-hidden p-6 gap-4 hidden">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-bold text-gray-400 uppercase">Telefone (Número)</label>
+          <input id="cont-numero" type="text" placeholder="Ex: 5511999999999" class="px-3 py-2 border rounded-lg text-sm outline-none focus:border-brand-400" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-bold text-gray-400 uppercase">Nome de Referência</label>
+          <input id="cont-nome" type="text" placeholder="Ex: João da Silva" class="px-3 py-2 border rounded-lg text-sm outline-none focus:border-brand-400" />
+        </div>
+      </div>
+      <button id="btn-add-contato" class="w-full py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold hover:opacity-90 shadow-sm transition-all">
+        Salvar / Atualizar Contato
+      </button>
+
+      <div class="h-px bg-gray-100 my-1"></div>
+
+      <div class="flex-1 overflow-y-auto pr-1" style="max-height:200px">
+        <table class="w-full text-[11px] border-collapse">
+          <thead>
+            <tr class="text-left text-gray-400 border-b">
+              <th class="pb-2 font-black uppercase tracking-widest">Nome</th>
+              <th class="pb-2 font-black uppercase tracking-widest">Telefone</th>
+              <th class="pb-2 font-black uppercase tracking-widest text-right">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="cont-list-body">
+            <!-- Preenchido via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
 
   </div> <!-- Fim modal container inner -->
 </div> <!-- Fim modal overlay -->
@@ -1676,7 +1716,8 @@
     const panels = {
       'config-bot': document.getElementById('tab-config-bot'),
       whatsapp: document.getElementById('tab-whatsapp'),
-      logins:   document.getElementById('tab-logins')
+      logins:   document.getElementById('tab-logins'),
+      contatos: document.getElementById('tab-contatos')
     };
 
     tabs.forEach(tab => {
@@ -1693,6 +1734,7 @@
         if (target === 'config-bot') loadBotConfig();
         if (target === 'whatsapp') loadWppConfig();
         if (target === 'logins')   loadLoginsTab();
+        if (target === 'contatos') loadContatosTab();
         lucide.createIcons();
       });
     });
@@ -1759,6 +1801,70 @@
         body: JSON.stringify({ id })
       });
       if (res.ok) loadLoginsTab();
+    });
+
+    /* --- Contatos Tab Logic --- */
+    async function loadContatosTab() {
+      const tbody = document.getElementById('cont-list-body');
+      tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400">Carregando...</td></tr>';
+      try {
+        const res = await fetch('/api/contatos', { headers: { 'Authorization': 'Bearer ' + token() } });
+        const data = await res.json();
+        const contatos = data.contatos || [];
+        tbody.innerHTML = '';
+        if (contatos.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400">Nenhum contato cadastrado.</td></tr>';
+          return;
+        }
+        contatos.forEach(c => {
+          const tr = document.createElement('tr');
+          tr.className = 'border-b hover:bg-gray-50';
+          tr.innerHTML = `
+            <td class="py-2.5 font-bold text-gray-700">${escHtml(c.nome || '')}</td>
+            <td class="py-2.5 text-gray-500 font-mono">${escHtml(c.numero || '')}</td>
+            <td class="py-2.5 text-right">
+              <button data-edit-cont-num="${escHtml(c.numero || '')}" data-edit-cont-nome="${escHtml(c.nome || '')}" class="p-1 text-brand-500 hover:text-brand-700 bg-transparent border-none cursor-pointer">
+                <i data-lucide="edit" class="w-3.5 h-3.5 inline"></i> Editar
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        lucide.createIcons();
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-red-500">Erro ao carregar contatos.</td></tr>';
+      }
+    }
+
+    document.getElementById('btn-add-contato').addEventListener('click', async function() {
+      const numero = document.getElementById('cont-numero').value.trim();
+      const nome = document.getElementById('cont-nome').value.trim();
+      if (!numero || !nome) return alert('Número e Nome de Referência são obrigatórios.');
+      
+      this.disabled = true;
+      try {
+        const res = await fetch('/api/contatos', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
+          body: JSON.stringify({ numero, nome })
+        });
+        if (res.ok) {
+          document.getElementById('cont-numero').value = '';
+          document.getElementById('cont-nome').value = '';
+          loadContatosTab();
+          load(); // Recarrega os chamados para atualizar os nomes na tela principal
+        } else {
+          const d = await res.json(); alert(d.error || 'Erro ao salvar contato.');
+        }
+      } finally { this.disabled = false; }
+    });
+
+    document.getElementById('cont-list-body').addEventListener('click', function(e) {
+      const btn = e.target.closest('[data-edit-cont-num]');
+      if (!btn) return;
+      document.getElementById('cont-numero').value = btn.dataset.editContNum;
+      document.getElementById('cont-nome').value = btn.dataset.editContNome;
+      document.getElementById('cont-nome').focus();
     });
 
     /* --- WhatsApp Config Logic --- */
