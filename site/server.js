@@ -159,7 +159,76 @@ const DADOS_DIR = path.resolve(__dirname, '..', 'dados');
 // Pasta de arquivos estáticos
 const PUBLIC_DIR = path.resolve(__dirname, 'public');
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// Helper para parsear CSV robustamente (Google Contacts, etc.)
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/);
+  if (lines.length < 2) return [];
+  
+  // Identifica o separador (vírgula ou ponto e vírgula)
+  const firstLine = lines[0];
+  const separator = firstLine.includes(';') ? ';' : ',';
+  
+  // Função auxiliar para dividir linha respeitando aspas
+  function splitCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === separator && !inQuotes) {
+        result.push(current.trim().replace(/^"|"$/g, ''));
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim().replace(/^"|"$/g, ''));
+    return result;
+  }
+  
+  const headers = splitCSVLine(lines[0]).map(h => h.toLowerCase().trim());
+  
+  // Mapeamento comum do Google Contacts (PT e EN)
+  const nameHeaders = ['name', 'nome', 'given name', 'nome proprio', 'display name'];
+  const phoneHeaders = ['phone 1 - value', 'telefone 1 - valor', 'phone', 'telefone', 'mobile', 'celular'];
+  
+  let nameIdx = headers.findIndex(h => nameHeaders.some(nh => h.includes(nh)));
+  let phoneIdx = headers.findIndex(h => phoneHeaders.some(ph => h.includes(ph)));
+  
+  if (nameIdx === -1) {
+    nameIdx = headers.findIndex(h => h.includes('name') || h.includes('nome'));
+  }
+  if (phoneIdx === -1) {
+    phoneIdx = headers.findIndex(h => h.includes('phone') || h.includes('telef') || h.includes('celular') || h.includes('fone'));
+  }
+  
+  if (nameIdx === -1) nameIdx = 0;
+  if (phoneIdx === -1) phoneIdx = Math.min(1, headers.length - 1);
+  
+  const contacts = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const row = splitCSVLine(line);
+    if (row.length <= Math.max(nameIdx, phoneIdx)) continue;
+    
+    const rawName = row[nameIdx];
+    const rawPhone = row[phoneIdx];
+    
+    if (rawName && rawPhone) {
+      const phoneDigits = rawPhone.replace(/\D/g, '');
+      if (phoneDigits.length >= 8) {
+        contacts.push({
+          nome: rawName.trim(),
+          numero: phoneDigits
+        });
+      }
+    }
+  }
+  return contacts;
+}
 
 /**
  * Lê todos os registros de uma coleção JSON.
@@ -601,6 +670,62 @@ const ROUTES = {
 
     botReq.write(data);
     botReq.end();
+  },
+
+  'POST /api/contatos/import-csv': (req, res) => {
+    const session = requireAuth(req, res);
+    if (!session) return;
+    const ALLOWED = ['administrador', 'supervisor'];
+    if (!ALLOWED.includes(session.role || 'usuario')) {
+      return sendJson(res, 403, { error: 'Sem permissão' });
+    }
+
+    let body = '';
+    req.on('data', chunk => (body += chunk));
+    req.on('end', () => {
+      try {
+        const contacts = parseCSV(body);
+        if (contacts.length === 0) {
+          return sendJson(res, 400, { error: 'Nenhum contato válido encontrado no CSV. Verifique se o arquivo possui colunas de Nome e Telefone.' });
+        }
+
+        const contatosPath = path.join(DADOS_DIR, 'contatos.json');
+        let contatos = readCollection('contatos');
+        let importedCount = 0;
+
+        contacts.forEach(c => {
+          let num = c.numero;
+          // Se for Brasil e não tiver DDI (55), adiciona se tiver 10 ou 11 dígitos
+          if (num.length === 11 || num.length === 10) {
+            if (!num.startsWith('55')) num = '55' + num;
+          }
+
+          const idx = contatos.findIndex(item => String(item.numero).replace(/\D/g, '') === num);
+          if (idx === -1) {
+            contatos.push({
+              id: Date.now() + Math.floor(Math.random() * 1000),
+              createdAt: new Date().toISOString(),
+              numero: num,
+              nome: c.nome
+            });
+            importedCount++;
+          } else if (!contatos[idx].nome || contatos[idx].nome === contatos[idx].numero) {
+            contatos[idx].nome = c.nome;
+            contatos[idx].updatedAt = new Date().toISOString();
+            importedCount++;
+          }
+        });
+
+        if (importedCount > 0) {
+          fs.writeFileSync(contatosPath, JSON.stringify(contatos, null, 2), 'utf-8');
+        }
+
+        sendJson(res, 200, { ok: true, imported: importedCount });
+      } catch (err) {
+        console.error('[csv-import] erro ao processar CSV:', err.message);
+        sendJson(res, 500, { error: 'Erro ao processar arquivo CSV.' });
+      }
+    });
   },
 
   /**
