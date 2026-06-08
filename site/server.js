@@ -190,41 +190,92 @@ function parseCSV(text) {
   
   const headers = splitCSVLine(lines[0]).map(h => h.toLowerCase().trim());
   
-  // Mapeamento comum do Google Contacts (PT e EN)
-  const nameHeaders = ['name', 'nome', 'given name', 'nome proprio', 'display name'];
-  const phoneHeaders = ['phone 1 - value', 'telefone 1 - valor', 'phone', 'telefone', 'mobile', 'celular'];
-  
-  let nameIdx = headers.findIndex(h => nameHeaders.some(nh => h.includes(nh)));
-  let phoneIdx = headers.findIndex(h => phoneHeaders.some(ph => h.includes(ph)));
-  
-  if (nameIdx === -1) {
-    nameIdx = headers.findIndex(h => h.includes('name') || h.includes('nome'));
-  }
-  if (phoneIdx === -1) {
-    phoneIdx = headers.findIndex(h => h.includes('phone') || h.includes('telef') || h.includes('celular') || h.includes('fone'));
-  }
-  
-  if (nameIdx === -1) nameIdx = 0;
-  if (phoneIdx === -1) phoneIdx = Math.min(1, headers.length - 1);
-  
+  // Mapeamento comum do Google Contacts para Nome (PT e EN)
+  const firstNameIdx = headers.findIndex(h => h === 'first name' || h === 'given name' || h === 'nome próprio' || h === 'nome proprio' || h === 'prenome');
+  const middleNameIdx = headers.findIndex(h => h === 'middle name' || h === 'additional name' || h === 'nome do meio');
+  const lastNameIdx = headers.findIndex(h => h === 'last name' || h === 'family name' || h === 'sobrenome');
+  const fullNameIdx = headers.findIndex(h => h === 'name' || h === 'nome' || h === 'display name' || h === 'nome de exibição' || h === 'nome de exibicao' || h === 'nome completo');
+
+  // Encontra todos os índices de colunas que parecem telefones
+  const phoneIdxs = [];
+  headers.forEach((h, idx) => {
+    if (h.includes('phone') || h.includes('telef') || h.includes('celular') || h.includes('fone') || h.includes('mobile')) {
+      phoneIdxs.push(idx);
+    }
+  });
+
   const contacts = [];
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
     const row = splitCSVLine(line);
-    if (row.length <= Math.max(nameIdx, phoneIdx)) continue;
+    if (row.length === 0) continue;
     
-    const rawName = row[nameIdx];
-    const rawPhone = row[phoneIdx];
+    // Constrói o nome combinando colunas se disponíveis
+    let nome = '';
+    if (firstNameIdx >= 0 && row[firstNameIdx]) {
+      const parts = [
+        row[firstNameIdx],
+        middleNameIdx >= 0 ? row[middleNameIdx] : '',
+        lastNameIdx >= 0 ? row[lastNameIdx] : ''
+      ].filter(Boolean).map(p => p.trim());
+      nome = parts.join(' ');
+    }
     
-    if (rawName && rawPhone) {
-      const phoneDigits = rawPhone.replace(/\D/g, '');
-      if (phoneDigits.length >= 8) {
-        contacts.push({
-          nome: rawName.trim(),
-          numero: phoneDigits
-        });
+    // Fallback para coluna de nome completo se o composto estiver vazio
+    if (!nome.trim() && fullNameIdx >= 0 && row[fullNameIdx]) {
+      nome = row[fullNameIdx].trim();
+    }
+    
+    // Se ainda não tem nome, tenta achar qualquer coluna contendo "name" ou "nome"
+    if (!nome.trim()) {
+      const anyNameIdx = headers.findIndex(h => h.includes('name') || h.includes('nome'));
+      if (anyNameIdx >= 0 && row[anyNameIdx]) {
+        nome = row[anyNameIdx].trim();
       }
+    }
+    
+    // Busca o telefone nas colunas de telefone identificadas
+    let phoneDigits = '';
+    for (const idx of phoneIdxs) {
+      if (idx < row.length && row[idx]) {
+        const val = row[idx].trim();
+        // Pega a primeira parte se estiver separada por ::: ou ; ou outro delimitador comum
+        const parts = val.split(/:::|;/);
+        for (const part of parts) {
+          const digits = part.replace(/\D/g, '');
+          if (digits.length >= 8) {
+            phoneDigits = digits;
+            break;
+          }
+        }
+        if (phoneDigits) break;
+      }
+    }
+
+    // Fallback: se não achou em colunas mapeadas, varre todas as colunas atrás de algo que pareça número de telefone
+    if (!phoneDigits) {
+      for (let idx = 0; idx < row.length; idx++) {
+        const val = row[idx] ? row[idx].trim() : '';
+        if (val) {
+          const parts = val.split(/:::|;/);
+          for (const part of parts) {
+            const digits = part.replace(/\D/g, '');
+            if (digits.length >= 8 && digits.length <= 15) {
+              phoneDigits = digits;
+              break;
+            }
+          }
+        }
+        if (phoneDigits) break;
+      }
+    }
+    
+    if (nome.trim() && phoneDigits) {
+      contacts.push({
+        nome: nome.trim(),
+        numero: phoneDigits
+      });
     }
   }
   return contacts;

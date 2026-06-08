@@ -1917,7 +1917,20 @@
       try {
         const reader = new FileReader();
         reader.onload = async (evt) => {
-          const text = evt.target.result;
+          const arrBuffer = evt.target.result;
+          const view = new Uint8Array(arrBuffer);
+          let encoding = 'utf-8';
+          
+          if (view.length >= 2) {
+            if (view[0] === 0xFF && view[1] === 0xFE) {
+              encoding = 'utf-16le';
+            } else if (view[0] === 0xFE && view[1] === 0xFF) {
+              encoding = 'utf-16be';
+            }
+          }
+          
+          const decoder = new TextDecoder(encoding);
+          const text = decoder.decode(arrBuffer);
           
           try {
             const res = await fetch('/api/contatos/import-csv', {
@@ -1937,7 +1950,7 @@
               alert(d.error || 'Erro ao importar contatos do CSV.');
             }
           } catch (err) {
-            alert('Erro ao se comunicar com o servidor.');
+            alert('Erro ao se comunicar com o servidor: ' + err.message);
           } finally {
             labelEl.style.pointerEvents = '';
             labelEl.innerHTML = originalText;
@@ -1945,9 +1958,9 @@
             document.getElementById('csv-file-input').value = '';
           }
         };
-        reader.readAsText(file, 'utf-8');
+        reader.readAsArrayBuffer(file);
       } catch (err) {
-        alert('Erro ao carregar o arquivo local.');
+        alert('Erro ao carregar o arquivo local: ' + err.message);
         labelEl.style.pointerEvents = '';
         labelEl.innerHTML = originalText;
         lucide.createIcons();
