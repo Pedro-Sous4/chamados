@@ -159,8 +159,9 @@ const DADOS_DIR = path.resolve(__dirname, '..', 'dados');
 // Pasta de arquivos estáticos
 const PUBLIC_DIR = path.resolve(__dirname, 'public');
 
-// Helper para parsear CSV robustamente (Google Contacts, etc.)
 function parseCSV(text) {
+  // Remove BOM (Byte Order Mark) e espaços/quebras extras do início do texto
+  text = text.replace(/^[\uFEFF\uFFFE]/, '').trim();
   const lines = text.split(/\r?\n/);
   if (lines.length < 2) return [];
   
@@ -196,10 +197,10 @@ function parseCSV(text) {
   const lastNameIdx = headers.findIndex(h => h === 'last name' || h === 'family name' || h === 'sobrenome');
   const fullNameIdx = headers.findIndex(h => h === 'name' || h === 'nome' || h === 'display name' || h === 'nome de exibição' || h === 'nome de exibicao' || h === 'nome completo');
 
-  // Encontra todos os índices de colunas que parecem telefones
+  // Encontra todos os índices de colunas que parecem telefones, excluindo campos fonéticos ou rótulos
   const phoneIdxs = [];
   headers.forEach((h, idx) => {
-    if (h.includes('phone') || h.includes('telef') || h.includes('celular') || h.includes('fone') || h.includes('mobile')) {
+    if ((h.includes('phone') || h.includes('telef') || h.includes('celular') || h.includes('fone') || h.includes('mobile')) && !h.includes('phonetic') && !h.includes('label')) {
       phoneIdxs.push(idx);
     }
   });
