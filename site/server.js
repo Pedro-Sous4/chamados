@@ -456,14 +456,21 @@ const ROUTES = {
     const contatos = readCollection('contatos');
     tickets = tickets.map(t => {
       let resolvedName = t.name;
+      let realNumber = t.number;
       if (t.number) {
         const contato = contatos.find(c => String(c.numero).replace(/\D/g, '') === String(t.number).replace(/\D/g, ''));
         if (contato && contato.nome) {
           resolvedName = contato.nome;
+          
+          // Se for um contato com LID (identificador do bot), tenta achar outro contato com o mesmo nome que tenha número de telefone real (10 a 13 dígitos)
+          const contatoReal = contatos.find(c => c.nome === contato.nome && c.numero && c.numero.length >= 10 && c.numero.length <= 13 && c.numero !== contato.numero);
+          if (contatoReal) {
+            realNumber = contatoReal.numero;
+          }
         }
       }
       
-      let enrichedTicket = Object.assign({}, t, { name: resolvedName });
+      let enrichedTicket = Object.assign({}, t, { name: resolvedName, realNumber: realNumber });
 
       if (enrichedTicket.solicitanteNome && enrichedTicket.solicitanteEmail) return enrichedTicket;
       // Tenta casar pelo email completo ou pelo prefixo (campo solicitante legado)

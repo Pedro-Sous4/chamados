@@ -450,7 +450,7 @@
           <i data-lucide="phone" class="w-4 h-4 text-brand-500"></i>
         </div>
         <div>
-          <p class="text-[.6rem] font-black uppercase tracking-widest text-brand-300">E-mail do solicitante</p>
+          <p id="perf-numero-label" class="text-[.6rem] font-black uppercase tracking-widest text-brand-300">E-mail do solicitante</p>
           <p id="perf-numero" class="text-sm font-semibold text-brand-900 mt-0.5 font-mono"></p>
         </div>
       </div>
@@ -1365,6 +1365,24 @@
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  function formatPhone(num) {
+    if (!num) return '—';
+    const clean = num.replace(/\D/g, '');
+    if (clean.length === 12 && clean.startsWith('55')) {
+      return '(' + clean.slice(2, 4) + ') ' + clean.slice(4, 8) + '-' + clean.slice(8);
+    }
+    if (clean.length === 13 && clean.startsWith('55')) {
+      return '(' + clean.slice(2, 4) + ') ' + clean.slice(4, 9) + '-' + clean.slice(9);
+    }
+    if (clean.length === 11) {
+      return '(' + clean.slice(0, 2) + ') ' + clean.slice(2, 7) + '-' + clean.slice(7);
+    }
+    if (clean.length === 10) {
+      return '(' + clean.slice(0, 2) + ') ' + clean.slice(2, 6) + '-' + clean.slice(6);
+    }
+    return num;
+  }
+
   /* ---------- Modal Configurações ---------- */
   (function () {
     const overlay  = document.getElementById('modal-config-overlay');
@@ -2223,11 +2241,13 @@
       tr.dataset.status = t.status || '';
       tr.dataset.ticket = JSON.stringify(t);
 
-      const rawSol = t.solicitanteNome
-        ? t.solicitanteNome
-        : (t.solicitante
-          ? t.solicitante
-          : (t.origem !== 'site' ? (t.name || 'Bot') : '—'));
+      const rawSol = (t.origem !== 'site' && t.name)
+        ? t.name
+        : (t.solicitanteNome
+          ? t.solicitanteNome
+          : (t.solicitante
+            ? t.solicitante
+            : '—'));
       const solLabel = rawSol.includes('@') ? rawSol.split('@')[0] : rawSol;
 
       tr.innerHTML =
@@ -2474,10 +2494,16 @@
     }
 
     // Solicitante
-    const solNome = ticket.solicitanteNome || ticket.solicitante || ticket.name || '—';
+    const solNome = (ticket.origem !== 'site' && ticket.name)
+      ? ticket.name
+      : (ticket.solicitanteNome || ticket.solicitante || '—');
     makeAvatarEl(solNome);
     document.getElementById('det-nome').textContent   = solNome;
-    document.getElementById('det-numero').textContent = ticket.solicitanteEmail || ticket.solicitante || '—';
+    
+    const solNumber = ticket.origem !== 'site'
+      ? (ticket.realNumber || ticket.number || '—')
+      : (ticket.solicitanteEmail || ticket.solicitante || '—');
+    document.getElementById('det-numero').textContent = ticket.origem !== 'site' ? formatPhone(solNumber) : solNumber;
 
     // Badge WhatsApp
     document.getElementById('det-wpp-badge').style.display = ticket.notifWpp ? 'inline-flex' : 'none';
@@ -2858,12 +2884,17 @@
 
   function openPerfilSolicitante(ticket) {
     // Perfil do solicitante = quem abriu o chamado (login), não o nome da pessoa do chamado
-    const rawSol = ticket.solicitante
-      ? ticket.solicitante
-      : (ticket.origem !== 'site' ? (ticket.name || 'Bot') : '—');
+    const rawSol = (ticket.origem !== 'site' && ticket.name)
+      ? ticket.name
+      : (ticket.solicitante
+        ? ticket.solicitante
+        : (ticket.origem !== 'site' ? (ticket.name || 'Bot') : '—'));
     const solLabel = rawSol.includes('@') ? rawSol.split('@')[0] : rawSol;
-    const name     = solLabel;
-    const number   = ticket.number || '—';
+    
+    // Prioriza o nome de referência (de contatos.json) se disponível
+    const name = ticket.name || solLabel;
+    const rawNumber = ticket.origem !== 'site' ? (ticket.realNumber || ticket.number) : (ticket.solicitanteEmail || ticket.solicitante);
+    const number = ticket.origem !== 'site' ? formatPhone(rawNumber) : (rawNumber || '—');
 
     // Avatar
     const perf  = document.getElementById('perf-avatar');
@@ -2874,6 +2905,11 @@
     document.getElementById('perf-nome').textContent     = name;
     document.getElementById('perf-iniciais').textContent = inits;
     document.getElementById('perf-numero').textContent   = number;
+
+    const labelEl = document.getElementById('perf-numero-label');
+    if (labelEl) {
+      labelEl.textContent = ticket.origem !== 'site' ? 'Telefone/ID do solicitante' : 'E-mail do solicitante';
+    }
 
     // Chamados deste solicitante
     const meus = _allTickets.filter(function(t) {
