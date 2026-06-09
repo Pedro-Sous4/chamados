@@ -3354,8 +3354,13 @@
     }
   });
 
-  // O Enter no textarea agora apenas pula para a próxima linha (padrão do navegador).
-  // O envio deve ser feito exclusivamente clicando no botão Enviar.
+  // Enviar com Enter no input, Shift+Enter para quebrar linha
+  document.getElementById('chat-text-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleChatSend();
+    }
+  });
 
   // Modal form submit
   document.getElementById('modal-form').addEventListener('submit', async function(e) {
