@@ -628,8 +628,8 @@
               </button>
               
               <!-- Input de Texto -->
-              <input type="text" id="chat-text-input" placeholder="Mensagem" autocomplete="off"
-                     class="flex-1 bg-transparent outline-none border-none text-brand-900 text-sm py-1 placeholder-brand-300 min-w-0" />
+              <textarea id="chat-text-input" placeholder="Mensagem" autocomplete="off" rows="1"
+                     class="flex-1 bg-transparent outline-none border-none text-brand-900 text-sm py-1 placeholder-brand-300 min-w-0 resize-none overflow-hidden" style="min-height: 28px; max-height: 150px; line-height: 20px;"></textarea>
               
               <!-- Indicador de Gravação de Áudio -->
               <div id="chat-recording-indicator" class="hidden flex-1 flex items-center justify-between text-red-600 text-xs py-1">
@@ -3168,7 +3168,12 @@
     lucide.createIcons({ nodes: [document.getElementById('btn-chat-action')] });
   }
 
-  document.getElementById('chat-text-input').addEventListener('input', triggerChatActionIconUpdate);
+  const chatInputEl = document.getElementById('chat-text-input');
+  chatInputEl.addEventListener('input', function() {
+    triggerChatActionIconUpdate();
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+  });
 
   // Seleção de Arquivos (Paperclip & Camera)
   function handleChatFileSelect(input) {
@@ -3332,12 +3337,13 @@
   async function handleChatSend() {
     const textInput = document.getElementById('chat-text-input');
     const text = textInput.value.trim();
+    const btnAction = document.getElementById('btn-chat-action');
     
-    if (!text && !selectedChatFile) return;
+    if ((!text && !selectedChatFile) || btnAction.disabled || textInput.disabled) return;
     
     const token = localStorage.getItem('auth_token');
-    const btnAction = document.getElementById('btn-chat-action');
     btnAction.disabled = true;
+    textInput.disabled = true;
     
     try {
       let uploadedFilename = null;
@@ -3373,6 +3379,8 @@
       showToast(err.message || 'Erro ao enviar mensagem.', 'error');
     } finally {
       btnAction.disabled = false;
+      textInput.disabled = false;
+      textInput.focus();
     }
   }
 
@@ -3391,10 +3399,11 @@
   });
 
   // Enviar com Enter no input, Shift+Enter para quebrar linha
-  document.getElementById('chat-text-input').addEventListener('keydown', function(e) {
+  chatInputEl.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleChatSend();
+      this.style.height = 'auto'; // reset height after send
     }
   });
 

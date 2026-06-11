@@ -1210,9 +1210,11 @@ const server = http.createServer((req, res) => {
       const atendenteLogin = readCollection('logins').find(u => u.email.toLowerCase() === session.email.toLowerCase());
       const atendenteNome = (atendenteLogin && atendenteLogin.name) ? atendenteLogin.name : session.email;
 
+      let addedMessage = false;
       // Atualiza campos permitidos
       if (data.status)      tickets[idx].status      = data.status;
       if (data.observacao || data.anexo_solucao) {
+        addedMessage = true;
         if (data.observacao) tickets[idx].observacao = data.observacao;
         if (data.anexo_solucao) tickets[idx].anexo_solucao = data.anexo_solucao;
         
@@ -1251,7 +1253,7 @@ const server = http.createServer((req, res) => {
           freshTickets[fIdx].status = tickets[idx].status;
           freshTickets[fIdx].observacao = tickets[idx].observacao;
           freshTickets[fIdx].updatedAt = tickets[idx].updatedAt;
-          if (tickets[idx].conversa) {
+          if (tickets[idx].conversa && addedMessage) {
              if (!freshTickets[fIdx].conversa) freshTickets[fIdx].conversa = [];
              // Adiciona apenas a última mensagem do técnico (se houver)
              const lastMsg = tickets[idx].conversa[tickets[idx].conversa.length - 1];
