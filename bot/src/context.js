@@ -63,18 +63,29 @@ async function sendToUser(userId, text) {
     return;
   }
 
+  let activeId = userId;
+
+
   try {
-    await _client.sendText(userId, text);
+    console.log(`[context:sendText] Enviando para ${activeId}: "${text.substring(0, 60)}..."`);
+    const res = await _client.sendText(activeId, text);
+    if (res && res.isSendFailure === true) {
+      throw new Error(`isSendFailure: true`);
+    }
+    console.log(`[context:sendText] Sucesso ao enviar para ${activeId}. Retorno:`, JSON.stringify(res));
   } catch (err) {
+    console.error(`[context:sendText] Erro ao enviar para ${activeId}:`, err.message || err);
     const errMsg = (err.message || '').toLowerCase();
-    if (errMsg.includes('no lid') || errMsg.includes('not found') || errMsg.includes('invalid jid')) {
-      console.warn(`[context:sendText] Problema de ID (${userId}), tentando resolver…`);
+    if (errMsg.includes('no lid') || errMsg.includes('not found') || errMsg.includes('invalid jid') || errMsg.includes('sendfailure') || activeId.includes('@lid')) {
+      console.warn(`[context:sendText] Problema de ID (${activeId}), tentando resolver…`);
       try {
-        const status = await _client.checkNumberStatus(userId);
-        const resolvedId = (status && status.id && status.id._serialized) || userId;
-        if (resolvedId !== userId) {
-          console.log(`[context:sendText] ID resolvido: ${userId} -> ${resolvedId}`);
-          await _client.sendText(resolvedId, text);
+        const status = await _client.checkNumberStatus(activeId);
+        const resolvedId = (status && status.id && status.id._serialized) || activeId;
+        if (resolvedId !== activeId) {
+          console.log(`[context:sendText] ID resolvido: ${activeId} -> ${resolvedId}`);
+          console.log(`[context:sendText] Tentando reenviar para ID resolvido ${resolvedId}...`);
+          const res2 = await _client.sendText(resolvedId, text);
+          console.log(`[context:sendText] Sucesso ao reenviar para ${resolvedId}. Retorno:`, JSON.stringify(res2));
           return;
         }
       } catch (e) {
@@ -94,6 +105,9 @@ async function sendFileToUser(userId, filePath, fileName, caption = '') {
     return;
   }
 
+  let activeId = userId;
+
+
   const doSend = async (id) => {
     const ext = fileName.split('.').pop().toLowerCase();
     const isAudio = ['mp3', 'ogg', 'wav', 'm4a', 'oga', 'amr', 'webm'].includes(ext);
@@ -105,17 +119,23 @@ async function sendFileToUser(userId, filePath, fileName, caption = '') {
   };
 
   try {
-    await doSend(userId);
+    const res = await doSend(activeId);
+    if (res && res.isSendFailure === true) {
+      throw new Error(`isSendFailure: true`);
+    }
   } catch (err) {
     const errMsg = (err.message || '').toLowerCase();
-    if (errMsg.includes('no lid') || errMsg.includes('not found') || errMsg.includes('invalid jid')) {
-      console.warn(`[context:sendFile] Problema de ID (${userId}), tentando resolver…`);
+    if (errMsg.includes('no lid') || errMsg.includes('not found') || errMsg.includes('invalid jid') || errMsg.includes('sendfailure') || activeId.includes('@lid')) {
+      console.warn(`[context:sendFile] Problema de ID (${activeId}), tentando resolver…`);
       try {
-        const status = await _client.checkNumberStatus(userId);
-        const resolvedId = (status && status.id && status.id._serialized) || userId;
-        if (resolvedId !== userId) {
-          console.log(`[context:sendFile] ID resolvido: ${userId} -> ${resolvedId}`);
-          await doSend(resolvedId);
+        const status = await _client.checkNumberStatus(activeId);
+        const resolvedId = (status && status.id && status.id._serialized) || activeId;
+        if (resolvedId !== activeId) {
+          console.log(`[context:sendFile] ID resolvido: ${activeId} -> ${resolvedId}`);
+          const res2 = await doSend(resolvedId);
+          if (res2 && res2.isSendFailure === true) {
+            throw new Error(`isSendFailure: true on retry`);
+          }
           return;
         }
       } catch (e) {

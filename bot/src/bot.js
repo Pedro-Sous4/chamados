@@ -266,7 +266,8 @@ async function processState(client, message, userId) {
       // 2. SALVA NO DISCO EM SEGUNDO PLANO
       setImmediate(async () => {
         try {
-          const mediaData = await client.downloadMedia(item);
+          const msgId = getMsgId(item) || item;
+          const mediaData = await client.downloadMedia(msgId);
           if (mediaData) {
             const base64Data = typeof mediaData === 'string' ? mediaData.replace(/^data:.*?base64,/, '') : mediaData;
             const buffer = Buffer.isBuffer(base64Data) ? base64Data : Buffer.from(base64Data, 'base64');
