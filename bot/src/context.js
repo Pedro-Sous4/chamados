@@ -64,8 +64,6 @@ async function sendToUser(userId, text) {
   }
 
   let activeId = userId;
-
-
   try {
     console.log(`[context:sendText] Enviando para ${activeId}: "${text.substring(0, 60)}..."`);
     const res = await _client.sendText(activeId, text);
@@ -106,8 +104,6 @@ async function sendFileToUser(userId, filePath, fileName, caption = '') {
   }
 
   let activeId = userId;
-
-
   const doSend = async (id) => {
     const ext = fileName.split('.').pop().toLowerCase();
     const isAudio = ['mp3', 'ogg', 'wav', 'm4a', 'oga', 'amr', 'webm'].includes(ext);

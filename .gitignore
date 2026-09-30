@@ -15,3 +15,13 @@ dados/uploads/*
 .env
 *.log
 .DS_Store
+
+# Banco de Dados de Produção
+dados/*.json
+
+# Arquivos locais
+pm2_home/
+pm2_*.txt
+scratch/
+tokens/
+contacts.csv

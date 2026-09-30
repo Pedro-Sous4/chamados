@@ -699,7 +699,7 @@ const ROUTES = {
     const data = JSON.stringify({ secret: process.env.WEBHOOK_SECRET || '' });
     const botReq = http.request({
       hostname: 'localhost',
-      port: process.env.WEBHOOK_PORT || 3000,
+      port: process.env.WEBHOOK_PORT || 3005,
       path: '/webhook/import-contacts',
       method: 'POST',
       headers: {
@@ -1042,7 +1042,7 @@ const ROUTES = {
     const data = JSON.stringify({ secret: process.env.WEBHOOK_SECRET || '' });
     const botReq = http.request({
       hostname: 'localhost',
-      port: process.env.WEBHOOK_PORT || 3000,
+      port: process.env.WEBHOOK_PORT || 3005,
       path: '/webhook/logout',
       method: 'POST',
       headers: {
@@ -1269,7 +1269,7 @@ const server = http.createServer((req, res) => {
       }
 
       const ticket = tickets[idx];
-      const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3000;
+      const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3005;
       const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
       const notifPhone = ticket.notifWpp || (ticket.origem === 'bot' ? ticket.number : null);
       const origemNotif = !!notifPhone;

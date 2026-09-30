@@ -3,7 +3,7 @@ const path = require('path');
 const { sendToUser, sendFileToUser } = require('./context');
 const { updateSession, resetSession, findSessionId } = require('./sessions');
 
-const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3000;
+const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3005;
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
 
 
