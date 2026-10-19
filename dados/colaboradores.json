@@ -115,6 +115,66 @@
             }
           ],
           "subsetores": []
+        },
+        {
+          "nome": "Controladoria",
+          "colaboradores": [
+            {
+              "id": "colab-1792381631592",
+              "nome": "Gabriela Carvalho",
+              "cargo": "Analista",
+              "setor": "Controladoria",
+              "email": "controladoria@laghetto.com.br",
+              "telefone": "54 9146-9581",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1792381659449.png",
+              "equipamentos": {
+                "notebook": true,
+                "fone": true,
+                "mouse": true,
+                "teclado": true,
+                "monitor": "1"
+              }
+            },
+            {
+              "id": "colab-1792381722775",
+              "nome": "Bruno Maldonado",
+              "cargo": "Analista",
+              "setor": "Controladoria",
+              "email": "controladoria@laghettomultipropriedade.com.br",
+              "telefone": "54 9369-1990",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1792381739855.png",
+              "equipamentos": {
+                "notebook": true,
+                "mouse": true,
+                "fone": true,
+                "cpu": true,
+                "monitor": "1"
+              }
+            },
+            {
+              "id": "colab-1792381728937",
+              "nome": "Vinicius Ross",
+              "cargo": "Analista",
+              "setor": "Controladoria",
+              "email": "controladoria3@laghettomultipropriedade.com.br",
+              "telefone": "54 8428-8487",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1792381806459.png",
+              "equipamentos": {
+                "notebook": true,
+                "mouse": true,
+                "fone": true,
+                "teclado": true,
+                "monitor": "1"
+              }
+            }
+          ],
+          "subsetores": []
         }
       ]
     },
