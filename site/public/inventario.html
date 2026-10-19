@@ -331,8 +331,23 @@
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Responsável / Colaborador</label>
-            <input id="formResponsavel" type="text" placeholder="Ex: Pedro Sousa" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-blue-500/40 rounded-lg p-2">
+            <div class="flex items-center justify-between mb-1">
+              <label class="block font-bold text-gray-700 dark:text-gray-300">Responsável / Colaborador</label>
+              <span class="text-[10px] text-blue-500 font-semibold uppercase">Organograma</span>
+            </div>
+            <div class="relative">
+              <input 
+                id="formResponsavel" 
+                list="colaboradoresList" 
+                type="text" 
+                oninput="handleColaboradorSelected(this.value)"
+                placeholder="Selecione ou busque o colaborador..." 
+                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-blue-500/40 rounded-lg p-2 font-medium"
+              >
+              <datalist id="colaboradoresList">
+                <!-- Preenchido dinamicamente via /api/colaboradores -->
+              </datalist>
+            </div>
           </div>
           <div>
             <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Setor / Localidade</label>
@@ -441,6 +456,66 @@
       localStorage.setItem('theme', isDark ? 'dark' : 'light');
       document.getElementById('themeIcon').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
       lucide.createIcons();
+    }
+
+    let colaboradoresOrganograma = [];
+
+    // Carregar colaboradores do organograma
+    async function loadColaboradoresOrganograma() {
+      try {
+        const res = await fetch('/api/colaboradores');
+        if (!res.ok) return;
+        const data = await res.json();
+        const list = [];
+
+        function extractFromSectors(sList) {
+          if (!sList) return;
+          sList.forEach(s => {
+            if (s.colaboradores) {
+              s.colaboradores.forEach(c => {
+                list.push({ ...c, setorNome: s.nome });
+              });
+            }
+            if (s.subsetores) extractFromSectors(s.subsetores);
+          });
+        }
+
+        if (data.lideranca) {
+          data.lideranca.forEach(c => list.push({ ...c, setorNome: 'Liderança' }));
+        }
+        extractFromSectors(data.setores);
+
+        // Ordenar alfabeticamente por nome
+        list.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+        colaboradoresOrganograma = list;
+
+        const datalist = document.getElementById('colaboradoresList');
+        if (datalist) {
+          datalist.innerHTML = list.map(c => 
+            `<option value="${c.nome}">${c.cargo ? c.cargo + ' • ' : ''}${c.setorNome || ''}</option>`
+          ).join('');
+        }
+      } catch (e) {
+        console.error('Erro ao carregar colaboradores do organograma:', e);
+      }
+    }
+
+    // Auto-preencher setor e RustDesk ao selecionar colaborador
+    function handleColaboradorSelected(nomeDigitado) {
+      if (!nomeDigitado || !colaboradoresOrganograma.length) return;
+      const found = colaboradoresOrganograma.find(c => 
+        (c.nome || '').trim().toLowerCase() === nomeDigitado.trim().toLowerCase()
+      );
+      if (found) {
+        const setorInput = document.getElementById('formSetor');
+        if (setorInput && !setorInput.value) {
+          setorInput.value = found.setorNome || found.setor || '';
+        }
+        const rustInput = document.getElementById('formRustdesk');
+        if (rustInput && !rustInput.value && found.rustdesk_id) {
+          rustInput.value = found.rustdesk_id;
+        }
+      }
     }
 
     // Carregar inventário da API
@@ -973,6 +1048,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       initTheme();
       loadInventory();
+      loadColaboradoresOrganograma();
       lucide.createIcons();
     });
   </script>
