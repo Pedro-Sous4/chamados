@@ -74,37 +74,91 @@ function withFooter(text, allowBack = true) {
 }
 
 function getLocalPrincipalMenu(session = {}) {
-  const text = `Olá {nome}! Qual é o seu local de trabalho atual?\n\n1. Escritório VITA (Administrativo)\n2. Escritório AVA (RH, DP, Conexão, Unique)\n3. Salas de Vendas (Comercial/Captação)`;
+  const config = getBotConfig();
+  const locaisTemplate = (config.menus || {}).locais;
+  if (locaisTemplate) {
+    return withFooter(locaisTemplate.replace(/{nome}/g, session.nome || ''), true);
+  }
+  const text = `Olá, {nome}! Qual é a sua sala ou unidade de atuação?\n\n` +
+    `1. Vita (Central de Contratos, Contas a Pagar, Contas a Receber, Estratégico, Jurídico, etc...)\n` +
+    `2. AVA (DP e RH)\n` +
+    `3. Canela (Uniques...)\n` +
+    `4. Sala de Vendas Pedras Altas\n` +
+    `5. Sala de Vendas NBA Park\n` +
+    `6. Sala de Vendas Golden Gramado\n\n` +
+    `*(Responda apenas com o NÚMERO)*`;
   return withFooter(text.replace(/{nome}/g, session.nome || ''), true);
 }
 
 function getSectoresVita() {
   const config = getBotConfig();
-  return config.setores_vita || ['Jurídico', 'Financeiro', 'Estratégico', 'Controladoria', 'Contas a Receber', 'Central de Contratos', 'Diretoria', 'Backoffice'];
+  return config.setores_vita || [
+    'Contas a Receber', 'Contas a Pagar', 'Jurídico',
+    'Controladoria', 'Central de Contratos', 'Estratégico', 'Diretoria / CFO'
+  ];
 }
 function getSetorVitaMenu() {
   const setores = getSectoresVita();
-  const text = `Você está no *VITA*. Qual o seu setor?\n\n` + setores.map((s, i) => `${i+1}. ${s}`).join('\n');
+  const text = `Você está no *Administrativo Vita*. Qual o seu setor?\n\n` + setores.map((s, i) => `${i+1}. ${s}`).join('\n');
   return withFooter(text, true);
 }
 
 function getSectoresAva() {
   const config = getBotConfig();
-  return config.setores_ava || ['Conexão Laghetto', 'RH', 'DP', 'Unique'];
+  return config.setores_ava || ['Recursos Humanos', 'Departamento Pessoal'];
 }
 function getSetorAvaMenu() {
   const setores = getSectoresAva();
-  const text = `Você está no *AVA*. Qual o seu setor?\n\n` + setores.map((s, i) => `${i+1}. ${s}`).join('\n');
+  const text = `Você está no *Administrativo AVA*. Qual o seu setor?\n\n` + setores.map((s, i) => `${i+1}. ${s}`).join('\n');
   return withFooter(text, true);
 }
 
-function getSalasVendas() {
+function getSectoresCanela() {
   const config = getBotConfig();
-  return config.salas_vendas || ['Pedras Altas', 'Pedras Altas Noturno', 'NBA Park', 'Golden Resort'];
+  return config.setores_canela || [
+    'Unique Golden', 'Unique Chateau', 'Unique Stilo Borges',
+    'Unique Villagio', 'Unique Riserva', 'Unique Sports', 'Retenção'
+  ];
 }
-function getSalaVendasMenu() {
-  const salas = getSalasVendas();
-  const text = `Você está em *Vendas*. Qual a sua sala?\n\n` + salas.map((s, i) => `${i+1}. ${s}`).join('\n');
+function getSetorCanelaMenu() {
+  const setores = getSectoresCanela();
+  const text = `Você está no *Administrativo Canela*. Qual o seu setor?\n\n` + setores.map((s, i) => `${i+1}. ${s}`).join('\n');
+  return withFooter(text, true);
+}
+
+function getSectoresPedrasAltas() {
+  const config = getBotConfig();
+  return config.setores_pedras_altas || [
+    'Captação', 'Consultoria', 'Operacional', 'Pós Vendas comercial Pedras Altas'
+  ];
+}
+function getSetorPedrasAltasMenu() {
+  const setores = getSectoresPedrasAltas();
+  const text = `Você está na *Sala de Vendas Pedras Altas*. Qual o seu setor?\n\n` + setores.map((s, i) => `${i+1}. ${s}`).join('\n');
+  return withFooter(text, true);
+}
+
+function getSectoresNbaPark() {
+  const config = getBotConfig();
+  return config.setores_nba_park || [
+    'Captação', 'Consultoria', 'Operacional', 'Pós comercial Retenção', 'Pós Vendas comercial NBA'
+  ];
+}
+function getSetorNbaParkMenu() {
+  const setores = getSectoresNbaPark();
+  const text = `Você está na *Sala de Vendas NBA Park*. Qual o seu setor?\n\n` + setores.map((s, i) => `${i+1}. ${s}`).join('\n');
+  return withFooter(text, true);
+}
+
+function getSectoresGoldenGramado() {
+  const config = getBotConfig();
+  return config.setores_golden_gramado || [
+    'Captação', 'Consultoria', 'Operacional', 'Pós Vendas comercial Golden'
+  ];
+}
+function getSetorGoldenGramadoMenu() {
+  const setores = getSectoresGoldenGramado();
+  const text = `Você está na *Sala de Vendas Golden Gramado*. Qual o seu setor?\n\n` + setores.map((s, i) => `${i+1}. ${s}`).join('\n');
   return withFooter(text, true);
 }
 
@@ -159,6 +213,87 @@ async function enviarEmailAcesso({ nome, numero, sistema, descricao }) {
       `</table>` +
       `<p><b>Descrição:</b><br>${descricao.replace(/\n/g, '<br>')}</p>`,
   });
+}
+
+async function enviarAlertaNovoChamado(ticket) {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    let toEmail = 'ti3@laghettomultipropriedade.com.br';
+    const configPath = path.resolve(__dirname, '..', '..', 'dados', 'config.json');
+    if (fs.existsSync(configPath)) {
+      try {
+        const cfg = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+        if (cfg && (cfg.email_alerta || cfg.emailAlerta)) {
+          toEmail = cfg.email_alerta || cfg.emailAlerta;
+        }
+      } catch {}
+    }
+
+    const dataHora = new Date().toLocaleString('pt-BR', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+      timeZone: 'America/Sao_Paulo',
+    });
+
+    const ticketId = ticket.id || 'N/A';
+    const tipo = ticket.type || 'Suporte';
+    const solicitante = ticket.solicitanteNome || ticket.name || ticket.solicitante || 'Não informado';
+    const telefone = ticket.realNumber || ticket.number || 'Não informado';
+    const salaSetor = ticket.sala || 'Não informado';
+    const origemNome = 'WhatsApp Bot';
+    const descricao = ticket.description || 'Sem descrição';
+
+    const subject = `[Novo Chamado #${ticketId}] ${tipo} — ${solicitante} (${origemNome})`;
+
+    const text =
+      `Central de Chamados TI Laghetto\n` +
+      `Um novo chamado foi aberto no sistema.\n\n` +
+      `ID/Protocolo: #${ticketId}\n` +
+      `Origem: ${origemNome}\n` +
+      `Tipo: ${tipo}\n` +
+      `Solicitante: ${solicitante}\n` +
+      `Telefone/Contato: ${telefone}\n` +
+      `Sala / Setor: ${salaSetor}\n` +
+      `Data/Hora: ${dataHora}\n\n` +
+      `Descrição:\n${descricao}\n\n` +
+      `Acesse a Central de Chamados para atender.`;
+
+    const html =
+      `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">` +
+        `<div style="background: #925616; padding: 20px 24px; color: #ffffff;">` +
+          `<h2 style="margin: 0; font-size: 18px; font-weight: 700;">Novo Chamado Aberto #${ticketId}</h2>` +
+          `<p style="margin: 4px 0 0; font-size: 13px; opacity: 0.9;">Recebido via <strong>${origemNome}</strong></p>` +
+        `</div>` +
+        `<div style="padding: 24px;">` +
+          `<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">` +
+            `<tr><td style="padding: 8px 0; color: #6b7280; width: 140px; font-weight: 600;">Protocolo:</td><td style="padding: 8px 0; color: #111827; font-weight: 700;">#${ticketId}</td></tr>` +
+            `<tr><td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Origem:</td><td style="padding: 8px 0; color: #111827;">${origemNome}</td></tr>` +
+            `<tr><td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Tipo de Demanda:</td><td style="padding: 8px 0; color: #111827; font-weight: 600;">${tipo}</td></tr>` +
+            `<tr><td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Solicitante:</td><td style="padding: 8px 0; color: #111827; font-weight: 600;">${solicitante}</td></tr>` +
+            `<tr><td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Telefone:</td><td style="padding: 8px 0; color: #111827;">${telefone}</td></tr>` +
+            `<tr><td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Sala / Setor:</td><td style="padding: 8px 0; color: #111827;">${salaSetor}</td></tr>` +
+            `<tr><td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Data e Hora:</td><td style="padding: 8px 0; color: #111827;">${dataHora}</td></tr>` +
+          `</table>` +
+          `<div style="background: #f9fafb; border-left: 4px solid #925616; padding: 14px; border-radius: 6px; margin-bottom: 20px;">` +
+            `<p style="margin: 0 0 6px; font-weight: 700; color: #374151; font-size: 13px; text-transform: uppercase;">Descrição do Problema:</p>` +
+            `<p style="margin: 0; color: #1f2937; font-size: 14px; line-height: 1.5; white-space: pre-wrap;">${descricao.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>` +
+          `</div>` +
+          `<p style="margin: 0; font-size: 12px; color: #9ca3af;">Este alerta automático foi gerado pela Central de Chamados Laghetto.</p>` +
+        `</div>` +
+      `</div>`;
+
+    await mailerAcesso.sendMail({
+      from: `"Central de Chamados Laghetto" <${SMTP_USER}>`,
+      to: toEmail,
+      subject,
+      text,
+      html,
+    });
+    console.log(`[bot] Alerta de novo chamado #${ticketId} enviado para ${toEmail}`);
+  } catch (err) {
+    console.warn(`[bot] Falha ao enviar alerta de novo chamado:`, err.message);
+  }
 }
 
 const STATUS_LABEL = {
@@ -322,7 +457,9 @@ async function processState(client, message, userId) {
         await send(msg);
         return;
      }
-     if (session.state === 'aguardando_setor_vita' || session.state === 'aguardando_setor_ava' || session.state === 'aguardando_sala_vendas') {
+     if (session.state === 'aguardando_setor_vita' || session.state === 'aguardando_setor_ava' || 
+         session.state === 'aguardando_setor_canela' || session.state === 'aguardando_setor_pedras_altas' || 
+         session.state === 'aguardando_setor_nba_park' || session.state === 'aguardando_setor_golden_gramado') {
         updateSession(userId, { state: 'aguardando_local_principal' });
         await send(getLocalPrincipalMenu(session));
         return;
@@ -334,9 +471,21 @@ async function processState(client, message, userId) {
         } else if (session.local_type === 'AVA') {
            updateSession(userId, { state: 'aguardando_setor_ava' });
            await send(getSetorAvaMenu());
+        } else if (session.local_type === 'CANELA') {
+           updateSession(userId, { state: 'aguardando_setor_canela' });
+           await send(getSetorCanelaMenu());
+        } else if (session.local_type === 'PEDRAS_ALTAS') {
+           updateSession(userId, { state: 'aguardando_setor_pedras_altas' });
+           await send(getSetorPedrasAltasMenu());
+        } else if (session.local_type === 'NBA_PARK') {
+           updateSession(userId, { state: 'aguardando_setor_nba_park' });
+           await send(getSetorNbaParkMenu());
+        } else if (session.local_type === 'GOLDEN_GRAMADO') {
+           updateSession(userId, { state: 'aguardando_setor_golden_gramado' });
+           await send(getSetorGoldenGramadoMenu());
         } else {
-           updateSession(userId, { state: 'aguardando_sala_vendas' });
-           await send(getSalaVendasMenu());
+           updateSession(userId, { state: 'aguardando_local_principal' });
+           await send(getLocalPrincipalMenu(session));
         }
         return;
      }
@@ -558,8 +707,23 @@ async function processState(client, message, userId) {
       return;
     }
     if (text === '3') {
-      updateSession(userId, { state: 'aguardando_sala_vendas', local_type: 'VENDAS' });
-      await send(getSalaVendasMenu());
+      updateSession(userId, { state: 'aguardando_setor_canela', local_type: 'CANELA' });
+      await send(getSetorCanelaMenu());
+      return;
+    }
+    if (text === '4') {
+      updateSession(userId, { state: 'aguardando_setor_pedras_altas', local_type: 'PEDRAS_ALTAS' });
+      await send(getSetorPedrasAltasMenu());
+      return;
+    }
+    if (text === '5') {
+      updateSession(userId, { state: 'aguardando_setor_nba_park', local_type: 'NBA_PARK' });
+      await send(getSetorNbaParkMenu());
+      return;
+    }
+    if (text === '6') {
+      updateSession(userId, { state: 'aguardando_setor_golden_gramado', local_type: 'GOLDEN_GRAMADO' });
+      await send(getSetorGoldenGramadoMenu());
       return;
     }
     await send(`Opção inválida.\n\n${getLocalPrincipalMenu(session)}`);
@@ -571,7 +735,7 @@ async function processState(client, message, userId) {
     const setores = getSectoresVita();
     const sName = setores[parseInt(text) - 1];
     if (!sName) { await send(`Opção inválida.\n\n${getSetorVitaMenu()}`); return; }
-    updateSession(userId, { state: 'aguardando_demanda_tipo', local: `VITA - ${sName}` });
+    updateSession(userId, { state: 'aguardando_demanda_tipo', local: `Administrativo Vita - ${sName}` });
     await send(getDemandaTipoMenu());
     return;
   }
@@ -581,17 +745,47 @@ async function processState(client, message, userId) {
     const setores = getSectoresAva();
     const sName = setores[parseInt(text) - 1];
     if (!sName) { await send(`Opção inválida.\n\n${getSetorAvaMenu()}`); return; }
-    updateSession(userId, { state: 'aguardando_demanda_tipo', local: `AVA - ${sName}` });
+    updateSession(userId, { state: 'aguardando_demanda_tipo', local: `Administrativo AVA - ${sName}` });
     await send(getDemandaTipoMenu());
     return;
   }
 
-  // ── ESTADO: aguardando_sala_vendas ─────────────────────────────────────────
-  if (session.state === 'aguardando_sala_vendas') {
-    const salas = getSalasVendas();
-    const sName = salas[parseInt(text) - 1];
-    if (!sName) { await send(`Opção inválida.\n\n${getSalaVendasMenu()}`); return; }
-    updateSession(userId, { state: 'aguardando_demanda_tipo', local: `Vendas - ${sName}` });
+  // ── ESTADO: aguardando_setor_canela ────────────────────────────────────────
+  if (session.state === 'aguardando_setor_canela') {
+    const setores = getSectoresCanela();
+    const sName = setores[parseInt(text) - 1];
+    if (!sName) { await send(`Opção inválida.\n\n${getSetorCanelaMenu()}`); return; }
+    updateSession(userId, { state: 'aguardando_demanda_tipo', local: `Administrativo Canela - ${sName}` });
+    await send(getDemandaTipoMenu());
+    return;
+  }
+
+  // ── ESTADO: aguardando_setor_pedras_altas ──────────────────────────────────
+  if (session.state === 'aguardando_setor_pedras_altas') {
+    const setores = getSectoresPedrasAltas();
+    const sName = setores[parseInt(text) - 1];
+    if (!sName) { await send(`Opção inválida.\n\n${getSetorPedrasAltasMenu()}`); return; }
+    updateSession(userId, { state: 'aguardando_demanda_tipo', local: `Sala de Vendas Pedras Altas - ${sName}` });
+    await send(getDemandaTipoMenu());
+    return;
+  }
+
+  // ── ESTADO: aguardando_setor_nba_park ──────────────────────────────────────
+  if (session.state === 'aguardando_setor_nba_park') {
+    const setores = getSectoresNbaPark();
+    const sName = setores[parseInt(text) - 1];
+    if (!sName) { await send(`Opção inválida.\n\n${getSetorNbaParkMenu()}`); return; }
+    updateSession(userId, { state: 'aguardando_demanda_tipo', local: `Sala de Vendas NBA Park - ${sName}` });
+    await send(getDemandaTipoMenu());
+    return;
+  }
+
+  // ── ESTADO: aguardando_setor_golden_gramado ────────────────────────────────
+  if (session.state === 'aguardando_setor_golden_gramado') {
+    const setores = getSectoresGoldenGramado();
+    const sName = setores[parseInt(text) - 1];
+    if (!sName) { await send(`Opção inválida.\n\n${getSetorGoldenGramadoMenu()}`); return; }
+    updateSession(userId, { state: 'aguardando_demanda_tipo', local: `Sala de Vendas Golden Gramado - ${sName}` });
     await send(getDemandaTipoMenu());
     return;
   }
@@ -755,6 +949,9 @@ async function processState(client, message, userId) {
     } catch (err) {
       console.error('[bot] erro ao salvar contato:', err.message);
     }
+
+    // Dispara alerta de novo chamado por e-mail para o TI
+    enviarAlertaNovoChamado(ticket).catch(err => console.warn('[bot] erro ao disparar alerta de novo chamado:', err.message));
 
     updateSession(userId, { state: 'chamado_criado' });
     await send(`✅ Gerando chamado...\n\nProtocolo *#${ticket.id}* aberto com sucesso!`);

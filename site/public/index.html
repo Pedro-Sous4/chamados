@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chamados — Laghetto</title>
+  <title>Central de Chamados — Laghetto</title>
 
   <script src="https://cdn.tailwindcss.com?v=1.0.3"></script>
   <script>
@@ -13,13 +13,16 @@
         extend: {
           colors: {
             brand: {
-              50:  '#FDF8F0',
-              100: '#F5ECCB',
-              200: '#FDF0E0',
-              300: '#c9a882',
-              400: '#B6741A',
-              500: '#925616',
-              900: '#3b2008',
+              50:  '#f8fafc',
+              100: '#e2e8f0',
+              200: '#cbd5e1',
+              300: '#94a3b8',
+              400: '#3b82f6',
+              500: '#2563eb',
+              600: '#1d4ed8',
+              700: '#1e3a8a',
+              800: '#1e293b',
+              900: '#0f172a',
             }
           }
         }
@@ -28,8 +31,242 @@
   </script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js?v=1.0.2"></script>
   <style>
-    /* ---------- Fundo da página ---------- */
-    body { background:#f0ebe0; }
+    
+    /* ---------- Theme Transition & Variables ---------- */
+    :root {
+      /* Modo Claro: Executive Blue & Clean White */
+      --bg-page: #f8fafc;
+      --card-bg: #ffffff;
+      --card-header: #f1f5f9;
+      --card-border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --toolbar-bg: rgba(255, 255, 255, 0.95);
+      --stat-bg: #ffffff;
+      --table-th-bg: #f8fafc;
+      --table-hover: #eff6ff;
+      --modal-bg: #ffffff;
+      --input-bg: #f8fafc;
+      --border-color: #e2e8f0;
+      --header-bg: #1e3a8a;
+      --primary: #1e3a8a;
+      --primary-accent: #3b82f6;
+    }
+
+    html.dark {
+      /* Modo Escuro: Deep Slate Navy & Ice Blue Highlights */
+      --bg-page: #0b1120;
+      --card-bg: #111c33;
+      --card-header: #15223e;
+      --card-border: rgba(59, 130, 246, 0.22);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --toolbar-bg: rgba(17, 28, 51, 0.95);
+      --stat-bg: #111c33;
+      --table-th-bg: #15223e;
+      --table-hover: #1e2e4f;
+      --modal-bg: #111c33;
+      --input-bg: #0b1120;
+      --border-color: rgba(59, 130, 246, 0.20);
+      --header-bg: #0f172a;
+      --primary: #3b82f6;
+      --primary-accent: #60a5fa;
+    }
+
+    body {
+      background: var(--bg-page) !important;
+      color: var(--text-main);
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    header[style*="background"] {
+      background: #1e3a8a !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.15) !important;
+    }
+
+    /* Dark mode overrides */
+    html.dark body {
+      color: #f8fafc !important;
+    }
+
+    html.dark header[style*="background"] {
+      background: #0f172a !important;
+      border-bottom: 1px solid rgba(59, 130, 246, 0.25) !important;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    html.dark .bg-white\/80,
+    html.dark .bg-white\/90,
+    html.dark .bg-white {
+      background-color: var(--card-bg) !important;
+    }
+
+    html.dark div[style*="background:#fdfaf5"],
+    html.dark div[style*="background: #fdfaf5"] {
+      background: var(--card-header) !important;
+      border-color: var(--card-border) !important;
+    }
+
+    html.dark div[style*="background:rgba(255,255,255"] {
+      background: var(--card-bg) !important;
+    }
+
+    html.dark #table {
+      background-color: var(--card-bg) !important;
+    }
+
+    html.dark #table tbody tr.trow {
+      background-color: var(--card-bg) !important;
+      border-bottom-color: rgba(59, 130, 246, 0.14) !important;
+    }
+
+    html.dark .trow:hover,
+    html.dark .trow[data-status="aberto"]:hover,
+    html.dark .trow[data-status="em_atendimento"]:hover,
+    html.dark .trow[data-status="concluido"]:hover,
+    html.dark .trow[data-status="cancelado"]:hover {
+      background-color: var(--table-hover) !important;
+    }
+
+    html.dark #table thead tr {
+      background-color: var(--table-th-bg) !important;
+      border-bottom-color: var(--border-color) !important;
+    }
+
+    html.dark .divide-brand-100 > :not([hidden]) ~ :not([hidden]) {
+      border-color: var(--border-color) !important;
+    }
+
+    html.dark .border-brand-100,
+    html.dark .border-brand-100\/60,
+    html.dark .border-brand-200 {
+      border-color: var(--border-color) !important;
+    }
+
+    html.dark .text-brand-900,
+    html.dark .sol-name {
+      color: #f8fafc !important;
+    }
+
+    html.dark .text-brand-700 {
+      color: #cbd5e1 !important;
+    }
+
+    html.dark .text-brand-500,
+    html.dark .text-brand-400 {
+      color: #60a5fa !important;
+    }
+
+    html.dark .text-brand-300 {
+      color: #94a3b8 !important;
+    }
+
+    html.dark .bg-brand-50,
+    html.dark .bg-brand-100 {
+      background-color: var(--input-bg) !important;
+      color: #f8fafc !important;
+    }
+
+    html.dark #q,
+    html.dark #filter-status,
+    html.dark #filter-origem {
+      background-color: var(--input-bg) !important;
+      color: #f8fafc !important;
+      border-color: var(--border-color) !important;
+    }
+
+    html.dark #btn-refresh {
+      background: #2563eb !important;
+      box-shadow: 0 2px 14px rgba(37, 99, 235, 0.35) !important;
+    }
+
+    html.dark .badge-tipo {
+      background: rgba(59, 130, 246, 0.15) !important;
+      color: #93c5fd !important;
+      border-color: rgba(59, 130, 246, 0.35) !important;
+    }
+
+    html.dark .badge-em_atendimento {
+      background: rgba(37, 99, 235, 0.20) !important;
+      color: #93c5fd !important;
+      border-color: rgba(37, 99, 235, 0.45) !important;
+    }
+
+    html.dark .badge-concluido {
+      background: rgba(22, 163, 74, 0.20) !important;
+      color: #86efac !important;
+      border-color: rgba(22, 163, 74, 0.45) !important;
+    }
+
+    html.dark .badge-aberto {
+      background: rgba(217, 119, 6, 0.20) !important;
+      color: #fde68a !important;
+      border-color: rgba(217, 119, 6, 0.45) !important;
+    }
+
+    html.dark #modal-detalhe > div,
+    html.dark #modal-perfil-solicitante > div,
+    html.dark #modal-perfil > div,
+    html.dark #modal-chamado > div,
+    html.dark #modal-config > div,
+    html.dark #modal-config-overlay > div {
+      background-color: var(--modal-bg) !important;
+      color: #f8fafc !important;
+      border: 1px solid var(--border-color);
+    }
+
+    html.dark div[style*="background:#925616"],
+    html.dark div[style*="background: #925616"] {
+      background: #1e3a8a !important;
+    }
+
+    html.dark .chat-msg-user {
+      background: #1e293b !important;
+      color: #f8fafc !important;
+      border-color: rgba(59, 130, 246, 0.30) !important;
+    }
+
+    html.dark .chat-msg-tech {
+      background: #2563eb !important;
+      color: #ffffff !important;
+      box-shadow: 0 2px 10px rgba(37, 99, 235, 0.35) !important;
+    }
+
+    html.dark #chat-text-input {
+      color: #f8fafc !important;
+      background: transparent !important;
+    }
+
+    html.dark #chat-bubble-container {
+      background: #0b1120 !important;
+      border-color: var(--border-color) !important;
+    }
+
+    html.dark #chat-input-bar {
+      background: #15223e !important;
+      border-color: var(--border-color) !important;
+    }
+
+    html.dark .tab-btn {
+      color: #94a3b8;
+    }
+
+    html.dark .tab-btn.tab-active {
+      color: #60a5fa !important;
+      border-bottom-color: #60a5fa !important;
+    }
+
+    html.dark #pagination-controls {
+      background-color: var(--card-bg) !important;
+      border-color: var(--border-color) !important;
+    }
+
+    html.dark #pagination-controls button {
+      background-color: #15223e !important;
+      color: #93c5fd !important;
+      border-color: rgba(59, 130, 246, 0.30) !important;
+    }
 
     /* ---------- Badge ---------- */
     .badge {
@@ -63,7 +300,7 @@
       border:1.5px solid #e8d5b0;
     }
 
-    /* ---------- Linhas da tabela ---------- */
+    /* ---------- Linhasda tabela ---------- */
     .trow { transition:background .15s; border-left:3px solid transparent; }
     .trow[data-status="aberto"]         { border-left-color:#f43f5e; }
     .trow[data-status="em_atendimento"] { border-left-color:#f59e0b; }
@@ -78,22 +315,22 @@
 
     td.description { white-space:normal; word-break:break-word; max-width:240px; }
 
-    /* ---------- Animations ---------- */
-    @keyframes spin { to { transform:rotate(360deg); } }
-    .spin { animation:spin 1s linear infinite; }
+    /* ---------- Animations---------- */
+    @keyframesspin { to { transform:rotate(360deg); } }
+    .spin { animation:spin 1slinear infinite; }
 
-    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
-    .anim-row { animation:fadeIn .28s ease both; }
+    @keyframesfadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    .anim-row { animation:fadeIn .28sease both; }
 
-    @keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
-    .anim-slide { animation:slideDown .3s ease both; }
+    @keyframesslideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+    .anim-slide { animation:slideDown .3sease both; }
 
-    .stat-item { animation:fadeIn .4s ease both; }
+    .stat-item { animation:fadeIn .4sease both; }
     .stat-item:nth-child(2) { animation-delay:.06s; }
     .stat-item:nth-child(3) { animation-delay:.12s; }
     .stat-item:nth-child(4) { animation-delay:.18s; }
 
-    /* ---------- Tabs ---------- */
+    /* ---------- Tabs---------- */
     .tab-btn {
       display:inline-flex; align-items:center; gap:7px;
       padding:10px 22px; font-size:.78rem; font-weight:700; letter-spacing:.15px;
@@ -112,7 +349,7 @@
     }
     .tab-btn.tab-active .tab-count { background:#925616; color:#fff; }
 
-    /* ---------- Toasts ---------- */
+    /* ---------- Toasts---------- */
     #toast-container {
       position:fixed; top:24px; right:24px; z-index:9999;
       display:flex; flex-direction:column; gap:10px; pointer-events:none;
@@ -123,12 +360,12 @@
       font-size:.82rem; font-weight:600; color:#fff;
       box-shadow:0 4px 24px rgba(0,0,0,.22);
       pointer-events:all; min-width:260px; max-width:380px;
-      animation:toastIn .28s cubic-bezier(.34,1.56,.64,1) both;
+      animation:toastIn .28scubic-bezier(.34,1.56,.64,1) both;
     }
     .toast i { flex-shrink:0; }
-    @keyframes toastIn  { from { opacity:0; transform:translateY(-16px) scale(.95); } to { opacity:1; transform:none; } }
-    @keyframes toastOut { to   { opacity:0; transform:translateY(-8px) scale(.96); } }
-    .toast-success { background:#16a34a; }
+    @keyframestoastIn  { from { opacity:0; transform:translateY(-16px)scale(.95); } to { opacity:1; transform:none; } }
+    @keyframestoastOut { to   { opacity:0; transform:translateY(-8px)scale(.96); } }
+    .toast-success{ background:#16a34a; }
     .toast-error   { background:#dc2626; }
     .toast-info    { background:#925616; }
     .toast-warning { background:#d97706; }
@@ -149,10 +386,10 @@
     .sol-cell:hover .sol-name { color:#925616; }
 
     /* ---------- Profile modal ---------- */
-    @keyframes modalIn { from { opacity:0; transform:scale(.96) translateY(8px); } to { opacity:1; transform:none; } }
-    .modal-anim { animation:modalIn .22s ease both; }
+    @keyframesmodalIn { from { opacity:0; transform:scale(.96) translateY(8px); } to { opacity:1; transform:none; } }
+    .modal-anim { animation:modalIn .22sease both; }
     
-    /* ---------- Chat Bubbles ---------- */
+    /* ---------- Chat Bubbles---------- */
     .chat-msg { max-width:85%; padding:10px 14px; border-radius:14px; font-size:.82rem; line-height:1.4; position:relative; white-space: pre-wrap; }
     .chat-msg-user { align-self:flex-start; background:#fff; border:1px solid #e5e7eb; color:#1f2937; border-bottom-left-radius:2px; }
     .chat-msg-tech { align-self:flex-end; background:#925616; color:#fff; border-bottom-right-radius:2px; box-shadow: 0 2px 8px rgba(146,86,22,0.2); }
@@ -161,55 +398,71 @@
 </head>
 <body class="min-h-screen text-brand-900">
 
-<!-- ═══════════════════════════════════════════════════════ HEADER ══ -->
-<header style="background:#c98830">
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• HEADER â•â• -->
+<header style="background:#1e3a8a">
   <div class="flex items-center justify-between px-8 py-5 gap-6 flex-wrap">
 
     <!-- Marca -->
     <div class="flex items-center gap-4">
       <div class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0
-                  border border-white/20 shadow-[0_0_0_4px_rgba(255,255,255,.06)]"
-           style="background:rgba(255,255,255,.12);backdrop-filter:blur(6px)">
+                  border border-white/20shadow-[0_0_0_4px_rgba(255,255,255,.06)]" style="background:rgba(255,255,255,.12);backdrop-filter:blur(6px)">
         <i data-lucide="headphones" class="w-5 h-5 text-white"></i>
       </div>
       <div>
         <h1 class="text-white font-bold text-lg leading-none tracking-tight">Central de Chamados</h1>
-        <p class="text-white/50 text-xs mt-1 tracking-widest uppercase font-medium">LAGHETTO GOLDEN MULTIPROPRIEDADE</p>
+        <p class="text-white/50 text-xsmt-1 tracking-widest uppercase font-medium">LAGHETTO GOLDEN MULTIPROPRIEDADE</p>
       </div>
     </div>
 
-    <!-- Ações -->
+    <!-- Ações-->
     <div class="flex items-center gap-3 flex-wrap">
-      <button onclick="window.location.href='dashboard.html'"
+      <button onclick="window.location.href='/organograma/'"
               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold
                      transition-all shadow-[0_2px_10px_rgba(0,0,0,.2)]
-                     text-white hover:brightness-110 cursor-pointer"
-              style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);backdrop-filter:blur(8px)">
+                     text-white hover:brightness-110 cursor-pointer" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);backdrop-filter:blur(8px)" title="Acessar o Organograma de Talentos">
+        <i data-lucide="network" class="w-4 h-4"></i> Organograma
+      </button>
+
+      <button onclick="window.location.href='inventario.html'"
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold
+                     transition-all shadow-[0_2px_10px_rgba(0,0,0,.2)]
+                     text-white hover:brightness-110 cursor-pointer" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);backdrop-filter:blur(8px)" title="Acessar o Inventário e Ativos de TI">
+        <i data-lucide="cpu" class="w-4 h-4"></i> Inventário TI
+      </button>
+
+      <button onclick="window.location.href='dashboard.html'"
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold
+                     transition-allshadow-[0_2px_10px_rgba(0,0,0,.2)]
+                     text-white hover:brightness-110 cursor-pointer" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);backdrop-filter:blur(8px)">
         <i data-lucide="bar-chart-2" class="w-4 h-4"></i> Dashboard Executivo
       </button>
 
       <button id="btn-novo-chamado"
               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold
-                     transition-all shadow-[0_2px_10px_rgba(0,0,0,.2)]
-                     text-brand-900 hover:brightness-105 cursor-pointer"
-              style="background:#f0c060;border:1px solid rgba(255,255,255,0.2)">
+                     transition-allshadow-[0_2px_10px_rgba(0,0,0,.2)]
+                     text-brand-900 hover:brightness-105 cursor-pointer" style="background:#3b82f6;color:#ffffff;border:1px solid rgba(255,255,255,0.2)">
         <i data-lucide="plus" class="w-4 h-4"></i> Novo Chamado
       </button>
       <button id="btn-config"
               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold
                      text-white/85 hover:text-white hover:bg-white/10 transition-all
-                     border border-white/15 cursor-pointer bg-transparent"
-              style="display:none">
-        <i data-lucide="settings" class="w-4 h-4"></i> Configurações
-      </button>
-      <div class="w-px h-6 bg-white/15 mx-1 hidden sm:block"></div>
-      <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl
+                     border border-white/15 cursor-pointer bg-transparent" style="display:none">
+        <i data-lucide="settings" class="w-4 h-4"></i> Configurações</button>
+      <div class="w-px h-6 bg-white/15 mx-1 hiddensm:block"></div>
+      <div class="hiddensm:flex items-center gap-2 px-3 py-1.5 rounded-xl
                   border border-white/15 bg-white/8">
         <div class="w-6 h-6 rounded-full bg-brand-400/60 flex items-center justify-center">
           <i data-lucide="user" class="w-3 h-3 text-white"></i>
         </div>
-        <span id="header-user" class="text-xs text-white/70 max-w-[160px] truncate"></span>
+        <span id="header-user" class="text-xstext-white/70 max-w-[160px] truncate"></span>
       </div>
+      
+      <!-- Botão Tema Claro / Escuro -->
+      <button id="btn-theme-toggle" type="button" title="Alternar tema Claro / Escuro"
+              class="inline-flex items-center justify-center w-10 h-10 rounded-xl text-white/90 hover:text-white hover:bg-white/10 transition-all border border-white/20 bg-white/5 cursor-pointer">
+        <i id="theme-icon" data-lucide="moon" class="w-5 h-5"></i>
+      </button>
+
       <button id="btn-logout"
               class="inline-flex items-center gap-1.5 p-2.5 rounded-xl text-white/60
                      hover:text-white hover:bg-white/10 transition-all border border-transparent
@@ -220,10 +473,9 @@
   </div>
 </header>
 
-<!-- ══════════════════════════════════════════════════ STATS STRIP ══ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• STATS STRIP â•â• -->
 <div id="stats-strip" class="anim-slide" style="display:none">
-  <div class="bg-white/80 border-b border-brand-100"
-       style="backdrop-filter:blur(8px)">
+  <div class="bg-white/80 border-b border-brand-100" style="backdrop-filter:blur(8px)">
     <div class="max-w-6xl mx-auto px-8 grid grid-cols-2 sm:grid-cols-4 divide-x divide-brand-100">
 
       <div class="stat-item flex items-center gap-4 py-5 px-4">
@@ -270,18 +522,13 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════ TOOLBAR ══ -->
-<div class="sticky top-0 z-30 bg-white/90 border-b border-brand-100"
-     style="backdrop-filter:blur(10px)">
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• TOOLBAR â•â• -->
+<div class="sticky top-0 z-30 bg-white/90 border-b border-brand-100" style="backdrop-filter:blur(10px)">
   <div class="max-w-6xl mx-auto px-8 py-3 flex flex-wrap gap-2.5 items-center">
 
     <div class="relative flex-1 min-w-[220px] max-w-xs">
       <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-300 pointer-events-none"></i>
-      <input type="search" id="q" autocomplete="off" placeholder="Buscar nome, número, descrição…"
-             class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-brand-100
-                    bg-brand-50 text-sm text-brand-900 outline-none
-                    focus:bg-white focus:border-brand-400 focus:ring-2 focus:ring-brand-400/15
-                    placeholder-brand-300/80 transition-all" />
+      <input type="text" id="q" name="busca_filtro_chamados" autocomplete="off" readonly onfocus="this.removeAttribute('readonly');" placeholder="Buscar nome, número, descrição..." class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-brand-100 bg-brand-50 text-sm text-brand-900 outline-none focus:bg-white focus:border-brand-400 focus:ring-2 focus:ring-brand-400/15 placeholder-brand-300/80 transition-all" />
     </div>
 
     <select id="filter-status"
@@ -295,6 +542,14 @@
       <option value="arquivado">Arquivado</option>
     </select>
 
+    <select id="filter-origem"
+            class="px-3 py-2.5 rounded-xl border border-brand-100 bg-brand-50 text-sm
+                   text-brand-900 outline-none focus:border-brand-400 transition-all cursor-pointer">
+      <option value="">Todas as origens</option>
+      <option value="site">Site</option>
+      <option value="bot">WhatsApp</option>
+    </select>
+
     <div id="count-wrap" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full
                                 bg-brand-500/10 border border-brand-500/20">
       <i data-lucide="ticket" class="w-3.5 h-3.5 text-brand-500"></i>
@@ -303,51 +558,34 @@
 
     <button id="btn-refresh"
             class="ml-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-xl
-                   text-sm font-bold text-white cursor-pointer border-none
-                   shadow-[0_2px_12px_rgba(146,86,22,.3)] hover:brightness-110
-                   disabled:opacity-50 transition-all"
-            style="background:#925616">
+                   text-sm font-bold text-white cursor-pointer border-noneshadow-[0_2px_12px_rgba(146,86,22,.3)] hover:brightness-110
+                   disabled:opacity-50 transition-all" style="background:#1e3a8a">
       <i data-lucide="refresh-cw" class="w-4 h-4"></i> Atualizar
     </button>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════ MAIN ══ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• MAIN â•â• -->
 <main class="max-w-6xl mx-auto px-8 py-7">
 
   <!-- Card da tabela -->
-  <div class="rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(146,86,22,.1)]"
-       style="background:rgba(255,255,255,.95);backdrop-filter:blur(8px)">
+  <div class="rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(146,86,22,.1)]" style="background:rgba(255,255,255,.95);backdrop-filter:blur(8px)">
 
-    <!-- Cabeçalho do card com abas -->
-    <div style="background:#fdfaf5;border-bottom:1.5px solid #F5ECCB">
+    <!-- Cabeçalho do card -->
+    <div style="background:#fdfaf5;border-bottom:1.5px solid #e2e8f0">
 
       <!-- Título + meta -->
-      <div class="flex items-center justify-between px-7 pt-5 pb-3">
+      <div class="flex items-center justify-between px-7 py-4">
         <div class="flex items-center gap-3.5">
           <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-brand-100">
             <i data-lucide="list-checks" class="w-5 h-5 text-brand-500"></i>
           </div>
           <div>
-            <h2 class="text-sm font-extrabold text-brand-900 tracking-tight">Chamados recentes</h2>
-            <p id="subtitle-meta" class="text-xs text-brand-300 mt-0.5">Carregando…</p>
+            <h2 class="text-sm font-extrabold text-brand-900 tracking-tight">Todos os Chamados</h2>
+            <p id="subtitle-meta" class="text-xs text-brand-300 mt-0.5">Carregando...</p>
           </div>
         </div>
         <span id="meta" class="text-xs text-brand-300/80 hidden md:inline"></span>
-      </div>
-
-      <!-- Abas -->
-      <div id="tabs-container" class="px-7 flex" style="border-top:1px solid #F5ECCB">
-        <button id="tab-site" data-tab="site" class="tab-btn tab-active">
-          <i data-lucide="monitor" class="w-3.5 h-3.5"></i>
-          Site
-          <span id="tab-count-site" class="tab-count">0</span>
-        </button>
-        <button id="tab-bot" data-tab="bot" class="tab-btn">
-          <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
-          WhatsApp
-          <span id="tab-count-bot" class="tab-count">0</span>
-        </button>
       </div>
 
     </div>
@@ -355,18 +593,21 @@
     <!-- Loading -->
     <div id="loading" class="py-20 flex flex-col items-center gap-4 text-brand-300">
       <div class="w-14 h-14 rounded-2xl flex items-center justify-center bg-brand-50 border border-brand-100">
-        <i data-lucide="loader" class="w-7 h-7 text-brand-400 spin"></i>
+        <i data-lucide="loader" class="w-7 h-7 text-brand-400 animate-spin"></i>
       </div>
-      <p class="text-sm font-medium">Buscando chamados…</p>
+      <p class="text-sm font-medium">Buscando chamados...</p>
     </div>
 
     <!-- Tabela -->
     <div class="tbl-wrap">
       <table id="table" class="w-full border-collapse" style="display:none">
         <thead>
-          <tr style="background:#faf6ee;border-bottom:1.5px solid #F5ECCB">
+          <tr style="background:#faf6ee;border-bottom:1.5px solid #e2e8f0">
             <th class="pl-7 pr-3 py-3.5 text-left">
               <span class="text-[.62rem] font-black uppercase tracking-widest text-brand-400">Solicitante</span>
+            </th>
+            <th class="px-3 py-3.5 text-left">
+              <span class="text-[.62rem] font-black uppercase tracking-widest text-brand-400">Origem</span>
             </th>
             <th class="px-3 py-3.5 text-left">
               <span class="text-[.62rem] font-black uppercase tracking-widest text-brand-400">Tipo</span>
@@ -389,8 +630,7 @@
     <!-- Paginação -->
     <div id="pagination-controls" class="flex items-center justify-between px-6 py-4 border-t border-brand-100 bg-white" style="display:none">
       <div class="text-xs text-brand-400 font-semibold">
-        Exibindo <span id="pag-info-start">0</span> a <span id="pag-info-end">0</span> de <span id="pag-info-total">0</span> chamados
-      </div>
+        Exibindo <span id="pag-info-start">0</span> a <span id="pag-info-end">0</span> de <span id="pag-info-total">0</span> chamados</div>
       <div class="flex gap-2">
         <button id="btn-pag-prev" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-brand-200 text-xs font-bold text-brand-600 bg-white hover:bg-brand-50 transition-all cursor-pointer disabled:opacity-40 disabled:pointer-events-none">
           <i data-lucide="chevron-left" class="w-4 h-4"></i> Anterior
@@ -401,7 +641,7 @@
       </div>
     </div>
 
-    <!-- Empty state -->
+    <!-- Emptystate -->
     <div id="empty" class="hidden py-20 flex-col items-center gap-4">
       <div class="w-20 h-20 rounded-3xl flex items-center justify-center bg-brand-50 border border-brand-100">
         <i data-lucide="inbox" class="w-10 h-10 text-brand-300"></i>
@@ -417,15 +657,12 @@
   </div><!-- /card -->
 </main>
 
-<!-- ═══════════════════════════════════ MODAL PERFIL SOLICITANTE ══ -->
-<div id="modal-perfil" class="fixed inset-0 z-50 flex items-center justify-center hidden"
-     style="background:rgba(30,15,5,.65);backdrop-filter:blur(5px)">
-  <div class="modal-anim w-full max-w-sm mx-4 rounded-2xl overflow-hidden shadow-2xl"
-       style="background:#fff">
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• MODAL PERFIL SOLICITANTE â•â• -->
+<div id="modal-perfil" class="fixed inset-0 z-50 flex items-center justify-center hidden" style="background:rgba(30,15,5,.65);backdrop-filter:blur(5px)">
+  <div class="modal-anim w-full max-w-sm mx-4 rounded-2xl overflow-hidden shadow-2xl" style="background:#fff">
 
     <!-- Header colorido com avatar grande -->
-    <div class="relative flex flex-col items-center pt-8 pb-6 px-6"
-         style="background:linear-gradient(135deg,#c98830 0%,#925616 100%)">
+    <div class="relative flex flex-col items-center pt-8 pb-6 px-6" style="background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%)">
       <button id="btn-fechar-perfil"
               class="absolute top-3 right-3 text-white/60 hover:text-white bg-transparent border-none cursor-pointer p-1 transition-colors">
         <i data-lucide="x" class="w-5 h-5"></i>
@@ -433,11 +670,10 @@
       <!-- Avatar grande -->
       <div id="perf-avatar"
            class="w-20 h-20 rounded-full flex items-center justify-center
-                  text-2xl font-black text-white shadow-[0_4px_20px_rgba(0,0,0,.25)]
-                  border-4 border-white/25 mb-3"
-           style="letter-spacing:.5px"></div>
+                  text-2xl font-black text-whiteshadow-[0_4px_20px_rgba(0,0,0,.25)]
+                  border-4 border-white/25 mb-3" style="letter-spacing:.5px"></div>
       <h2 id="perf-nome" class="text-xl font-black text-white text-center leading-tight"></h2>
-      <p id="perf-iniciais" class="text-white/50 text-xs mt-0.5 font-mono tracking-widest"></p>
+      <p id="perf-iniciais" class="text-white/50 text-xsmt-0.5 font-mono tracking-widest"></p>
     </div>
 
     <!-- Body -->
@@ -445,8 +681,7 @@
 
       <!-- Telefone -->
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-             style="background:#fdf8f0;border:1px solid #F5ECCB">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:#eff6ff;border:1px solid #bfdbfe">
           <i data-lucide="phone" class="w-4 h-4 text-brand-500"></i>
         </div>
         <div>
@@ -455,10 +690,9 @@
         </div>
       </div>
 
-      <!-- Chamados -->
+      <!-- Chamados-->
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-             style="background:#fdf8f0;border:1px solid #F5ECCB">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:#eff6ff;border:1px solid #bfdbfe">
           <i data-lucide="ticket" class="w-4 h-4 text-brand-500"></i>
         </div>
         <div class="flex-1">
@@ -467,22 +701,34 @@
         </div>
       </div>
 
-      <!-- Origem (último canal) -->
+      <!-- Origem (Ãšltimo canal) -->
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-             style="background:#fdf8f0;border:1px solid #F5ECCB">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:#eff6ff;border:1px solid #bfdbfe">
           <i data-lucide="radio" class="w-4 h-4 text-brand-500"></i>
         </div>
         <div>
-          <p class="text-[.6rem] font-black uppercase tracking-widest text-brand-300">Último canal usado</p>
-          <p id="perf-origem" class="text-sm font-semibold text-brand-900 mt-0.5"></p>
+          <p class="text-[.6rem] font-black uppercase tracking-widest text-brand-300">Canal de Origem</p>
+          <p id="perf-origem" class="text-sm font-semibold text-brand-900 mt-0.5 capitalize"></p>
+        </div>
+      </div>
+
+      <!-- Vincular Organograma -->
+      <div class="flex items-start gap-3 mt-2 pt-4 border-t border-gray-100">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:#eff6ff;border:1px solid #bfdbfe">
+          <i data-lucide="link" class="w-4 h-4 text-brand-500"></i>
+        </div>
+        <div class="flex-1">
+          <p class="text-[.6rem] font-black uppercase tracking-widest text-brand-300 mb-1.5">Vincular ao Organograma</p>
+          <select id="perf-colab-select" class="w-full border border-gray-200 rounded-lg p-2 text-xsbg-gray-50 focus:border-brand-500 outline-none mb-2">
+            <option value="">Carregando...</option>
+          </select>
+          <button id="btn-vincular-colab" class="w-full py-2 bg-brand-500 text-white font-bold text-xsrounded-lg hover:bg-brand-600 transition">Salvar Vínculo</button>
         </div>
       </div>
 
       <!-- Primeiro chamado -->
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-             style="background:#fdf8f0;border:1px solid #F5ECCB">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:#eff6ff;border:1px solid #bfdbfe">
           <i data-lucide="calendar" class="w-4 h-4 text-brand-500"></i>
         </div>
         <div>
@@ -498,7 +744,7 @@
       <button id="btn-fechar-perfil-footer"
               class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-bold
                      border border-brand-100 text-brand-500 bg-white hover:bg-brand-50
-                     transition-colors cursor-pointer">
+                     transition-colorscursor-pointer">
         <i data-lucide="x" class="w-4 h-4"></i> Fechar
       </button>
     </div>
@@ -506,23 +752,19 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════ MODAL DETALHES CHAMADO ══ -->
-<div id="modal-detalhe" class="fixed inset-0 z-50 flex items-center justify-center hidden"
-     style="background:rgba(30,15,5,.60);backdrop-filter:blur(4px)">
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• MODAL DETALHES CHAMADO â•â• -->
+<div id="modal-detalhe" class="fixed inset-0 z-50 flex items-center justify-center hidden" style="background:rgba(30,15,5,.60);backdrop-filter:blur(4px)">
 
-  <div class="w-full max-w-lg mx-4 rounded-2xl overflow-hidden shadow-2xl flex flex-col"
-       style="background:#fff;max-height:92vh">
+  <div class="w-full max-w-lg mx-4 rounded-2xl overflow-hidden shadow-2xl flex flex-col" style="background:#fff;max-height:92vh">
 
     <!-- Header -->
-    <div class="flex items-center justify-between px-6 py-4 shrink-0"
-         style="background:#925616">
+    <div class="flex items-center justify-between px-6 py-4 shrink-0" style="background:#1e3a8a">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg flex items-center justify-center"
-             style="background:rgba(255,255,255,.15)">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(255,255,255,.15)">
           <i data-lucide="ticket" class="w-4 h-4 text-white"></i>
         </div>
         <div>
-          <p class="font-bold text-white text-sm leading-tight" id="det-titulo">Chamado #—</p>
+          <p class="font-bold text-white text-sm leading-tight" id="det-titulo">Chamado #</p>
           <p class="text-white/50 text-[10px]" id="det-data"></p>
         </div>
       </div>
@@ -546,7 +788,7 @@
     <!-- Body -->
     <div class="overflow-y-auto px-6 py-6 flex flex-col gap-5">
 
-      <!-- Status + Tipo + Origem -->
+      <!-- Status+ Tipo + Origem -->
       <div class="flex flex-wrap gap-2 items-center">
         <span id="det-status-badge"></span>
         <span id="det-tipo-badge" class="badge-tipo"></span>
@@ -564,9 +806,10 @@
           </span>
         </div>
         <div class="flex items-center gap-3 mt-1">
-          <div id="det-avatar" class="avatar shrink-0"></div>
+          <div id="det-avatar" class="w-11 h-11 rounded-full flex items-center justify-center shrink-0 overflow-hidden font-bold text-white text-sm shadow-sm"></div>
           <div>
             <p id="det-nome" class="font-bold text-brand-900 text-sm"></p>
+            <p id="det-cargo" class="text-[0.65rem] font-bold text-brand-500 uppercase tracking-widest mt-0.5"></p>
             <p id="det-numero" class="text-xs font-mono text-brand-400 mt-0.5"></p>
           </div>
         </div>
@@ -592,13 +835,24 @@
       <!-- Chat de Atendimento -->
       <div id="det-chat-wrapper" class="hidden flex flex-col gap-2">
         <div class="flex items-center justify-between">
-           <p class="text-[.64rem] font-black uppercase tracking-widest text-brand-400">Mensagens / Chat</p>
+           <p class="text-[.64rem] font-black uppercase tracking-widest text-brand-400">Mensagens/ Chat</p>
            <button onclick="loadDetalheRefresh()" class="text-[10px] font-bold text-brand-400 hover:text-brand-600 bg-transparent border-none cursor-pointer">
              <i data-lucide="refresh-cw" class="w-3 h-3 inline"></i> Atualizar Chat
            </button>
         </div>
-        <div id="det-chat-container" class="flex flex-col gap-3 max-h-[350px] overflow-y-auto p-4 bg-brand-50 rounded-xl border border-brand-100">
-          <!-- Mensagens entram aqui -->
+        
+          <!-- Bot Warning Bar -->
+          <div id="bot-warning-bar" class="hidden flex items-center justify-between bg-yellow-100 border border-yellow-300 text-yellow-800 text-xs font-bold px-3 py-2 rounded-lg mb-2 shadow-sm">
+             <div class="flex items-center gap-2">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-yellow-600"></i>
+                <span>Robô Desativado para este chat. Você está no controle.</span>
+             </div>
+             <button onclick="document.getElementById('btn-concluir').click()" class="bg-yellow-200 hover:bg-yellow-300 text-yellow-800 border border-yellow-400 px-2 py-1 rounded text-[10px] uppercase cursor-pointer transition-colors">
+                Reativar (Encerrar)
+             </button>
+          </div>
+          <div id="det-chat-container" class="flex flex-col gap-3 max-h-[350px] overflow-y-auto p-4 bg-brand-50 rounded-xl border border-brand-100">
+          <!-- Mensagensentram aqui -->
         </div>
 
         <!-- NOVO: Barra de entrada no estilo WhatsApp Premium -->
@@ -614,9 +868,9 @@
             </button>
           </div>
           
-          <!-- Seletor de Emojis Flutuante -->
+          <!-- Seletor de EmojisFlutuante -->
           <div id="chat-emoji-drawer" class="hidden absolute bottom-full left-2 mb-2 p-3 bg-white border border-brand-100 rounded-2xl shadow-xl z-50 grid grid-cols-8 gap-2 w-64 max-w-full animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <!-- Emojis preenchidos via JS -->
+            <!-- Emojispreenchidosvia JS -->
           </div>
           
           <div class="flex items-center gap-2.5 w-full">
@@ -632,7 +886,7 @@
                      class="flex-1 bg-transparent outline-none border-none text-brand-900 text-sm py-1 placeholder-brand-300 min-w-0 resize-none overflow-hidden" style="min-height: 28px; max-height: 150px; line-height: 20px;"></textarea>
               
               <!-- Indicador de Gravação de Áudio -->
-              <div id="chat-recording-indicator" class="hidden flex-1 flex items-center justify-between text-red-600 text-xs py-1">
+              <div id="chat-recording-indicator" class="hidden flex-1 flex items-center justify-between text-red-600 text-xspy-1">
                 <div class="flex items-center gap-2">
                   <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0"></span>
                   <span class="font-bold uppercase tracking-wider">Gravando...</span>
@@ -685,12 +939,12 @@
           </div>
         </div>
 
-        <textarea id="det-obs-input" placeholder="O que foi feito para resolver este chamado? Ou digite aqui sua resposta ao cliente..."
+        <textarea id="det-obs-input" placeholder="O que foi feito para resolver este chamado? Ou digite aquisua resposta ao cliente..."
                   class="w-full px-4 py-3 text-sm text-brand-900 bg-brand-50 border border-brand-100
                          rounded-xl outline-none focus:border-brand-400 focus:bg-white transition-all
                          min-h-[100px] resize-none"></textarea>
         <div class="flex justify-end mt-2">
-          <button id="btn-salvar-obs" class="inline-flex items-center gap-2 px-4 py-2 bg-brand-100 text-brand-700 font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-brand-200 transition-all">
+          <button id="btn-salvar-obs" class="inline-flex items-center gap-2 px-4 py-2 bg-brand-100 text-brand-700 font-bold text-xsuppercase tracking-wider rounded-lg hover:bg-brand-200 transition-all">
             <i data-lucide="send" class="w-4 h-4"></i>
             Salvar / Enviar Resposta
           </button>
@@ -718,7 +972,7 @@
           </div>
           <div>
             <p class="text-sm font-bold text-orange-900">Anexo disponível</p>
-            <p class="text-xs text-orange-700">A foto foi enviada pelo WhatsApp</p>
+            <p class="text-xstext-orange-700">A foto foi enviada pelo WhatsApp</p>
           </div>
         </div>
         <a id="det-anexo-link" href="#" target="_blank" class="px-5 py-2 bg-orange-600 text-white rounded-lg text-sm font-bold hover:bg-orange-700 transition-all shadow-md">
@@ -729,24 +983,21 @@
     </div>
 
     <!-- Footer -->
-    <div class="px-6 py-4 border-t border-brand-100 flex items-center gap-2 flex-wrap shrink-0"
-         style="background:#fdfaf5">
+    <div class="px-6 py-4 border-t border-brand-100 flex items-center gap-2 flex-wrapshrink-0" style="background:#fdfaf5">
 
-      <!-- Assumir chamado (só aparece quando status = aberto) -->
+      <!-- Assumir chamado (só aparece quandostatus= aberto) -->
       <button id="btn-assumir"
               class="hidden inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-bold
                      text-white border-none cursor-pointer hover:opacity-90 transition-all
-                     disabled:opacity-50 disabled:cursor-not-allowed"
-              style="background:#f59e0b">
+                     disabled:opacity-50 disabled:cursor-not-allowed" style="background:#f59e0b">
         <i data-lucide="zap" class="w-4 h-4"></i> Assumir chamado
       </button>
 
-      <!-- Concluir chamado (aparece quando status = aberto ou em_atendimento) -->
+      <!-- Concluir chamado (aparece quandostatus= aberto ou em_atendimento) -->
       <button id="btn-concluir"
               class="hidden inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-bold
                      text-white border-none cursor-pointer hover:opacity-90 transition-all
-                     disabled:opacity-50 disabled:cursor-not-allowed"
-              style="background:#16a34a">
+                     disabled:opacity-50 disabled:cursor-not-allowed" style="background:#16a34a">
         <i data-lucide="check-circle" class="w-4 h-4"></i> Concluir chamado
       </button>
 
@@ -763,19 +1014,15 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════ MODAL NOVO CHAMADO ══ -->
-<div id="modal-chamado" class="fixed inset-0 z-50 flex items-center justify-center hidden"
-     style="background:rgba(30,15,5,.60);backdrop-filter:blur(4px)">
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• MODAL NOVO CHAMADO â•â• -->
+<div id="modal-chamado" class="fixed inset-0 z-50 flex items-center justify-center hidden" style="background:rgba(30,15,5,.60);backdrop-filter:blur(4px)">
 
-  <div class="w-full max-w-lg mx-4 rounded-2xl overflow-hidden shadow-2xl flex flex-col"
-       style="background:#fff;max-height:90vh">
+  <div class="w-full max-w-lg mx-4 rounded-2xl overflow-hidden shadow-2xl flex flex-col" style="background:#fff;max-height:90vh">
 
     <!-- Modal header -->
-    <div class="flex items-center justify-between px-7 py-4 shrink-0"
-         style="background:#925616">
+    <div class="flex items-center justify-between px-7 py-4shrink-0" style="background:#1e3a8a">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg flex items-center justify-center"
-             style="background:rgba(255,255,255,.15)">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(255,255,255,.15)">
           <i data-lucide="ticket" class="w-4 h-4 text-white"></i>
         </div>
         <h3 class="font-bold text-white text-base tracking-tight">Novo Chamado</h3>
@@ -790,7 +1037,7 @@
       </div>
     </div>
 
-    <!-- Step 1 — Tipo -->
+    <!-- Step 1 â€” Tipo -->
     <div id="modal-step-1" class="px-7 py-7 overflow-y-auto">
       <p class="text-[.65rem] font-black uppercase tracking-widest text-brand-400 mb-1">Passo 1 de 2</p>
       <h4 class="text-lg font-extrabold text-brand-900 mb-1">Tipo de chamado</h4>
@@ -798,10 +1045,10 @@
 
       <div class="flex flex-col gap-3">
 
-        <!-- INCLUSÃO -->
+        <!-- INCLUSÃƒO -->
         <button class="tipo-card group flex items-center gap-4 px-5 py-4 rounded-xl border-2 border-brand-100
                        hover:border-brand-400 hover:bg-brand-50 transition-all text-left cursor-pointer bg-white
-                       focus:outline-none focus:border-brand-400" data-tipo="INCLUSÃO">
+                       focus:outline-none focus:border-brand-400" data-tipo="INCLUSÃƒO">
           <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-brand-100">
             <i data-lucide="user-plus" class="w-5 h-5 text-brand-500"></i>
           </div>
@@ -812,10 +1059,10 @@
           <i data-lucide="chevron-right" class="w-4 h-4 text-brand-200 group-hover:text-brand-400 shrink-0 transition-colors"></i>
         </button>
 
-        <!-- EDIÇÃO -->
+        <!-- EDIÃ‡ÃƒO -->
         <button class="tipo-card group flex items-center gap-4 px-5 py-4 rounded-xl border-2 border-brand-100
                        hover:border-brand-400 hover:bg-brand-50 transition-all text-left cursor-pointer bg-white
-                       focus:outline-none focus:border-brand-400" data-tipo="EDIÇÃO">
+                       focus:outline-none focus:border-brand-400" data-tipo="EDIÃ‡ÃƒO">
           <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-50">
             <i data-lucide="pencil" class="w-5 h-5 text-blue-500"></i>
           </div>
@@ -843,10 +1090,10 @@
       </div>
     </div>
 
-    <!-- Step 2 — Informações gerais -->
+    <!-- Step 2 â€” Informaçõesgerais-->
     <div id="modal-step-2" class="hidden flex flex-col overflow-hidden">
 
-      <!-- Cabeçalho do step 2 -->
+      <!-- Cabeçalho dostep 2 -->
       <div class="px-7 pt-6 pb-5 border-b border-brand-100" style="background:#fdfaf5">
         <div class="flex items-center gap-2 mb-3">
           <button id="modal-back"
@@ -858,15 +1105,14 @@
           <span class="text-[.62rem] font-black uppercase tracking-widest text-brand-300">Passo 2 de 2</span>
         </div>
         <div class="flex items-start gap-3">
-          <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-               style="background:#925616">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#1e3a8a">
             <i data-lucide="user-check" class="w-5 h-5 text-white"></i>
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-2">
               <h4 class="text-base font-extrabold text-brand-900 leading-tight">Informações do Usuário</h4>
               <!-- Toggle: notificação WhatsApp -->
-              <label for="m-notif-wpp" class="flex items-center gap-1.5 cursor-pointer select-none shrink-0">
+              <label for="m-notif-wpp" class="flex items-center gap-1.5 cursor-pointerselect-noneshrink-0">
                 <span class="text-[.62rem] font-bold text-brand-400 whitespace-nowrap">Notif. WhatsApp</span>
                 <div class="relative w-9 h-5">
                   <input type="checkbox" id="m-notif-wpp" class="sr-only peer" />
@@ -876,7 +1122,7 @@
               </label>
             </div>
             <div class="flex items-center gap-1.5 mt-1">
-              <span class="text-[.68rem] text-brand-400 font-medium">Tipo selecionado:</span>
+              <span class="text-[.68rem] text-brand-400 font-medium">Tiposelecionado:</span>
               <span id="tipo-selected-label"
                     class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[.68rem]
                            font-bold bg-brand-100 text-brand-500 border border-brand-200"></span>
@@ -976,7 +1222,7 @@
                              text-sm text-brand-900 bg-white outline-none
                              focus:border-brand-400 focus:ring-2 focus:ring-brand-400/10
                              transition-all appearance-none">
-                <option value="">Selecione…</option>
+                <option value="">Selecioneâ€¦</option>
               </select>
             </div>
           </div>
@@ -986,7 +1232,7 @@
             </label>
             <div class="relative">
               <i data-lucide="briefcase" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-brand-300 pointer-events-none"></i>
-              <input id="m-funcao" type="text" placeholder="Ex: Gerente…" maxlength="80" required
+              <input id="m-funcao" type="text" placeholder="Ex: Gerenteâ€¦" maxlength="80" required
                      class="w-full pl-8 pr-3 py-2 border-[1.5px] border-brand-100 rounded-lg
                             text-sm text-brand-900 bg-white outline-none
                             focus:border-brand-400 focus:ring-2 focus:ring-brand-400/10
@@ -1010,25 +1256,24 @@
           </div>
           <div class="flex flex-col min-w-0">
             <span class="text-sm font-semibold text-brand-500">Adicionar arquivo</span>
-            <span id="file-name" class="text-xs text-brand-300 truncate">Imagem, PDF, documento… (opcional)</span>
+            <span id="file-name" class="text-xs text-brand-300 truncate">Imagem, PDF, documentoâ€¦ (opcional)</span>
           </div>
           <input id="m-file" type="file" class="hidden" />
         </label>
 
-        <!-- Ações -->
+        <!-- Ações-->
         <div class="flex gap-2.5 justify-end">
           <button type="button" id="modal-cancel-btn"
                   class="inline-flex items-center gap-1.5 px-4 py-2.5 border-[1.5px] border-brand-100
                          rounded-lg text-sm font-semibold text-brand-500 hover:bg-brand-50
-                         transition-colors bg-white cursor-pointer">
+                         transition-colorsbg-white cursor-pointer">
             <i data-lucide="x" class="w-4 h-4"></i> Cancelar
           </button>
           <button id="modal-submit" type="submit"
                   class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-bold
-                         text-white shadow-[0_2px_10px_rgba(146,86,22,.28)]
+                         text-whiteshadow-[0_2px_10px_rgba(146,86,22,.28)]
                          hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed
-                         transition-all border-none cursor-pointer"
-                  style="background:#925616">
+                         transition-all border-none cursor-pointer" style="background:#1e3a8a">
             <i data-lucide="send" class="w-4 h-4"></i> Abrir chamado
           </button>
         </div>
@@ -1039,19 +1284,16 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════ MODAL CONFIGURAÇÕES ══ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• MODAL CONFIGURAÃ‡Ã•ES â•â• -->
 <div id="modal-config-overlay"
-     class="fixed inset-0 z-50 flex items-center justify-center p-4"
-     style="display:none!important; background:rgba(0,0,0,.55); backdrop-filter:blur(4px)">
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col"
-       style="max-height:90vh">
+     class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none!important; background:rgba(0,0,0,.55); backdrop-filter:blur(4px)">
+  <div class="bg-white rounded-2xlshadow-2xl w-full max-w-lg flex flex-col" style="max-height:90vh">
 
     <!-- Header do modal -->
     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl flex items-center justify-center"
-             style="background:#f5eccb">
-          <i data-lucide="settings" class="w-5 h-5" style="color:#925616"></i>
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#eff6ff">
+          <i data-lucide="settings" class="w-5 h-5" style="color:#1e3a8a"></i>
         </div>
         <h2 class="text-base font-bold text-gray-800">Configurações</h2>
       </div>
@@ -1062,32 +1304,25 @@
       </button>
     </div>
 
-    <!-- Abas -->
+    <!-- Abas-->
     <div class="flex border-b border-gray-100 px-6">
       <button data-tab="config-bot"
-              class="config-tab px-4 py-3 text-sm font-semibold border-b-2 transition-colors
-                     cursor-pointer bg-transparent border-x-0 border-t-0"
-              style="color:#925616; border-bottom-color:#925616">
+              class="config-tab px-4 py-3 text-sm font-semibold border-b-2 transition-colorscursor-pointer bg-transparent border-x-0 border-t-0" style="color:#1e3a8a; border-bottom-color:#1e3a8a">
         <i data-lucide="bot" class="w-4 h-4 inline-block mr-1.5 -mt-0.5"></i>Config Bot
       </button>
       <button data-tab="whatsapp"
-              class="config-tab px-4 py-3 text-sm font-semibold border-b-2 transition-colors
-                     cursor-pointer bg-transparent border-x-0 border-t-0"
-              style="color:#6b7280; border-bottom-color:transparent">
+              class="config-tab px-4 py-3 text-sm font-semibold border-b-2 transition-colorscursor-pointer bg-transparent border-x-0 border-t-0" style="color:#6b7280; border-bottom-color:transparent">
         <i data-lucide="message-square" class="w-4 h-4 inline-block mr-1.5 -mt-0.5"></i>Whatsapp
       </button>
       <button data-tab="logins"
-              class="config-tab px-4 py-3 text-sm font-semibold border-b-2 transition-colors
-                     cursor-pointer bg-transparent border-x-0 border-t-0"
-              style="color:#6b7280; border-bottom-color:transparent">
-        <i data-lucide="users" class="w-4 h-4 inline-block mr-1.5 -mt-0.5"></i>Logins
-      </button>
+              class="config-tab px-4 py-3 text-sm font-semibold border-b-2 transition-colorscursor-pointer bg-transparent border-x-0 border-t-0" style="color:#6b7280; border-bottom-color:transparent">
+        <i data-lucide="users" class="w-4 h-4 inline-block mr-1.5 -mt-0.5"></i>Logins</button>
       <button data-tab="contatos"
-              class="config-tab px-4 py-3 text-sm font-semibold border-b-2 transition-colors
-                     cursor-pointer bg-transparent border-x-0 border-t-0"
-              style="color:#6b7280; border-bottom-color:transparent">
-        <i data-lucide="contact" class="w-4 h-4 inline-block mr-1.5 -mt-0.5"></i>Contatos
-      </button>
+              class="config-tab px-4 py-3 text-sm font-semibold border-b-2 transition-colors cursor-pointer bg-transparent border-x-0 border-t-0" style="color:#6b7280; border-bottom-color:transparent">
+        <i data-lucide="contact" class="w-4 h-4 inline-block mr-1.5 -mt-0.5"></i>Contatos</button>
+      <button data-tab="alertas"
+              class="config-tab px-4 py-3 text-sm font-semibold border-b-2 transition-colors cursor-pointer bg-transparent border-x-0 border-t-0" style="color:#6b7280; border-bottom-color:transparent">
+        <i data-lucide="bell" class="w-4 h-4 inline-block mr-1.5 -mt-0.5"></i>Alertas & E-mail</button>
     </div>
 
     <!-- Painel: Configuração Bot -->
@@ -1096,38 +1331,40 @@
       <!-- Seletor de Categoria -->
       <div class="flex gap-1.5 p-1 bg-gray-100 rounded-xl overflow-x-auto">
         <button onclick="changeBotCategory('menus')" id="cat-btn-menus" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg bg-white text-brand-500 shadow-sm transition-all border-none cursor-pointer whitespace-nowrap">Menus</button>
-        <button onclick="changeBotCategory('setores_vita')" id="cat-btn-setores_vita" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer whitespace-nowrap">VITA</button>
+        <button onclick="changeBotCategory('setores_vita')" id="cat-btn-setores_vita" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer whitespace-nowrap">Vita</button>
         <button onclick="changeBotCategory('setores_ava')" id="cat-btn-setores_ava" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer whitespace-nowrap">AVA</button>
-        <button onclick="changeBotCategory('salas_vendas')" id="cat-btn-salas_vendas" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer whitespace-nowrap">Vendas</button>
+        <button onclick="changeBotCategory('setores_canela')" id="cat-btn-setores_canela" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer whitespace-nowrap">Canela</button>
+        <button onclick="changeBotCategory('setores_pedras_altas')" id="cat-btn-setores_pedras_altas" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer whitespace-nowrap">Pedras Altas</button>
+        <button onclick="changeBotCategory('setores_nba_park')" id="cat-btn-setores_nba_park" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer whitespace-nowrap">NBA Park</button>
+        <button onclick="changeBotCategory('setores_golden_gramado')" id="cat-btn-setores_golden_gramado" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer whitespace-nowrap">Golden</button>
         <button onclick="changeBotCategory('sistemas')" id="cat-btn-sistemas" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer whitespace-nowrap">Sistemas</button>
         <button onclick="changeBotCategory('problemas')" id="cat-btn-problemas" class="cat-btn flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer whitespace-nowrap">Problemas</button>
       </div>
 
-      <!-- Campo de adição (só aparece se não for a aba de Início) -->
+      <!-- Campo de adição (só aparecese não for a aba de Início) -->
       <div id="add-bot-item-wrap" class="flex flex-col gap-3 p-4 rounded-2xl bg-gray-50 border border-gray-100 mb-2">
         <div class="flex items-center gap-2 mb-1">
            <span id="add-bot-item-title" class="text-[10px] font-black uppercase tracking-widest text-gray-400">Novo Item</span>
         </div>
         <div class="flex gap-2">
           <input id="novo-bot-item-key" type="text" placeholder="Identificador (ex: menu_atendimento)"
-                 class="w-1/3 px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-brand-400 transition-colors hidden" />
+                 class="w-1/3 px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-brand-400 transition-colorshidden" />
           <input id="novo-bot-item-input" type="text" maxlength="80"
                  placeholder="Novo item..."
                  class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm
                         outline-none focus:border-brand-400 transition-colors" />
           <button id="btn-add-bot-item"
                   class="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-sm
-                         font-bold text-white shadow cursor-pointer border-none transition-all
-                         hover:opacity-90 active:scale-95 whitespace-nowrap"
-                  style="background:#925616">
+                         font-bold text-whiteshadow cursor-pointer border-none transition-all
+                         hover:opacity-90 active:scale-95 whitespace-nowrap" style="background:#1e3a8a">
             <i data-lucide="plus" class="w-4 h-4"></i> Adicionar
           </button>
         </div>
       </div>
 
-      <p id="bot-config-error" class="text-xs text-red-600 -mt-2 hidden"></p>
+      <p id="bot-config-error" class="text-xstext-red-600 -mt-2 hidden"></p>
 
-      <!-- Lista de itens -->
+      <!-- Lista de itens-->
       <div class="flex-1 overflow-y-auto pr-1" style="max-height:280px">
         <ul id="bot-config-list" class="flex flex-col gap-2">
           <li class="text-sm text-gray-400 text-center py-6" id="bot-config-empty">
@@ -1142,13 +1379,13 @@
     <!-- Painel: Whatsapp -->
     <div id="tab-whatsapp" class="flex flex-col flex-1 overflow-hidden p-6 gap-6 hidden">
       
-      <!-- Seção única de Status e QR Code -->
+      <!-- Seção única de Statuse QR Code -->
       <div id="wpp-status-section" class="flex flex-col gap-5 pt-2">
         <div class="flex items-center justify-between">
-          <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Status da Conexão</label>
+          <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Statusda Conexão</label>
           <div class="flex items-center gap-3">
             <div id="wpp-status-badge" class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-gray-100 text-gray-500">
-              Verificando…
+              Verificandoâ€¦
             </div>
             <button id="btn-logout-wpp" class="px-3 py-1.5 rounded-lg bg-white border border-red-100 text-red-500 text-[10px] font-bold uppercase tracking-wider hover:bg-red-50 transition-all cursor-pointer">
               Desvincular
@@ -1157,30 +1394,30 @@
         </div>
         
         <div id="wpp-qr-container" class="hidden flex flex-col items-center gap-4 p-6 rounded-2xl bg-gray-50 border border-gray-100">
-          <p class="text-xs text-gray-500 text-center">Escaneie o QR Code abaixo para conectar o bot:</p>
-          <div class="p-4 bg-white rounded-xl shadow-sm border border-gray-100">
-            <img id="wpp-qr-img" src="" alt="QR Code" class="w-48 h-48" />
+          <p class="text-xstext-gray-500 text-center">Escaneie o QR Code abaixo para conectar o bot:</p>
+          <div class="p-4 bg-white rounded-xlshadow-sm border border-gray-100">
+            <img id="wpp-qr-img"src="" alt="QR Code" class="w-48 h-48" />
           </div>
           <div class="flex items-center gap-2 text-[10px] text-brand-500 font-bold animate-pulse">
-            <i data-lucide="loader" class="w-3 h-3"></i> AGUARDANDO SCAN…
+            <i data-lucide="loader" class="w-3 h-3"></i> AGUARDANDO SCANâ€¦
           </div>
 
-          <!-- Dicas de orientação -->
+          <!-- Dicasde orientação -->
           <div class="mt-2 p-3 bg-brand-50 border border-brand-100 rounded-xl text-[11px] text-brand-800 leading-relaxed">
             <p class="flex items-start gap-2 mb-1.5">
-              <i data-lucide="info" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-brand-500"></i>
-              <span>Se você escanear e o celular disser que conectou, mas o painel ainda mostrar "Aguardando", <strong>aguarde de 10 a 15 segundos</strong>.</span>
+              <i data-lucide="info" class="w-3.5 h-3.5 mt-0.5shrink-0 text-brand-500"></i>
+              <span>Se você escanear e o celular disser que conectou, maso painel ainda mostrar "Aguardando", <strong>aguarde de 10 a 15segundos</strong>.</span>
             </p>
             <p class="flex items-start gap-2">
-              <i data-lucide="alert-triangle" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-500"></i>
-              <span>Se ainda assim não mudar, use o botão <strong>Desvincular</strong> no topo para limpar a sessão e tentar novamente.</span>
+              <i data-lucide="alert-triangle" class="w-3.5 h-3.5 mt-0.5shrink-0 text-amber-500"></i>
+              <span>Se ainda assim não mudar, use o botão <strong>Desvincular</strong> no topo para limpar asessão e tentar novamente.</span>
             </p>
           </div>
         </div>
 
         <div id="wpp-connected-info" class="hidden flex items-center justify-between p-4 rounded-xl bg-green-50 border border-green-100">
           <div class="flex items-center gap-4">
-            <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white shadow-lg shadow-green-200">
+            <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-whiteshadow-lgshadow-green-200">
                <i data-lucide="phone" class="w-5 h-5"></i>
             </div>
             <div>
@@ -1192,7 +1429,7 @@
       </div>
     </div>
 
-    <!-- Painel: Logins (Novo) -->
+    <!-- Painel: Logins(Novo) -->
     <div id="tab-logins" class="flex flex-col flex-1 overflow-hidden p-6 gap-4 hidden">
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col gap-1">
@@ -1216,7 +1453,7 @@
           </select>
         </div>
       </div>
-      <button id="btn-add-login" class="w-full py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold hover:opacity-90 shadow-sm transition-all">
+      <button id="btn-add-login" class="w-full py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold hover:opacity-90shadow-sm transition-all">
         Cadastrar Novo Acesso
       </button>
 
@@ -1238,7 +1475,7 @@
       </div>
     </div>
 
-    <!-- Painel: Contatos (Novo) -->
+    <!-- Painel: Contatos(Novo) -->
     <div id="tab-contatos" class="flex flex-col flex-1 overflow-hidden p-6 gap-4 hidden">
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col gap-1">
@@ -1250,8 +1487,8 @@
           <input id="cont-nome" type="text" placeholder="Ex: João da Silva" class="px-3 py-2 border rounded-lg text-sm outline-none focus:border-brand-400" />
         </div>
       </div>
-      <div class="flex flex-col sm:flex-row gap-3">
-        <button id="btn-add-contato" class="flex-1 py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold hover:opacity-90 shadow-sm transition-all border-none cursor-pointer">
+      <div class="flex flex-colsm:flex-row gap-3">
+        <button id="btn-add-contato" class="flex-1 py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold hover:opacity-90shadow-sm transition-all border-none cursor-pointer">
           Salvar / Atualizar Contato
         </button>
         <button id="btn-import-contatos" class="flex-1 py-2.5 bg-white border border-brand-500 text-brand-500 rounded-xl text-sm font-bold hover:bg-brand-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
@@ -1281,38 +1518,74 @@
       </div>
     </div>
 
+    <!-- Painel: Alertas & E-mail -->
+    <div id="tab-alertas" class="flex flex-col flex-1 overflow-hidden p-6 gap-5 hidden">
+      <div class="p-4 bg-brand-50/60 border border-brand-100 rounded-2xl">
+        <h4 class="text-xs font-bold text-brand-900 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="mail-check" class="w-4 h-4 text-brand-500"></i>
+          Notificação Automática de Novos Chamados
+        </h4>
+        <p class="text-xs text-brand-400 mt-1.5 leading-relaxed">
+          Sempre que um novo chamado for aberto — seja via <strong>Site</strong>, <strong>WhatsApp Bot</strong> ou <strong>Organograma</strong> —, um e-mail de alerta com todos os dados da solicitação será disparado para o endereço abaixo.
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">E-mail de Destino dos Alertas</label>
+        <div class="flex gap-2">
+          <input id="cfg-email-alerta" type="email" placeholder="ti3@laghettomultipropriedade.com.br"
+                 class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-brand-400 transition-colors" />
+          <button id="btn-save-email-alerta"
+                  class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow cursor-pointer border-none transition-all hover:opacity-90 active:scale-95 whitespace-nowrap" style="background:#1e3a8a">
+            <i data-lucide="save" class="w-4 h-4"></i> Salvar
+          </button>
+        </div>
+        <p id="cfg-alerta-msg" class="text-xs mt-1 hidden"></p>
+      </div>
+
+      <div class="p-4 bg-gray-50 border border-gray-100 rounded-2xl flex flex-col gap-2 text-xs text-gray-500">
+        <div class="flex items-center gap-2 font-bold text-gray-700">
+          <i data-lucide="shield-check" class="w-4 h-4 text-green-600"></i>
+          Disparo Centralizado e Imediato
+        </div>
+        <p>
+          O servidor utiliza conexão SMTP segura autenticada para entregar o alerta imediatamente assim que o chamado recebe número de protocolo.
+        </p>
+      </div>
+    </div>
+
   </div> <!-- Fim modal container inner -->
 </div> <!-- Fim modal overlay -->
 
-<!-- Modal Especial para Edição de Mensagem do Bot (WhatsApp style) -->
+<!-- Modal Especial para Edição de Mensagem do Bot (WhatsAppstyle) -->
 <div id="modal-edit-menu-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
-  <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+  <div class="bg-white w-full max-w-lg rounded-3xlshadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
     <div class="p-5 flex items-center justify-between border-b border-gray-50">
       <div>
         <h3 id="edit-menu-title" class="text-lg font-black text-gray-800 leading-tight">Editar Menu</h3>
         <p class="text-[10px] font-bold text-orange-500 uppercase tracking-widest mt-0.5">Configuração de Template</p>
       </div>
-      <button id="btn-close-edit-menu" class="p-2 rounded-xl hover:bg-gray-100 transition-colors border-none bg-transparent cursor-pointer text-gray-400">
+      <button id="btn-close-edit-menu" class="p-2 rounded-xl hover:bg-gray-100 transition-colorsborder-none bg-transparent cursor-pointer text-gray-400">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
     </div>
     <div class="p-6 flex flex-col gap-4 bg-gray-50/50">
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <div class="bg-white p-4 rounded-2xlshadow-sm border border-gray-100">
         <textarea id="edit-menu-textarea" class="w-full min-h-[220px] text-sm text-gray-700 bg-transparent outline-none resize-none font-mono leading-relaxed" placeholder="Escreva a mensagem do bot aqui..."></textarea>
       </div>
       <div class="flex items-start gap-2 text-[10px] text-gray-500 px-2 leading-relaxed bg-blue-50/50 p-3 rounded-xl border border-blue-100">
         <i data-lucide="info" class="w-4 h-4 mt-0.5 text-blue-500 flex-shrink-0"></i>
         <div class="flex flex-col gap-1.5">
-           <span class="font-bold text-blue-800 text-[11px] uppercase tracking-wider">Dicas de Formatação</span>
-           <span>• Use <b>{nome}</b> para inserir o nome real do cliente na saudação.</span>
-           <span>• Use enter (quebra de linha) para organizar os itens numéricos como no WhatsApp.</span>
-           <span>• Não adicione opções de sair/voltar. O bot já adiciona <b>[V] Voltar</b> e <b>[0] Cancelar</b> automaticamente em todos os menus.</span>
+           <span class="font-bold text-blue-800 text-[11px] uppercase tracking-wider">Dicasde Formatação</span>
+           <span>â€¢ Use <b>{nome}</b> para inserir o nome real do cliente nasaudação.</span>
+           <span>â€¢ Use enter (quebra de linha) para organizar ositensnuméricoscomo no WhatsApp.</span>
+           <span>â€¢ Não adicione opçõesdesair/voltar. O bot já adiciona <b>[V] Voltar</b> e <b>[0] Cancelar</b> automaticamente em todososmenus.</span>
         </div>
       </div>
     </div>
     <div class="p-5 border-t border-gray-50 bg-white flex gap-3">
       <button id="btn-cancel-edit-menu" class="flex-1 py-3 rounded-xl text-sm font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-all border-none cursor-pointer">Cancelar</button>
-      <button id="btn-save-edit-menu" class="flex-[2] py-3 rounded-xl text-sm font-bold text-white bg-orange-600 hover:opacity-90 shadow-lg shadow-orange-200 transition-all border-none cursor-pointer flex items-center justify-center gap-2">
+      <button id="btn-save-edit-menu" class="flex-[2] py-3 rounded-xl text-sm font-bold text-white bg-orange-600 hover:opacity-90shadow-lgshadow-orange-200 transition-all border-none cursor-pointer flex items-center justify-center gap-2">
         <i data-lucide="check" class="w-4 h-4"></i> Salvar Template
       </button>
     </div>
@@ -1336,6 +1609,33 @@
     }
   })();
 
+  
+  /* ---------- Gerenciamento de Tema (Claro / Escuro) ---------- */
+  function applyTheme(isDark) {
+    const root = document.documentElement;
+    const icon = document.getElementById('theme-icon');
+    if (isDark) {
+      root.classList.add('dark');
+      if (icon) icon.setAttribute('data-lucide', 'sun');
+      localStorage.setItem('laghetto_theme', 'dark');
+    } else {
+      root.classList.remove('dark');
+      if (icon) icon.setAttribute('data-lucide', 'moon');
+      localStorage.setItem('laghetto_theme', 'light');
+    }
+    if (window.lucide) lucide.createIcons();
+  }
+
+  const savedTheme = localStorage.getItem('laghetto_theme');
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialDark = savedTheme ? savedTheme === 'dark' : prefersDark;
+  applyTheme(initialDark);
+
+  document.getElementById('btn-theme-toggle').addEventListener('click', function() {
+    const isDark = document.documentElement.classList.contains('dark');
+    applyTheme(!isDark);
+  });
+
   document.getElementById('btn-logout').addEventListener('click', async function () {
     const t = localStorage.getItem('auth_token');
     await fetch('/api/auth/logout', { method:'POST', headers:{ 'Authorization':'Bearer '+t } }).catch(()=>{});
@@ -1354,7 +1654,7 @@
     if (role === 'administrador' || role === 'supervisor') {
       if (btnConfig) btnConfig.style.display = 'inline-flex';
     }
-    // Ocultar aba de logins dentro do modal se não for admin
+    // Ocultar aba de loginsdentro do modalse não for admin
     if (role !== 'administrador') {
       const tabLgn = document.querySelector('[data-tab="logins"]');
       if (tabLgn) tabLgn.style.display = 'none';
@@ -1366,7 +1666,7 @@
   }
 
   function formatPhone(num) {
-    if (!num) return '—';
+    if (!num) return 'â€”';
     const clean = num.replace(/\D/g, '');
     if (clean.length === 12 && clean.startsWith('55')) {
       return '(' + clean.slice(2, 4) + ') ' + clean.slice(4, 8) + '-' + clean.slice(8);
@@ -1383,7 +1683,7 @@
     return num;
   }
 
-  /* ---------- Modal Configurações ---------- */
+  /* ---------- Modal Configurações---------- */
   (function () {
     const overlay  = document.getElementById('modal-config-overlay');
     const btnOpen  = document.getElementById('btn-config');
@@ -1397,17 +1697,21 @@
     const emptyBot    = document.getElementById('bot-config-empty');
     
     let currentCategory = 'menus';
-    let botConfigData = { menus: [], sistemas: [], problemas: [] };
+    let botConfigData = { menus: [],sistemas: [], problemas: [] };
 
     function token() { return localStorage.getItem('auth_token') || ''; }
 
     function showErrorBot(msg) {
       errBot.textContent = msg;
-      errBot.classList.remove('hidden');
-      setTimeout(() => errBot.classList.add('hidden'), 3500);
+      errBot.classList.remove('hidden');setTimeout(() => errBot.classList.add('hidden'), 3500);
     }
 
-    const ICONS = { menus: 'edit-3', flow: 'git-branch', salas: 'briefcase', setores_vita: 'briefcase', setores_ava: 'briefcase', salas_vendas: 'briefcase', setores: 'door-open', sistemas: 'monitor', problemas: 'alert-triangle' };
+    const ICONS = {
+      menus: 'edit-3', flow: 'git-branch', salas: 'briefcase',
+      setores_vita: 'briefcase', setores_ava: 'briefcase', setores_canela: 'briefcase',
+      setores_pedras_altas: 'briefcase', setores_nba_park: 'briefcase', setores_golden_gramado: 'briefcase',
+      sistemas: 'monitor', problemas: 'alert-triangle'
+    };
 
     function renderBotConfig() {
       listBot.innerHTML = '';
@@ -1426,9 +1730,12 @@
         } else {
           inputKey.classList.add('hidden');
           let label = 'Item';
-          if (currentCategory === 'setores_vita') label = 'Setor VITA';
+          if (currentCategory === 'setores_vita') label = 'Setor Vita';
           else if (currentCategory === 'setores_ava') label = 'Setor AVA';
-          else if (currentCategory === 'salas_vendas') label = 'Sala de Vendas';
+          else if (currentCategory === 'setores_canela') label = 'Setor Canela';
+          else if (currentCategory === 'setores_pedras_altas') label = 'Setor Pedras Altas';
+          else if (currentCategory === 'setores_nba_park') label = 'Setor NBA Park';
+          else if (currentCategory === 'setores_golden_gramado') label = 'Setor Golden Gramado';
           else if (currentCategory === 'sistemas') label = 'Sistema';
           else if (currentCategory === 'problemas') label = 'Problema';
           titleAdd.textContent = "Adicionar " + label;
@@ -1437,26 +1744,23 @@
 
       if (isFlow) {
         // Layout de Sequência (Timeline)
-        const mainMenus = botConfigData.menus || [];
+        const mainMenus= botConfigData.menus|| [];
         const order = botConfigData.journeyOrder || ['saudacao', 'setores', 'demanda', 'sistemas'];
 
-        const stepLabels = {
-          saudacao: { title: 'Boas-vindas', icon: 'hand' },
-          setores:  { title: 'Localização', icon: 'map-pin' },
-          demanda:  { title: 'Triagem de Demanda', icon: 'help-circle' },
-          sistemas: { title: 'Detalhamento', icon: 'clipboard-list' }
+        const stepLabels= {saudacao: { title: 'Boas-vindas', icon: 'hand' },setores:  { title: 'Localização', icon: 'map-pin' },
+          demanda:  { title: 'Triagem de Demanda', icon: 'help-circle' },sistemas: { title: 'Detalhamento', icon: 'clipboard-list' }
         };
 
         const journeyWrap = document.createElement('div');
         journeyWrap.className = 'flex flex-col gap-3 mt-2';
 
         order.forEach(function (k, idx) {
-          // No flow, k já deve ser a string da chave (ex: "saudacao")
+          // No flow, k já deveser astring da chave (ex: "saudacao")
           const item = mainMenus.find(m => m.key === k) || { key: k, value: '' };
-          const info = stepLabels[k] || { title: k, icon: 'circle' };
+          const info =stepLabels[k] || { title: k, icon: 'circle' };
           
           const div = document.createElement('div');
-          div.className = 'flex items-center gap-4 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm hover:border-orange-200 transition-all';
+          div.className = 'flex items-center gap-4 p-4 rounded-2xl bg-white border border-gray-100shadow-sm hover:border-orange-200 transition-all';
           div.innerHTML =
             '<div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">' +
               '<i data-lucide="' + (info.icon || 'circle') + '" class="w-5 h-5"></i>' +
@@ -1479,12 +1783,9 @@
 
       const isMenu = currentCategory === 'menus';
       if (isMenu) {
-        // Layout de Edição de Templates (WhatsApp Style)
-        const labels = {
-          saudacao: 'Menu Saudação (Boas-vindas)',
-          setores:  'Menu Setor de atuação (Listagem de Salas)',
-          demanda:  'Menu Demanda (Sistemas vs Hardware)',
-          sistemas: 'Menu Sistemas (Listagem de Softwares)'
+        // Layout de Edição de Templates(WhatsApp Style)
+        const labels= {saudacao: 'Menu Saudação (Boas-vindas)',setores:  'Menu Setor de atuação (Listagem de Salas)',
+          demanda:  'Menu Demanda (SistemasvsHardware)',sistemas: 'Menu Sistemas(Listagem de Softwares)'
         };
 
         items.forEach(function (item) {
@@ -1495,12 +1796,12 @@
           div.innerHTML =
             '<div class="flex items-center justify-between px-1">' +
               '<span class="text-[10px] font-black uppercase tracking-widest text-gray-400">' + label + '</span>' +
-              '<button onclick="openEditMenuModal(\'' + item.key + '\', \'menus\')" class="flex items-center gap-1.5 text-[10px] font-bold text-brand-500 hover:text-brand-700 transition-colors border-none bg-transparent cursor-pointer">' +
+              '<button onclick="openEditMenuModal(\'' + item.key + '\', \'menus\')" class="flex items-center gap-1.5 text-[10px] font-bold text-brand-500 hover:text-brand-700 transition-colorsborder-none bg-transparent cursor-pointer">' +
                 '<i data-lucide="edit-3" class="w-3 h-3"></i> EDITAR TEMPLATE' +
               '</button>' +
             '</div>' +
             '<div class="relative group">' +
-              '<div class="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-gray-100 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed relative">' +
+              '<div class="bg-white p-4 rounded-2xl rounded-tl-noneshadow-sm border border-gray-100 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed relative">' +
                 '<div class="absolute -left-2 top-0 w-0 h-0 border-t-[12px] border-t-white border-l-[12px] border-l-transparent"></div>' +
                 escHtml(item.value) +
               '</div>' +
@@ -1526,11 +1827,11 @@
       items.forEach(function (item) {
         const li = document.createElement('li');
         li.dataset.key = item.key;
-        li.className = 'flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 hover:bg-orange-50 transition-colors group';
+        li.className = 'flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 hover:bg-orange-50 transition-colorsgroup';
         li.innerHTML =
           '<div class="flex items-center gap-2.5 flex-1 min-w-0">' +
-            '<div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style="background:#f5eccb">' +
-              '<i data-lucide="' + (ICONS[currentCategory] || 'hash') + '" class="w-3.5 h-3.5" style="color:#925616"></i>' +
+            '<div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style="background:#eff6ff">' +
+              '<i data-lucide="' + (ICONS[currentCategory] || 'hash') + '" class="w-3.5 h-3.5" style="color:#1e3a8a"></i>' +
             '</div>' +
             '<span class="text-sm font-medium text-gray-700 truncate">' + escHtml(item.value) + '</span>' +
           '</div>' +
@@ -1577,17 +1878,16 @@
       lucide.createIcons({ nodes: btn });
 
       try {
-        const res  = await fetch('/api/config/bot', {
+        const res =  await fetch('/api/config/bot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
           body: JSON.stringify({ category: currentEditCategory, value, key: currentEditKey }),
         });
-        if (!res.ok) { showErrorBot('Erro ao salvar.'); return; }
+        if (!res.ok) {showErrorBot('Erro aosalvar.'); return; }
         
         document.getElementById('modal-edit-menu-overlay').classList.add('hidden');
         loadBotConfig();
-      } catch { 
-        showErrorBot('Erro de conexão.'); 
+      } catch {showErrorBot('Erro de conexão.'); 
       } finally {
         btn.disabled = false;
         btn.innerHTML = originalHtml;
@@ -1604,18 +1904,18 @@
       [order[idx], order[newIdx]] = [order[newIdx], order[idx]];
 
       try {
-        const res = await fetch('/api/config/bot', {
+        const res =  await fetch('/api/config/bot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
           body: JSON.stringify({ category: 'journeyOrder', value: order }),
         });
-        if (!res.ok) { showErrorBot('Erro ao salvar nova ordem.'); return; }
+        if (!res.ok) {showErrorBot('Erro aosalvar nova ordem.'); return; }
         loadBotConfig();
-      } catch { showErrorBot('Erro de conexão.'); }
+      } catch {showErrorBot('Erro de conexão.'); }
     };
     async function loadBotConfig() {
       try {
-        const res  = await fetch('/api/config/bot', { headers: { 'Authorization': 'Bearer ' + token() } });
+        const res =  await fetch('/api/config/bot', { headers: { 'Authorization': 'Bearer ' + token() } });
         const data = await res.json();
         botConfigData = data;
         renderBotConfig();
@@ -1631,54 +1931,54 @@
 
       btnAddBot.disabled = true;
       try {
-        const res  = await fetch('/api/config/bot', {
+        const res =  await fetch('/api/config/bot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
           body: JSON.stringify({ category: currentCategory, value, key: key || undefined }),
         });
         const data = await res.json();
-        if (!res.ok) { showErrorBot(data.error || 'Erro ao adicionar item'); return; }
+        if (!res.ok) {showErrorBot(data.error || 'Erro ao adicionar item'); return; }
         inputBot.value = '';
         document.getElementById('novo-bot-item-key').value = '';
         if (currentCategory === 'salas' && typeof loadSalasSelect === 'function') loadSalasSelect();
         if (['salas', 'setores_vita', 'setores_ava', 'salas_vendas'].includes(currentCategory) && typeof loadSalasSelect === 'function') loadSalasSelect();
-      } catch { showErrorBot('Erro de conexão.'); }
+      } catch {showErrorBot('Erro de conexão.'); }
       finally { btnAddBot.disabled = false; }
     }
 
     async function deleteBotConfigItem(key) {
       try {
-        const res  = await fetch('/api/config/bot', {
+        const res =  await fetch('/api/config/bot', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
           body: JSON.stringify({ category: currentCategory, key: String(key) }),
         });
         const data = await res.json();
-        if (!res.ok) { showErrorBot(data.error || 'Erro ao excluir item'); return; }
+        if (!res.ok) {showErrorBot(data.error || 'Erro ao excluir item'); return; }
         loadBotConfig();
         if (['salas', 'setores_vita', 'setores_ava', 'salas_vendas'].includes(currentCategory) && typeof loadSalasSelect === 'function') loadSalasSelect();
-      } catch { showErrorBot('Erro de conexão.'); }
+      } catch {showErrorBot('Erro de conexão.'); }
     }
 
     async function updateBotConfigItem(key, value) {
       try {
-        const res  = await fetch('/api/config/bot', {
+        const res =  await fetch('/api/config/bot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
           body: JSON.stringify({ category: currentCategory, value: value, key: String(key) }),
         });
         const data = await res.json();
-        if (!res.ok) { showErrorBot(data.error || 'Erro ao atualizar item'); return; }
+        if (!res.ok) {showErrorBot(data.error || 'Erro ao atualizar item'); return; }
         loadBotConfig();
         if (['salas', 'setores_vita', 'setores_ava', 'salas_vendas'].includes(currentCategory) && typeof loadSalasSelect === 'function') loadSalasSelect();
-      } catch { showErrorBot('Erro de conexão.'); }
+      } catch {showErrorBot('Erro de conexão.'); }
     }
 
     listBot.addEventListener('click', function (e) {
       const editBtn = e.target.closest('[data-edit-item]');
       if (editBtn) {
         const key = editBtn.dataset.editItem;
-        const items = botConfigData[currentCategory] || [];
+        const items= botConfigData[currentCategory] || [];
         const item = items.find(i => String(i.key) === String(key));
         if (item) {
           const newVal = prompt("Editar valor:", item.value);
@@ -1712,9 +2012,12 @@
         activeBtn.classList.add('bg-white', 'text-brand-500', 'shadow-sm');
       }
       let label = 'item';
-      if (cat === 'setores_vita') label = 'setor VITA';
+      if (cat === 'setores_vita') label = 'setor Vita';
       else if (cat === 'setores_ava') label = 'setor AVA';
-      else if (cat === 'salas_vendas') label = 'sala de vendas';
+      else if (cat === 'setores_canela') label = 'setor Canela';
+      else if (cat === 'setores_pedras_altas') label = 'setor Pedras Altas';
+      else if (cat === 'setores_nba_park') label = 'setor NBA Park';
+      else if (cat === 'setores_golden_gramado') label = 'setor Golden Gramado';
       else if (cat === 'sistemas') label = 'sistema';
       else if (cat === 'problemas') label = 'problema';
       inputBot.placeholder = "Novo " + label + "...";
@@ -1738,12 +2041,13 @@
     });
 
     /* --- Tab Switching Logic --- */
-    const tabs = document.querySelectorAll('.config-tab');
-    const panels = {
+    const tabs= document.querySelectorAll('.config-tab');
+    const panels= {
       'config-bot': document.getElementById('tab-config-bot'),
       whatsapp: document.getElementById('tab-whatsapp'),
       logins:   document.getElementById('tab-logins'),
-      contatos: document.getElementById('tab-contatos')
+      contatos: document.getElementById('tab-contatos'),
+      alertas:  document.getElementById('tab-alertas')
     };
 
     tabs.forEach(tab => {
@@ -1755,24 +2059,93 @@
           t.style.borderBottomColor = isActive ? '#925616' : 'transparent';
         });
         Object.keys(panels).forEach(p => {
-          if(panels[p]) panels[p].classList.toggle('hidden', p !== target);
+          if (panels[p]) panels[p].classList.toggle('hidden', p !== target);
         });
         if (target === 'config-bot') loadBotConfig();
         if (target === 'whatsapp') loadWppConfig();
         if (target === 'logins')   loadLoginsTab();
         if (target === 'contatos') loadContatosTab();
+        if (target === 'alertas')  loadAlertasConfig();
         lucide.createIcons();
       });
     });
 
-    /* --- Logins Tab Logic --- */
+    /* --- Alertas Config Logic --- */
+    async function loadAlertasConfig() {
+      const emailInput = document.getElementById('cfg-email-alerta');
+      const msgEl = document.getElementById('cfg-alerta-msg');
+      msgEl.classList.add('hidden');
+      try {
+        const res = await fetch('/api/config', { headers: { 'Authorization': 'Bearer ' + token() } });
+        if (res.status === 401) {
+          msgEl.className = 'text-xs mt-1 text-red-500 font-semibold';
+          msgEl.textContent = 'Sua sessão expirou. Por favor, recarregue a página ou faça login novamente.';
+          msgEl.classList.remove('hidden');
+          return;
+        }
+        if (res.ok) {
+          const data = await res.json();
+          emailInput.value = data.email_alerta || '';
+        }
+      } catch {}
+    }
+
+    document.getElementById('btn-save-email-alerta').addEventListener('click', async function() {
+      const emailInput = document.getElementById('cfg-email-alerta');
+      const msgEl = document.getElementById('cfg-alerta-msg');
+      const email = emailInput.value.trim();
+      if (!email) {
+        msgEl.className = 'text-xs mt-1 text-red-500';
+        msgEl.textContent = 'Por favor, informe um endereço de e-mail.';
+        msgEl.classList.remove('hidden');
+        return;
+      }
+      this.disabled = true;
+      const originalText = this.innerHTML;
+      this.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Salvando...';
+      lucide.createIcons({ nodes: this });
+
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
+          body: JSON.stringify({ email_alerta: email })
+        });
+        if (res.status === 401) {
+          msgEl.className = 'text-xs mt-1 text-red-500 font-semibold';
+          msgEl.textContent = 'Sessão expirada. Faça login novamente para salvar.';
+          msgEl.classList.remove('hidden');
+          return;
+        }
+        const data = await res.json();
+        if (res.ok) {
+          msgEl.className = 'text-xs mt-1 text-green-600 font-bold';
+          msgEl.textContent = '✓ E-mail de alerta salvo com sucesso!';
+          msgEl.classList.remove('hidden');
+        } else {
+          msgEl.className = 'text-xs mt-1 text-red-500';
+          msgEl.textContent = data.error || 'Erro ao salvar configuração.';
+          msgEl.classList.remove('hidden');
+        }
+      } catch {
+        msgEl.className = 'text-xs mt-1 text-red-500';
+        msgEl.textContent = 'Erro de conexão com o servidor.';
+        msgEl.classList.remove('hidden');
+      } finally {
+        this.disabled = false;
+        this.innerHTML = originalText;
+        lucide.createIcons({ nodes: this });
+      }
+    });
+
+    /* --- LoginsTab Logic --- */
     async function loadLoginsTab() {
       const tbody = document.getElementById('lgn-list-body');
       tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400">Carregando...</td></tr>';
       try {
-        const res = await fetch('/api/logins', { headers: { 'Authorization': 'Bearer ' + token() } });
+        const res =  await fetch('/api/logins', { headers: { 'Authorization': 'Bearer ' + token() } });
         const data = await res.json();
-        const logins = data.logins || [];
+        const logins= data.logins|| [];
         tbody.innerHTML = '';
         if (logins.length === 0) {
           tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400">Nenhum login cadastrado.</td></tr>';
@@ -1785,7 +2158,7 @@
           tr.innerHTML = 
             '<td class="py-2"><p class="font-bold">' + escHtml(u.name || u.email.split('@')[0]) + '</p><p class="text-[9px] text-gray-400">' + escHtml(u.email) + '</p></td>' +
             '<td class="py-2"><span class="px-1.5 py-0.5 bg-gray-100 rounded text-[9px] font-bold uppercase">' + escHtml(u.role) + '</span></td>' +
-            '<td class="py-2 text-right">' + (isMe ? '—' : '<button data-del-lgn="' + u.id + '" class="text-red-500 hover:underline">Remover</button>') + '</td>';
+            '<td class="py-2 text-right">' + (isMe ? 'â€”' : '<button data-del-lgn="' + u.id + '" class="text-red-500 hover:underline">Remover</button>') + '</td>';
           tbody.appendChild(tr);
         });
       } catch { tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-red-500">Erro ao carregar.</td></tr>'; }
@@ -1796,14 +2169,14 @@
       const email = document.getElementById('lgn-email').value.trim();
       const senha = document.getElementById('lgn-senha').value;
       const role = document.getElementById('lgn-role').value;
-      if (!email || !senha) return alert('Email e Senha são obrigatórios.');
+      if (!email || !senha) return alert('Email e Senhasão obrigatórios.');
       
       this.disabled = true;
       try {
-        const res = await fetch('/api/logins', {
+        const res =  await fetch('/api/logins', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
-          body: JSON.stringify({ name: nome, email, password: senha, role })
+          body: JSON.stringify({ name: nome, email, password:senha, role })
         });
         if (res.ok) {
           document.getElementById('lgn-nome').value = '';
@@ -1821,7 +2194,7 @@
       if (!btn) return;
       if (!confirm('Deseja remover este acesso?')) return;
       const id = btn.dataset.delLgn;
-      const res = await fetch('/api/logins', {
+      const res =  await fetch('/api/logins', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
         body: JSON.stringify({ id })
@@ -1829,14 +2202,14 @@
       if (res.ok) loadLoginsTab();
     });
 
-    /* --- Contatos Tab Logic --- */
+    /* --- ContatosTab Logic --- */
     async function loadContatosTab() {
       const tbody = document.getElementById('cont-list-body');
       tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400">Carregando...</td></tr>';
       try {
-        const res = await fetch('/api/contatos', { headers: { 'Authorization': 'Bearer ' + token() } });
+        const res =  await fetch('/api/contatos', { headers: { 'Authorization': 'Bearer ' + token() } });
         const data = await res.json();
-        const contatos = data.contatos || [];
+        const contatos= data.contatos|| [];
         tbody.innerHTML = '';
         if (contatos.length === 0) {
           tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400">Nenhum contato cadastrado.</td></tr>';
@@ -1865,11 +2238,11 @@
     document.getElementById('btn-add-contato').addEventListener('click', async function() {
       const numero = document.getElementById('cont-numero').value.trim();
       const nome = document.getElementById('cont-nome').value.trim();
-      if (!numero || !nome) return alert('Número e Nome de Referência são obrigatórios.');
+      if (!numero || !nome) return alert('Número e Nome de Referênciasão obrigatórios.');
       
       this.disabled = true;
       try {
-        const res = await fetch('/api/contatos', {
+        const res =  await fetch('/api/contatos', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() },
           body: JSON.stringify({ numero, nome })
@@ -1878,15 +2251,21 @@
           document.getElementById('cont-numero').value = '';
           document.getElementById('cont-nome').value = '';
           loadContatosTab();
-          load(); // Recarrega os chamados para atualizar os nomes na tela principal
+          
+    // Previne que preenchimento automático do navegador com e-mail filtre a lista
+    if (qInput && qInput.value && qInput.value.includes('@')) {
+      qInput.value = '';
+    }
+
+    load(); // Recarrega oschamadospara atualizar osnomesna tela principal
         } else {
-          const d = await res.json(); alert(d.error || 'Erro ao salvar contato.');
+          const d = await res.json(); alert(d.error || 'Erro aosalvar contato.');
         }
       } finally { this.disabled = false; }
     });
 
     document.getElementById('btn-import-contatos').addEventListener('click', async function() {
-      if (!confirm('Deseja importar todos os contatos da agenda do WhatsApp conectado? Isso sincronizará novos números e nomes.')) return;
+      if (!confirm('Deseja importar todososcontatosda agenda do WhatsApp conectado? Issosincronizará novosnúmerose nomes.')) return;
       
       const originalText = this.innerHTML;
       this.disabled = true;
@@ -1894,20 +2273,20 @@
       lucide.createIcons();
 
       try {
-        const res = await fetch('/api/contatos/import', {
+        const res =  await fetch('/api/contatos/import', {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + token() }
         });
         const d = await res.json();
         if (res.ok) {
-          alert(`Importação concluída! ${d.imported || 0} contatos importados/atualizados.`);
+          alert(`Importação concluída! ${d.imported || 0} contatosimportados/atualizados.`);
           loadContatosTab();
-          load(); // Recarrega os chamados na tela principal
+          load(); // Recarrega oschamadosna tela principal
         } else {
           alert(d.error || 'Erro ao importar contatos.');
         }
       } catch (err) {
-        alert('Erro ao se comunicar com o servidor.');
+        alert('Erro aose comunicar com oservidor.');
       } finally {
         this.disabled = false;
         this.innerHTML = originalText;
@@ -1923,12 +2302,12 @@
       const originalText = labelEl.innerHTML;
       
       if (!file.name.endsWith('.csv')) {
-        alert('Por favor, selecione um arquivo no formato CSV (.csv).');
+        alert('Por favor,selecione um arquivo no formato CSV (.csv).');
         this.value = '';
         return;
       }
       
-      labelEl.style.pointerEvents = 'none';
+      labelEl.style.pointerEvents= 'none';
       labelEl.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin inline-block"></i> Processando...';
       lucide.createIcons();
 
@@ -1951,7 +2330,7 @@
           const text = decoder.decode(arrBuffer);
           
           try {
-            const res = await fetch('/api/contatos/import-csv', {
+            const res =  await fetch('/api/contatos/import-csv', {
               method: 'POST',
               headers: { 
                 'Content-Type': 'text/csv; charset=utf-8', 
@@ -1961,16 +2340,16 @@
             });
             const d = await res.json();
             if (res.ok) {
-              alert(`Importação concluída! ${d.imported || 0} contatos importados/atualizados do CSV.`);
+              alert(`Importação concluída! ${d.imported || 0} contatosimportados/atualizadosdo CSV.`);
               loadContatosTab();
               load();
             } else {
-              alert(d.error || 'Erro ao importar contatos do CSV.');
+              alert(d.error || 'Erro ao importar contatosdo CSV.');
             }
           } catch (err) {
-            alert('Erro ao se comunicar com o servidor: ' + err.message);
+            alert('Erro aose comunicar com oservidor: ' + err.message);
           } finally {
-            labelEl.style.pointerEvents = '';
+            labelEl.style.pointerEvents= '';
             labelEl.innerHTML = originalText;
             lucide.createIcons();
             document.getElementById('csv-file-input').value = '';
@@ -1979,7 +2358,7 @@
         reader.readAsArrayBuffer(file);
       } catch (err) {
         alert('Erro ao carregar o arquivo local: ' + err.message);
-        labelEl.style.pointerEvents = '';
+        labelEl.style.pointerEvents= '';
         labelEl.innerHTML = originalText;
         lucide.createIcons();
         this.value = '';
@@ -2004,15 +2383,15 @@
 
     async function loadWppConfig() {
       try {
-        const res  = await fetch('/api/config/whatsapp', { headers: { 'Authorization': 'Bearer ' + token() } });
+        const res =  await fetch('/api/config/whatsapp', { headers: { 'Authorization': 'Bearer ' + token() } });
         const data = await res.json();
         
         updateWppStatusUI(data.status, data.qr, data.numero);
         
         // Se estiver esperando QR ou offline, agenda nova verificação
-        if (data.status !== 'connected' && overlay.style.display !== 'none' && panels.whatsapp.classList.contains('hidden') === false) {
+        if (data.status!== 'connected' && overlay.style.display !== 'none' && panels.whatsapp.classList.contains('hidden') === false) {
            clearTimeout(wppPollTimer);
-           wppPollTimer = setTimeout(loadWppConfig, 3000);
+           wppPollTimer =setTimeout(loadWppConfig, 3000);
         }
 
         lucide.createIcons();
@@ -2027,33 +2406,33 @@
         notLogged:  { label: 'Desconectado', cls: 'bg-red-100 text-red-700' }
       };
       
-      const cfg = ST_CFG[status] || { label: status, cls: 'bg-blue-100 text-blue-700' };
+      const cfg = ST_CFG[status] || { label:status, cls: 'bg-blue-100 text-blue-700' };
       wppBadge.textContent = cfg.label;
       wppBadge.className = 'px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ' + cfg.cls;
 
-      wppConnInfo.classList.toggle('hidden', status !== 'connected');
+      wppConnInfo.classList.toggle('hidden',status!== 'connected');
       
-      if (status === 'connected' && numero) {
+      if (status=== 'connected' && numero) {
         const elNum = document.getElementById('wpp-connected-number');
         if (elNum) elNum.textContent = numero;
       }
       
       const btnLogoutWpp = document.getElementById('btn-logout-wpp');
       if (btnLogoutWpp) {
-        btnLogoutWpp.classList.toggle('hidden', status === 'notLogged');
+        btnLogoutWpp.classList.toggle('hidden',status=== 'notLogged');
       }
 
-      if (status === 'waiting_qr' && qr) {
+      if (status=== 'waiting_qr' && qr) {
         // Apenas atualiza o SRC se o QR mudou mesmo, para evitar piscadas
         if (wppQRImg.src !== qr) {
           console.log('[WPP] Novo QR Code recebido');
           wppQRImg.src = qr;
         }
         wppQRBox.classList.remove('hidden');
-      } else if (status === 'connected') {
+      } else if (status=== 'connected') {
         wppQRBox.classList.add('hidden');
       }
-      // Não escondemos o QR se o status for offline temporário, 
+      // Não escondemoso QRse ostatusfor offline temporário, 
       // para manter a imagem na tela enquanto tenta recuperar.
     }
 
@@ -2062,19 +2441,17 @@
     document.getElementById('btn-logout-wpp').addEventListener('click', async function() {
       if (!confirm('Deseja realmente desvincular o WhatsApp? O bot parará de responder.')) return;
       this.disabled = true;
-      this.textContent = 'PROCESSANDO…';
+      this.textContent = 'PROCESSANDOâ€¦';
       try {
-        const res = await fetch('/api/config/whatsapp/logout', {
+        const res =  await fetch('/api/config/whatsapp/logout', {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + token() }
         });
         if (res.ok) {
           loadWppConfig();
-        } else {
-          showError('Erro ao desvincular');
+        } else {showError('Erro ao desvincular');
         }
-      } catch {
-        showError('Erro de conexão');
+      } catch {showError('Erro de conexão');
       } finally {
         this.disabled = false;
         this.textContent = 'DESVINCULAR';
@@ -2083,23 +2460,25 @@
     });
   })();
 
-  /* ---------- DOM refs ---------- */
+  /* ---------- DOM refs---------- */
   const qInput      = document.getElementById('q');
   const statusSel   = document.getElementById('filter-status');
+  const origemSel   = document.getElementById('filter-origem');
   const btn         = document.getElementById('btn-refresh');
   const tbody       = document.getElementById('tbody');
   const table       = document.getElementById('table');
   const emptyEl     = document.getElementById('empty');
   const loadingEl   = document.getElementById('loading');
   const metaEl      = document.getElementById('meta');
-  const statsStrip  = document.getElementById('stats-strip');
+  const statsStrip = document.getElementById('stats-strip');
   const countLabel  = document.getElementById('count-label');
   const countWrap   = document.getElementById('count-wrap');
-  const subtitleMeta= document.getElementById('subtitle-meta');
+  const subtitleMeta = document.getElementById('subtitle-meta');
 
-  /* ---------- Aba ativa ---------- */
-  let currentOrigin  = 'site';
-  let _allTickets    = [];
+  /* ---------- Filtro de Origem (Unificado) ---------- */
+  let currentOrigin  = '';
+  let _allTickets =  [];
+  let _allColabs= [];
   let _detalheTicket = null;
   let _pollingTimer   = null;
   let _currentPage   = 1;
@@ -2107,25 +2486,25 @@
 
 
 
-  /* ---------- Status config ---------- */
+  /* ---------- Statusconfig ---------- */
   const STATUS_CFG = {
     aberto:           { label:'Aberto',         cls:'badge-aberto' },
     em_atendimento:   { label:'Em atendimento', cls:'badge-em_atendimento' },
-    concluido:        { label:'Concluído',      cls:'badge-concluido' },
+    concluido: { label:'Concluído', cls:'badge-concluido' },
     cancelado:        { label:'Cancelado',      cls:'badge-cancelado' },
     arquivado:        { label:'Arquivado',      cls:'badge-arquivado' },
   };
 
   function statusBadge(status) {
-    const cfg = STATUS_CFG[status] || { label: status || '—', cls:'badge-default' };
-    return '<span class="badge ' + cfg.cls + '">' + cfg.label + '</span>';
+    const cfg = STATUS_CFG[status] || { label:status|| '—', cls:'badge-default' };
+    return '<span class="badge ' + cfg.cls+ '">' + cfg.label + '</span>';
   }
 
   /* ---------- Avatar ---------- */
   const AV_COLORS = ['#e85d4a','#f79a3e','#70b5f9','#6dc6a0','#9f7aea','#f76d8e','#52b2cf','#a78bfa'];
   function makeAvatar(name) {
     const clean = (name||'').trim();
-    const parts  = clean.split(/\s+/);
+    const parts =  clean.split(/\s+/);
     const init   = (parts.length>=2 ? parts[0][0]+parts[1][0] : clean.slice(0,2)).toUpperCase() || '?';
     let hash = 0;
     for (let i=0; i<clean.length; i++) hash = (hash * 31 + clean.charCodeAt(i)) & 0xffffffff;
@@ -2135,12 +2514,13 @@
 
   /* ---------- URL builder ---------- */
   function buildURL() {
-    const params = new URLSearchParams();
+    const params =  new URLSearchParams();
     const q      = qInput.value.trim();
     const status = statusSel.value;
+    const origem = origemSel ? origemSel.value : currentOrigin;
     if (q)      params.set('q',      q);
     if (status) params.set('status', status);
-    params.set('origem', currentOrigin);
+    if (origem) params.set('origem', origem);
     return '/api/tickets' + (params.toString() ? '?'+params.toString() : '');
   }
 
@@ -2153,25 +2533,24 @@
     statsStrip.style.display = 'none';
     countWrap.style.display = 'none';
     document.getElementById('pagination-controls').style.display = 'none';
-    subtitleMeta.textContent = 'Carregando…';
-
-    try {
-      const res     = await fetch(buildURL());
+    subtitleMeta.textContent = 'Carregando...';
+      try {
+      const res =  await fetch(buildURL());
       const data    = await res.json();
-      const tickets = data.tickets || [];
-      _allTickets   = tickets;
+      const tickets =  data.tickets|| [];
+      _allTickets =  tickets;
 
-      /* Stats (sem filtros) */
+      /* Stats(sem filtros) */
       const noFilter = !qInput.value.trim() && !statusSel.value;
       if (noFilter) {
-        const byStatus = tickets.reduce(function(acc, t) {
+        const byStatus =  tickets.reduce(function(acc, t) {
           acc[t.status] = (acc[t.status]||0) + 1; return acc;
         }, {});
         document.getElementById('stat-total').textContent          = data.total || 0;
         document.getElementById('stat-aberto').textContent         = byStatus.aberto || 0;
         document.getElementById('stat-em_atendimento').textContent = byStatus.em_atendimento || 0;
         document.getElementById('stat-concluido').textContent      = byStatus.concluido || 0;
-        statsStrip.style.display = 'block';
+    statsStrip.style.display = 'block';
         lucide.createIcons();
       }
 
@@ -2183,10 +2562,9 @@
 
       const now = new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
       metaEl.textContent = 'Atualizado às ' + now;
-      updateTabCounts();
 
     } catch (err) {
-      subtitleMeta.textContent = 'Erro ao carregar';
+    subtitleMeta.textContent = 'Erro ao carregar';
       emptyEl.innerHTML =
         '<div class="w-20 h-20 rounded-3xl flex items-center justify-center" style="background:#fff1f2;border:1px solid #fecdd3">' +
         '<i data-lucide="wifi-off" class="w-10 h-10 text-rose-400"></i></div>' +
@@ -2202,13 +2580,13 @@
 
   function renderTicketsList() {
     tbody.innerHTML = '';
-    const tickets = _allTickets || [];
+    const tickets =  _allTickets|| [];
 
     if (tickets.length === 0) {
       emptyEl.style.display = 'flex';
       table.style.display = 'none';
       document.getElementById('pagination-controls').style.display = 'none';
-      subtitleMeta.textContent = 'Nenhum resultado';
+    subtitleMeta.textContent = 'Nenhum resultado';
       lucide.createIcons();
       return;
     }
@@ -2218,27 +2596,27 @@
     subtitleMeta.textContent = tickets.length + ' chamado' + (tickets.length !== 1 ? 's' : '') + ' encontrado' + (tickets.length !== 1 ? 's' : '');
 
     const STATUS_ORDER = { aberto: 0, em_atendimento: 1, concluido: 2, cancelado: 3 };
-    const sortedTickets = tickets.slice().sort(function(a, b) {
+    const sortedTickets =  tickets.slice().sort(function(a, b) {
       const sa = STATUS_ORDER[a.status] ?? 2;
       const sb = STATUS_ORDER[b.status] ?? 2;
-      if (sa !== sb) return sa - sb;
-      // Dentro do mesmo status, mais recente primeiro
+      if (sa !==sb) return sa - sb;
+      // Dentro do mesmostatus, maisrecente primeiro
       return b.id - a.id;
     });
 
-    const totalPages = Math.ceil(sortedTickets.length / _pageSize) || 1;
+    const totalPages =  Math.ceil(sortedTickets.length / _pageSize) || 1;
     if (_currentPage > totalPages) _currentPage = totalPages;
     if (_currentPage < 1) _currentPage = 1;
 
-    const startIdx = (_currentPage - 1) * _pageSize;
-    const endIdx = startIdx + _pageSize;
+    const startIdx =  (_currentPage - 1) * _pageSize;
+    const endIdx =startIdx + _pageSize;
     const paginatedTickets = sortedTickets.slice(startIdx, endIdx);
 
     paginatedTickets.forEach(function(t, i) {
       const tr = document.createElement('tr');
       tr.className = 'trow anim-row border-b border-brand-100/60 cursor-pointer';
       tr.style.animationDelay = (i * 30) + 'ms';
-      tr.dataset.status = t.status || '';
+      tr.dataset.status =  t.status|| '';
       tr.dataset.ticket = JSON.stringify(t);
 
       const rawSol = (t.origem !== 'site' && t.name)
@@ -2248,19 +2626,26 @@
           : (t.solicitante
             ? t.solicitante
             : '—'));
-      const solLabel = rawSol.includes('@') ? rawSol.split('@')[0] : rawSol;
+      const solLabel =  rawSol.includes('@') ? rawSol.split('@')[0] : rawSol;
+
+      const isSite = (t.origem === 'site');
+      const origemBadge = isSite
+        ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200"><i data-lucide="monitor" style="width:10px;height:10px"></i> Site</span>'
+        : '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200"><i data-lucide="message-circle" style="width:10px;height:10px"></i> WhatsApp</span>';
 
       tr.innerHTML =
         /* Solicitante (login) */
         '<td class="pl-7 pr-3 py-4 sol-cell" data-cell="profile">' +
           '<div class="flex items-center gap-3">' +
-            makeAvatar(solLabel) +
+            (t.foto ? '<img src="' + t.foto + '" class="avatar object-cover rounded-full shadow-sm" />' : makeAvatar(solLabel)) +
             '<div class="min-w-0">' +
-              '<p class="sol-name font-bold text-brand-900 text-sm truncate max-w-[140px]" style="transition:color .15s" title="' + escHtml(solLabel) + '">' + escHtml(solLabel) + '</p>' +
+              '<p class="sol-name font-bold text-brand-900 text-sm truncate max-w-[200px]" style="transition:color .15s" title="' + escHtml(solLabel) + '">' + escHtml(solLabel) + '</p>' +
               '<p class="sol-hint">ver perfil →</p>' +
             '</div>' +
           '</div>' +
         '</td>' +
+        /* Origem */
+        '<td class="px-3 py-4 whitespace-nowrap">' + origemBadge + '</td>' +
         /* Tipo */
         '<td class="px-3 py-4"><span class="badge-tipo">' + escHtml(t.type || '—') + '</span></td>' +
         /* Descrição */
@@ -2270,7 +2655,7 @@
             (t.attachment ? '<span class="p-1 bg-orange-100 text-orange-600 rounded shrink-0" title="Possui anexo"><i data-lucide="paperclip" style="width:12px;height:12px"></i></span>' : '') +
           '</div>' +
         '</td>' +
-        /* Status */
+        /* Status*/
         '<td class="px-3 py-4">' + statusBadge(t.status) + '</td>' +
         /* Data */
         '<td class="px-3 pr-7 py-4 whitespace-nowrap">' + fmtDate(t.createdAt) + '</td>';
@@ -2280,8 +2665,8 @@
 
     lucide.createIcons();
 
-    // Atualiza controles de paginação
-    const pagControls = document.getElementById('pagination-controls');
+    // Atualiza controlesde paginação
+    const pagControls =  document.getElementById('pagination-controls');
     const infoStart = document.getElementById('pag-info-start');
     const infoEnd = document.getElementById('pag-info-end');
     const infoTotal = document.getElementById('pag-info-total');
@@ -2291,33 +2676,33 @@
     pagControls.style.display = 'flex';
     
     const startItem = startIdx + 1;
-    const endItem = Math.min(endIdx, sortedTickets.length);
+    const endItem = Math.min(endIdx,sortedTickets.length);
 
-    infoStart.textContent = startItem;
+    infoStart.textContent =startItem;
     infoEnd.textContent = endItem;
-    infoTotal.textContent = sortedTickets.length;
+    infoTotal.textContent =sortedTickets.length;
 
     btnPrev.disabled = _currentPage === 1;
     btnNext.disabled = _currentPage === totalPages;
   }
 
-  /* ---------- Helpers ---------- */
+  /* ---------- Helpers---------- */
 
-  /* Renderiza descrição estruturada (linhas "Chave: valor") como pills */
+  /* Renderiza descrição estruturada (linhas"Chave: valor") como pills*/
   function fmtDesc(raw) {
-    if (!raw) return '<span class="text-brand-200 text-xs">—</span>';
-    const lines = raw.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
-    // Detecta se é formato estruturado (pelo menos a primeira linha tem ":")
-    const structured = lines.length > 1 && lines[0].includes(':');
+    if (!raw) return '<span class="text-brand-200 text-xs">â€”</span>';
+    const lines =  raw.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
+    // Detectase é formato estruturado (pelo menosa primeira linha tem ":")
+    const structured =  lines.length > 1 && lines[0].includes(':');
     if (!structured) {
-      // Fallback: texto simples truncado
-      return '<span class="text-xs text-brand-700 line-clamp-2" title="' + escHtml(raw) + '">' + escHtml(raw.slice(0, 90)) + (raw.length > 90 ? '…' : '') + '</span>';
+      // Fallback: textosimplestruncado
+      return '<span class="text-xs text-brand-700 line-clamp-2" title="' + escHtml(raw) + '">' + escHtml(raw.slice(0, 90)) + (raw.length > 90 ? 'â€¦' : '') + '</span>';
     }
     const ICONS = { 'Nome':'user', 'CPF':'id-card', 'E-mail':'mail', 'Sala':'building-2', 'Função':'briefcase', 'Anexo':'paperclip' };
     let html = '<div class="flex flex-col gap-1">';
-    const displayLines = lines.slice(0, 2);
+    const displayLines =  lines.slice(0, 2);
     displayLines.forEach(function(line) {
-      const sep = line.indexOf(':');
+      const sep =  line.indexOf(':');
       if (sep === -1) return;
       const key = line.slice(0, sep).trim();
       const val = line.slice(sep + 1).trim();
@@ -2330,14 +2715,14 @@
         '</div>';
     });
     if (lines.length > 2) {
-      html += '<span class="text-[9px] text-brand-300 font-semibold mt-0.5">… ver mais</span>';
+      html += '<span class="text-[9px] text-brand-300 font-semibold mt-0.5">â€¦ ver mais</span>';
     }
     html += '</div>';
     return html;
   }
 
   function fmtDate(iso) {
-    if (!iso) return '<span class="text-brand-200">—</span>';
+    if (!iso) return '<span class="text-brand-200">â€”</span>';
     const d    = new Date(iso);
     const date = d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit' });
     const time = d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
@@ -2350,11 +2735,10 @@
   function showToast(msg, type, duration) {
     type     = type     || 'info';
     duration = duration || 4000;
-    const iconSvg = {
-      success: '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>',
-      error:   '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>',
-      info:    '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
-      warning: '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+    const iconSvg = {success: '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"stroke="currentColor"stroke-width="2.5"stroke-linecap="round"stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>',
+      error:   '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"stroke="currentColor"stroke-width="2.5"stroke-linecap="round"stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>',
+      info:    '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"stroke="currentColor"stroke-width="2.5"stroke-linecap="round"stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
+      warning: '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"stroke="currentColor"stroke-width="2.5"stroke-linecap="round"stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
     };
     const container = document.getElementById('toast-container');
     const t = document.createElement('div');
@@ -2362,22 +2746,34 @@
     t.innerHTML =
       iconSvg[type] +
       '<span style="flex:1;line-height:1.4">' + escHtml(msg) + '</span>' +
-      '<button onclick="this.parentNode.remove()" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;padding:0;margin-left:4px;line-height:1;font-size:14px">✕</button>';
+      '<button onclick="this.parentNode.remove()" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;padding:0;margin-left:4px;line-height:1;font-size:14px">âœ•</button>';
     container.appendChild(t);
     setTimeout(function() {
       t.style.animation = 'toastOut .22s ease forwards';
-      setTimeout(function() { if (t.parentNode) t.remove(); }, 230);
+    setTimeout(function() { if (t.parentNode) t.remove(); }, 230);
     }, duration);
   }
 
 
+  
+  // prevent_autofill_email_in_search
+  function sanitizeSearchInput() {
+    if (qInput && qInput.value && qInput.value.includes('@')) {
+      qInput.value = '';
+    }
+  }
+  window.addEventListener('load', sanitizeSearchInput);
+  setTimeout(sanitizeSearchInput, 500);
+  setTimeout(sanitizeSearchInput, 1500);
+  
   let debTimer;
   qInput.addEventListener('input', function() { _currentPage = 1; clearTimeout(debTimer); debTimer = setTimeout(load, 300); });
   statusSel.addEventListener('change', function() { _currentPage = 1; load(); });
+  if (origemSel) origemSel.addEventListener('change', function() { _currentPage = 1; load(); });
   btn.addEventListener('click',        function() { _currentPage = 1; load(); });
-  /* setInterval removido conforme solicitado pelo usuário */
+  /*setInterval removido conformesolicitado pelo usuário */
 
-  /* ---------- Pagination Events ---------- */
+  /* ---------- Pagination Events---------- */
   document.getElementById('btn-pag-prev').addEventListener('click', function() {
     if (_currentPage > 1) {
       _currentPage--;
@@ -2385,56 +2781,66 @@
     }
   });
   document.getElementById('btn-pag-next').addEventListener('click', function() {
-    const totalPages = Math.ceil(_allTickets.length / _pageSize) || 1;
+    const totalPages =  Math.ceil(_allTickets.length / _pageSize) || 1;
     if (_currentPage < totalPages) {
       _currentPage++;
       renderTicketsList();
     }
   });
 
-  /* ---------- Tab switch ---------- */
-  document.getElementById('tabs-container').addEventListener('click', function(e) {
-    const tabBtn = e.target.closest('.tab-btn');
-    if (!tabBtn) return;
-    if (tabBtn.dataset.tab === currentOrigin) return;
-    currentOrigin = tabBtn.dataset.tab;
-    document.querySelectorAll('.tab-btn').forEach(function(b) {
-      b.classList.toggle('tab-active', b.dataset.tab === currentOrigin);
-    });
-    qInput.value    = '';
-    statusSel.value = '';
-    _currentPage    = 1;
-    load();
-  });
-
-  /* ---------- Atualiza contadores das abas ---------- */
-  async function updateTabCounts() {
+  /* ---------- Carrega lista inicial de colaboradores ---------- */
+  async function loadColabs() {
     try {
-      const [resSite, resBot] = await Promise.all([
-        fetch('/api/tickets?origem=site'),
-        fetch('/api/tickets?origem=bot'),
-      ]);
-      const [dataSite, dataBot] = await Promise.all([resSite.json(), resBot.json()]);
-      document.getElementById('tab-count-site').textContent = dataSite.total || 0;
-      document.getElementById('tab-count-bot').textContent  = dataBot.total  || 0;
+      const resCols = await fetch('/api/colaboradores');
+      const colsData = await resCols.json();
+      _allColabs = [];
+      const root = Array.isArray(colsData) ? colsData[0] : colsData;
+      if (root) {
+        if (root.lideranca) _allColabs.push(...root.lideranca);
+        const extractDeep = (sectors) => {
+          if (!sectors) return;
+          sectors.forEach(s => {
+            if (s.colaboradores) _allColabs.push(...s.colaboradores);
+            if (s.subsetores) extractDeep(s.subsetores);
+          });
+        };
+        extractDeep(root.setores);
+      }
     } catch {}
   }
 
   load();
-  updateTabCounts();
+  loadColabs();
+
+    const urlParams= new URLSearchParams(window.location.search);
+    const openId = urlParams.get('openId');
+    if (openId && !window._openedByUrl) {
+      window._openedByUrl = true;
+      fetch('/api/tickets/' + openId, {
+        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '') }
+      })
+      .then(r => r.ok ? r.json() : null)
+      .then(ticket => {
+        if (ticket && ticket.id) {
+          openDetalhe(ticket);
+        }
+      })
+      .catch(e => console.error('Erro ao abrir chamado direto:', e));
+    }
+
   // Atualização automática da lista principal a cada 30 segundos
   setInterval(() => {
     if (!document.getElementById('modal-detalhe').classList.contains('hidden')) return;
     load();
   }, 30000);
 
-  /* ─────────────────────────────────── MODAL DETALHES ─── */
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ MODAL DETALHES â”€â”€â”€ */
 
   const AV_COLORS_DET = ['#e85d4a','#f79a3e','#70b5f9','#6dc6a0','#9f7aea','#f76d8e','#52b2cf','#a78bfa'];
 
   function makeAvatarEl(name) {
     const clean = (name||'').trim();
-    const parts = clean.split(/\s+/);
+    const parts =  clean.split(/\s+/);
     const init  = (parts.length >= 2 ? parts[0][0] + parts[1][0] : clean.slice(0,2)).toUpperCase() || '?';
     let hash = 0;
     for (let i = 0; i < clean.length; i++) hash = (hash * 31 + clean.charCodeAt(i)) & 0xffffffff;
@@ -2455,7 +2861,7 @@
 
     // Inicia atualização automática (polling) enquanto o modal estiver aberto
     if (_pollingTimer) clearInterval(_pollingTimer);
-    _pollingTimer = setInterval(loadDetalheRefresh, 5000); 
+    _pollingTimer =setInterval(loadDetalheRefresh, 5000); 
   }
 
   function renderDetalhe(ticket, isUpdate = false) {
@@ -2469,19 +2875,19 @@
         d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
     }
 
-    // Status badge
+    // Statusbadge
     const sCfg = {
       aberto:         { label:'Aberto',         cls:'badge-aberto' },
       em_atendimento: { label:'Em atendimento', cls:'badge-em_atendimento' },
-      concluido:      { label:'Concluído',      cls:'badge-concluido' },
+      concluido: { label:'Concluído', cls:'badge-concluido' },
       cancelado:      { label:'Cancelado',      cls:'badge-cancelado' },
     };
-    const sc = sCfg[ticket.status] || { label: ticket.status || '—', cls:'badge-default' };
+    const sc =sCfg[ticket.status] || { label: ticket.status|| 'â€”', cls:'badge-default' };
     document.getElementById('det-status-badge').innerHTML =
-      '<span class="badge ' + sc.cls + '">' + escHtml(sc.label) + '</span>';
+      '<span class="badge ' +sc.cls+ '">' + escHtml(sc.label) + '</span>';
 
     // Tipo
-    document.getElementById('det-tipo-badge').textContent = ticket.type || '—';
+    document.getElementById('det-tipo-badge').textContent = ticket.type || 'â€”';
 
     // Origem
     const origemEl = document.getElementById('det-origem-badge');
@@ -2496,33 +2902,41 @@
     // Solicitante
     const solNome = (ticket.origem !== 'site' && ticket.name)
       ? ticket.name
-      : (ticket.solicitanteNome || ticket.solicitante || '—');
-    makeAvatarEl(solNome);
-    document.getElementById('det-nome').textContent   = solNome;
+      : (ticket.solicitanteNome || ticket.solicitante || 'â€”');
+    if (ticket.foto) {
+      const avEl = document.getElementById('det-avatar'); avEl.style.background = 'transparent'; avEl.innerHTML = `<img src="${ticket.foto}" class="w-full h-full object-cover rounded-full" />`;
+    } else {
+      makeAvatarEl(solNome);
+    }
+    document.getElementById('det-nome').textContent   = ticket.solicitanteNome ||solNome;
+    document.getElementById('det-cargo').textContent = ticket.cargo || '';
+    if (ticket.colabSetor) {
+      document.getElementById('det-sala').textContent = ticket.colabSetor;
+    }
     
     const solNumber = ticket.origem !== 'site'
-      ? (ticket.realNumber || ticket.number || '—')
-      : (ticket.solicitanteEmail || ticket.solicitante || '—');
-    document.getElementById('det-numero').textContent = ticket.origem !== 'site' ? formatPhone(solNumber) : solNumber;
+      ? (ticket.realNumber || ticket.number || 'â€”')
+      : (ticket.solicitanteEmail || ticket.solicitante || 'â€”');
+    document.getElementById('det-numero').textContent = ticket.origem !== 'site' ? formatPhone(solNumber) :solNumber;
 
     // Badge WhatsApp
     document.getElementById('det-wpp-badge').style.display = ticket.notifWpp ? 'inline-flex' : 'none';
 
     // Sala
-    document.getElementById('det-sala').textContent = ticket.sala || 'Não informado';
+    document.getElementById('det-sala').textContent = ticket.colabSetor || ticket.sala || 'Não informado';
 
     // Descrição
-    document.getElementById('det-descricao').textContent = ticket.description || '—';
+    document.getElementById('det-descricao').textContent = ticket.description || 'â€”';
 
     // Anexo
     const anexoWrapper = document.getElementById('det-anexo-wrapper');
-    if (ticket.attachments && ticket.attachments.length > 0) {
+    if (ticket.attachments&& ticket.attachments.length > 0) {
       let html = '';
       ticket.attachments.forEach((att, idx) => {
         html += `<div class="flex items-center justify-between p-2 bg-white rounded-lg border border-orange-100 mb-2 last:mb-0">
           <div class="flex items-center gap-2">
             <i data-lucide="paperclip" class="w-4 h-4 text-orange-600"></i>
-            <span class="text-xs text-orange-950 font-medium">Anexo ${idx + 1}</span>
+            <span class="text-xstext-orange-950 font-medium">Anexo ${idx + 1}</span>
           </div>
           <a href="/uploads/${encodeURIComponent(att)}" target="_blank" class="px-3 py-1 bg-orange-600 text-white rounded text-xs font-bold hover:bg-orange-700 transition-all">
             Visualizar
@@ -2530,7 +2944,7 @@
         </div>`;
       });
       anexoWrapper.innerHTML = `<div class="w-full">
-        <p class="text-xs font-bold text-orange-900 mb-2">Anexos disponíveis (${ticket.attachments.length}):</p>
+        <p class="text-xs font-bold text-orange-900 mb-2">Anexos disponíveis(${ticket.attachments.length}):</p>
         ${html}
       </div>`;
       anexoWrapper.classList.remove('hidden');
@@ -2543,7 +2957,7 @@
           </div>
           <div>
             <p class="text-sm font-bold text-orange-900">Anexo disponível</p>
-            <p class="text-xs text-orange-700">A foto foi enviada pelo WhatsApp</p>
+            <p class="text-xstext-orange-700">A foto foi enviada pelo WhatsApp</p>
           </div>
         </div>
         <a id="det-anexo-link" href="/uploads/${encodeURIComponent(ticket.attachment)}" target="_blank" class="px-5 py-2 bg-orange-600 text-white rounded-lg text-sm font-bold hover:bg-orange-700 transition-all shadow-md">
@@ -2565,8 +2979,19 @@
     
     chatContainer.innerHTML = '';
     
-    const isWpp = ticket.origem !== 'site';
-    if ((ticket.conversa && ticket.conversa.length > 0) || isWpp) {
+    
+      const isWpp = ticket.origem !== 'site';
+      
+      const botWarningBar = document.getElementById('bot-warning-bar');
+      if (botWarningBar) {
+         if (ticket.status=== 'em_atendimento' && isWpp) {
+            botWarningBar.classList.remove('hidden');
+         } else {
+            botWarningBar.classList.add('hidden');
+         }
+      }
+
+      if ((ticket.conversa && ticket.conversa.length > 0) || isWpp) {
       chatWrapper.classList.remove('hidden');
       
       if (ticket.conversa && ticket.conversa.length > 0) {
@@ -2577,7 +3002,7 @@
           
           let html = escHtml(msg.text);
           
-          const attachments = msg.attachments || (msg.attachment ? [msg.attachment] : []);
+          const attachments= msg.attachments|| (msg.attachment ? [msg.attachment] : []);
           if (attachments.length > 0) {
              attachments.forEach(att => {
                 const ext = att.split('.').pop().toLowerCase();
@@ -2598,8 +3023,7 @@
         chatContainer.innerHTML = '<div class="text-center py-8 text-brand-300/80 text-xs font-semibold">Nenhuma mensagem no chat ainda. Envie uma mensagem abaixo!</div>';
       }
       
-      if (wasAtBottom || !isUpdate) {
-        setTimeout(() => chatContainer.scrollTop = chatContainer.scrollHeight, 50);
+      if (wasAtBottom || !isUpdate) {setTimeout(() => chatContainer.scrollTop = chatContainer.scrollHeight, 50);
       } else {
         chatContainer.scrollTop = oldScroll;
       }
@@ -2607,7 +3031,7 @@
       chatWrapper.classList.add('hidden');
     }
 
-    // Gerencia a exibição dos painéis de entrada conforme origem do chamado
+    // Gerencia a exibição dospainéisde entrada conforme origem do chamado
     const obsWrapper = document.getElementById('det-obs-wrapper');
     const chatInputWrapper = document.getElementById('det-chat-input-wrapper');
     
@@ -2619,20 +3043,20 @@
       if (chatInputWrapper) chatInputWrapper.classList.add('hidden');
     }
 
-    // Observação Técnica - SÓ ATUALIZA SE NÃO FOR UM UPDATE EM BACKGROUND (ou se o campo estiver vazio)
+    // Observação Técnica - SÃ“ ATUALIZA SE NÃƒO FOR UM UPDATE EM BACKGROUND (ouse o campo estiver vazio)
     const obsInput = document.getElementById('det-obs-input');
     if (!isUpdate || !obsInput.value.trim()) {
        obsInput.value = ticket.observacao || '';
     }
 
-    // Botões de ação
+    // Botõesde ação
     const btnAssumir  = document.getElementById('btn-assumir');
     const btnConcluir = document.getElementById('btn-concluir');
     const st = ticket.status;
-    btnAssumir.classList.toggle('hidden',  st !== 'aberto');
-    btnConcluir.classList.toggle('hidden', st === 'concluido' || st === 'cancelado' || st === 'arquivado');
+    btnAssumir.classList.toggle('hidden',st !== 'aberto');
+    btnConcluir.classList.toggle('hidden',st === 'concluido' ||st === 'cancelado' ||st === 'arquivado');
     
-    // Anexo da solução
+    // Anexo dasolução
     const mDetAnexoSolWrapper = document.getElementById('det-anexo-solucao-wrapper');
     const mDetAnexoSolLink = document.getElementById('det-anexo-solucao-link');
     if (ticket.anexo_solucao) {
@@ -2646,7 +3070,7 @@
 
     // Inicia atualização automática (polling) enquanto o modal estiver aberto
     if (_pollingTimer) clearInterval(_pollingTimer);
-    _pollingTimer = setInterval(loadDetalheRefresh, 5000); // 5 segundos
+    _pollingTimer = setInterval(loadDetalheRefresh, 5000);
   }
 
   function closeDetalhe() {
@@ -2670,40 +3094,37 @@
     if (btnConcluir) btnConcluir.disabled = true;
     
     // Se houver arquivo, faz upload antes
-    const anexoSol = await uploadSolutionFile();
+  const anexoSol = await uploadSolutionFile();
     if (anexoSol) extra.anexo_solucao = anexoSol;
 
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch('/api/tickets/' + _detalheTicket.id, {
+      const res =  await fetch('/api/tickets/' + _detalheTicket.id, {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body:    JSON.stringify(Object.assign({ status: novoStatus }, extra)),
+        body:    JSON.stringify(Object.assign({status: novoStatus}, extra)),
       });
-      if (res.status === 401) {
+      if (res.status=== 401) {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_email');
         window.location.replace('/login.html');
         return;
       }
       const data = await res.json();
-      if (!res.ok) {
-        showToast(data.error || 'Erro ao atualizar chamado.', 'error');
+      if (!res.ok) {showToast(data.error || 'Erro ao atualizar chamado.', 'error');
         return;
       }
 
-      if (novoStatus === 'em_atendimento') showToast('Chamado assumido!', 'info');
-      else if (novoStatus === 'concluido') showToast('Chamado concluído!', 'success');
-      else if (novoStatus === 'arquivado') showToast('Chamado arquivado.', 'info');
+      if (novoStatus=== 'em_atendimento')showToast('Chamado assumido!', 'info');
+      else if (novoStatus=== 'concluido')showToast('Chamado concluído!', 'success');
+      else if (novoStatus=== 'arquivado')showToast('Chamado arquivado.', 'info');
 
-      if (data.emailResult && data.emailResult.ok) {
-        showToast('E-mail de conclusão enviado!', 'success', 6000);
+      if (data.emailResult && data.emailResult.ok) {showToast('E-mail de conclusão enviado!', 'success', 6000);
       }
 
       closeDetalhe();
       load();
-    } catch (err) {
-      showToast('Erro de conexão.', 'error');
+    } catch (err) {showToast('Erro de conexão.', 'error');
     } finally {
       if (btnAssumir)  btnAssumir.disabled = false;
       if (btnConcluir) btnConcluir.disabled = false;
@@ -2712,34 +3133,32 @@
 
   document.getElementById('btn-assumir').addEventListener('click',  () => updateTicketStatus('em_atendimento'));
   document.getElementById('btn-concluir').addEventListener('click', () => {
-    const obs = document.getElementById('det-obs-input').value.trim();
-    updateTicketStatus('concluido', { observacao: obs });
+    const obs= document.getElementById('det-obs-input').value.trim();
+    updateTicketStatus('concluido', { observacao: obs});
   });
 
   document.getElementById('btn-arquivar-chamado').addEventListener('click', () => {
-    if (confirm('Deseja arquivar este chamado? Ele sairá da lista principal.')) {
+    if (confirm('Deseja arquivar este chamado? Elesairá da lista principal.')) {
       updateTicketStatus('arquivado');
     }
   });
 
   document.getElementById('btn-excluir-chamado').addEventListener('click', async () => {
-    if (!confirm('ATENÇÃO: Deseja EXCLUIR permanentemente este chamado?')) return;
+    if (!confirm('ATENÃ‡ÃƒO: Deseja EXCLUIR permanentemente este chamado?')) return;
     const token = localStorage.getItem('auth_token');
-    const res = await fetch('/api/tickets/' + _detalheTicket.id, {
+    const res =  await fetch('/api/tickets/' + _detalheTicket.id, {
       method: 'DELETE',
       headers: { 'Authorization': 'Bearer ' + token }
     });
-    if (res.ok) {
-      showToast('Chamado excluído.', 'info');
+    if (res.ok) {showToast('Chamado excluído.', 'info');
       closeDetalhe();
       load();
     } else {
-      const d = await res.json();
-      showToast(d.error || 'Erro ao excluir.', 'error');
+      const d = await res.json();showToast(d.error || 'Erro ao excluir.', 'error');
     }
   });
 
-  // Auxiliares para Upload de Solução
+  // Auxiliarespara Upload de Solução
   if (document.getElementById('det-obs-file')) {
     const mDetObsFile  = document.getElementById('det-obs-file');
     const mDetObsFileLabel = document.getElementById('det-obs-file-label');
@@ -2768,7 +3187,7 @@
     if (!fileInput || !fileInput.files[0]) return null;
     const file = fileInput.files[0];
     try {
-      const res = await fetch('/api/upload?filename=' + encodeURIComponent(file.name), {
+      const res =  await fetch('/api/upload?filename=' + encodeURIComponent(file.name), {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '') },
         body: file
@@ -2784,9 +3203,8 @@
   }
 
   document.getElementById('btn-salvar-obs').addEventListener('click', async () => {
-    const obs = document.getElementById('det-obs-input').value.trim();
-    if (!obs && !document.getElementById('det-obs-file').files[0]) {
-      showToast('Digite uma observação ou anexe um arquivo primeiro.', 'error');
+    const obs= document.getElementById('det-obs-input').value.trim();
+    if (!obs&& !document.getElementById('det-obs-file').files[0]) {showToast('Digite uma observação ou anexe um arquivo primeiro.', 'error');
       return;
     }
     
@@ -2799,7 +3217,7 @@
     
     const anexoSol = await uploadSolutionFile();
     
-    const body = { observacao: obs };
+    const body = { observacao: obs};
     if (anexoSol) body.anexo_solucao = anexoSol;
 
     fetch('/api/tickets/' + _detalheTicket.id, {
@@ -2812,12 +3230,10 @@
       lucide.createIcons();
       
       if (data.id) {
-        // Atualiza a UI com os novos dados (incluindo o chat)
+        // Atualiza a UI com osnovosdados(incluindo o chat)
         renderDetalhe(data);
 
-        document.getElementById('det-obs-saved-badge').classList.remove('hidden');
-        setTimeout(() => document.getElementById('det-obs-saved-badge').classList.add('hidden'), 2000);
-        showToast('Resposta enviada com sucesso!', 'success');
+        document.getElementById('det-obs-saved-badge').classList.remove('hidden');setTimeout(() => document.getElementById('det-obs-saved-badge').classList.add('hidden'), 2000);showToast('Resposta enviada comsucesso!', 'success');
         
         // Limpa o campo de texto e anexo
         document.getElementById('det-obs-input').value = '';
@@ -2825,22 +3241,20 @@
         if (mDetBtnClearFile) mDetBtnClearFile.click();
         
         load(); // Recarrega lista principal
-      } else {
-        showToast(data.error || 'Erro ao enviar resposta.', 'error');
+      } else {showToast(data.error || 'Erro ao enviar resposta.', 'error');
       }
     }).catch(() => {
       btnSalvar.disabled = false;
       btnSalvar.innerHTML = originalText;
-      lucide.createIcons();
-      showToast('Erro de conexão.', 'error');
+      lucide.createIcons();showToast('Erro de conexão.', 'error');
     });
   });
 
-  /* Atualiza apenas o modal de detalhe */
+  /* Atualiza apenaso modal de detalhe */
   async function loadDetalheRefresh() {
     if (!_detalheTicket) return;
     try {
-      const res = await fetch('/api/tickets/' + _detalheTicket.id, {
+      const res =  await fetch('/api/tickets/' + _detalheTicket.id, {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('auth_token') }
       });
       const t = await res.json();
@@ -2848,9 +3262,9 @@
     } catch {}
   }
 
-  // Clique nas linhas da tabela
+  // Clique naslinhasda tabela
   document.getElementById('tbody').addEventListener('click', function(e) {
-    // Clique na célula de perfil do solicitante
+    // Clique na célula de perfil dosolicitante
     if (e.target.closest('[data-cell="profile"]')) {
       const tr = e.target.closest('tr[data-ticket]');
       if (!tr) return;
@@ -2864,7 +3278,7 @@
     } catch {}
   });
 
-  /* ─────────────────────────────────── MODAL PERFIL SOLICITANTE ─── */
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ MODAL PERFIL SOLICITANTE â”€â”€â”€ */
 
   const AV_COLORS_PERF = ['#e85d4a','#f79a3e','#70b5f9','#6dc6a0','#9f7aea','#f76d8e','#52b2cf','#a78bfa'];
 
@@ -2876,72 +3290,74 @@
   }
 
   function initialsOf(name) {
-    const parts = (name||'').trim().split(/\s+/);
+    const parts =  (name||'').trim().split(/\s+/);
     if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     return (name||'').slice(0,2).toUpperCase() || '?';
   }
 
 
   function openPerfilSolicitante(ticket) {
-    // Perfil do solicitante = quem abriu o chamado (login), não o nome da pessoa do chamado
+    // Perfil dosolicitante = quem abriu o chamado (login), não o nome da pessoa do chamado
     const rawSol = (ticket.origem !== 'site' && ticket.name)
       ? ticket.name
       : (ticket.solicitante
         ? ticket.solicitante
-        : (ticket.origem !== 'site' ? (ticket.name || 'Bot') : '—'));
-    const solLabel = rawSol.includes('@') ? rawSol.split('@')[0] : rawSol;
+        : (ticket.origem !== 'site' ? (ticket.name || 'Bot') : 'â€”'));
+    const solLabel =  rawSol.includes('@') ? rawSol.split('@')[0] : rawSol;
     
-    // Prioriza o nome de referência (de contatos.json) se disponível
-    const name = ticket.name || solLabel;
+    // Prioriza o nome de referência (de contatos.json)se disponível
+    const name = ticket.name ||solLabel;
     const rawNumber = ticket.origem !== 'site' ? (ticket.realNumber || ticket.number) : (ticket.solicitanteEmail || ticket.solicitante);
-    const number = ticket.origem !== 'site' ? formatPhone(rawNumber) : (rawNumber || '—');
+    const number = ticket.origem !== 'site' ? formatPhone(rawNumber) : (rawNumber || 'â€”');
 
     // Avatar
     const perf  = document.getElementById('perf-avatar');
-    const inits = initialsOf(name);
-    perf.style.background = avatarBgForName(name);
-    perf.textContent      = inits;
+    if (ticket.foto) {
+      perf.innerHTML = `<img src="${ticket.foto}" class="w-full h-full object-cover rounded-full" />`;
+      perf.style.background = 'transparent';
+    } else {
+      const inits= initialsOf(name);
+      perf.style.background = avatarBgForName(name);
+      perf.textContent      = inits;
+    }
 
-    document.getElementById('perf-nome').textContent     = name;
-    document.getElementById('perf-iniciais').textContent = inits;
+    document.getElementById('perf-nome').textContent     = ticket.solicitanteNome || name;
+    document.getElementById('perf-iniciais').textContent = ticket.cargo || ticket.colabSetor || initialsOf(name);
     document.getElementById('perf-numero').textContent   = number;
 
     const labelEl = document.getElementById('perf-numero-label');
     if (labelEl) {
-      labelEl.textContent = ticket.origem !== 'site' ? 'Telefone/ID do solicitante' : 'E-mail do solicitante';
+      labelEl.textContent = ticket.origem !== 'site' ? 'Telefone/ID dosolicitante' : 'E-mail dosolicitante';
     }
 
-    // Chamados deste solicitante
-    const meus = _allTickets.filter(function(t) {
+    // Chamadosdestesolicitante
+    const meus= _allTickets.filter(function(t) {
       const sol = t.solicitante || (t.origem === 'bot' ? 'Bot' : '');
       return sol === solLabel || (!ticket.solicitante && (t.number || '') === number);
     });
 
     // Badges por status
     const statusMap = {};
-    meus.forEach(function(t) { statusMap[t.status] = (statusMap[t.status]||0)+1; });
+    meus.forEach(function(t) {statusMap[t.status] = (statusMap[t.status]||0)+1; });
     const badgesEl = document.getElementById('perf-chamados-badges');
     badgesEl.innerHTML = '';
     if (Object.keys(statusMap).length === 0) {
       badgesEl.innerHTML = '<span class="text-xs text-brand-300">Nenhum</span>';
     } else {
       const STD = {
-        aberto:         { label:'Abertos',         style:'background:#fff1f2;color:#be123c;border:1.5px solid #fda4af' },
-        em_atendimento: { label:'Em andamento',     style:'background:#fffbeb;color:#92400e;border:1.5px solid #fcd34d' },
-        concluido:      { label:'Concluídos',       style:'background:#f0fdf4;color:#15803d;border:1.5px solid #86efac' },
-        cancelado:      { label:'Cancelados',       style:'background:#f9fafb;color:#374151;border:1.5px solid #e5e7eb' },
+        aberto:         { label:'Abertos',style:'background:#fff1f2;color:#be123c;border:1.5px solid #fda4af' },
+        em_atendimento: { label:'Em andamento',style:'background:#fffbeb;color:#92400e;border:1.5px solid #fcd34d' },
+        concluido:      { label:'Concluídos',style:'background:#f0fdf4;color:#15803d;border:1.5px solid #86efac' },
+        cancelado:      { label:'Cancelados',style:'background:#f9fafb;color:#374151;border:1.5px solid #e5e7eb' },
       };
       Object.entries(statusMap).forEach(function(e) {
-        const cfg = STD[e[0]] || { label: e[0], style:'background:#f9fafb;color:#374151;border:1.5px solid #e5e7eb' };
-        const span = document.createElement('span');
-        span.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[.68rem] font-bold';
-        span.style.cssText = cfg.style;
-        span.textContent = e[1] + ' ' + cfg.label;
+        const cfg = STD[e[0]] || { label: e[0],style:'background:#f9fafb;color:#374151;border:1.5px solid #e5e7eb' };
+        const span = document.createElement('span');span.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[.68rem] font-bold';span.style.cssText = cfg.style;span.textContent = e[1] + ' ' + cfg.label;
         badgesEl.appendChild(span);
       });
     }
 
-    // Último canal
+    // Ãšltimo canal
     const last = meus.slice().sort(function(a,b){ return b.id - a.id; })[0];
     const origemEl = document.getElementById('perf-origem');
     if (last && last.origem === 'site') {
@@ -2956,8 +3372,60 @@
     if (oldest && oldest.createdAt) {
       desdeEl.textContent = new Date(oldest.createdAt).toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
     } else {
-      desdeEl.textContent = '—';
+      desdeEl.textContent = 'â€”';
     }
+
+    // Popularselect de colaboradores
+  const colabSelect = document.getElementById('perf-colab-select');
+    colabSelect.innerHTML = '<option value="">-- Selecione o colaborador --</option>';
+    
+    // Sort colabsalphabetically
+    const sortedColabs= [..._allColabs].sort((a,b) => (a.nome||'').localeCompare(b.nome||''));sortedColabs.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.nome;
+      opt.textContent = `${c.nome} (${c.setor})`;
+      if (ticket.solicitanteNome && c.nome.toLowerCase() === ticket.solicitanteNome.toLowerCase()) {
+         opt.selected = true;
+      }
+      colabSelect.appendChild(opt);
+    });
+
+    const btnVincular = document.getElementById('btn-vincular-colab');
+    btnVincular.onclick = async () => {
+      const nomeSelecionado = colabSelect.value;
+      if (!nomeSelecionado) {
+        alert('Selecione um colaborador primeiro!');
+        return;
+      }
+      const rawNumber = ticket.origem !== 'site' ? (ticket.realNumber || ticket.number) : (ticket.solicitanteEmail || ticket.solicitante);
+      
+      try {
+        btnVincular.disabled = true;
+        btnVincular.textContent = 'Salvando...';
+        const token = localStorage.getItem('auth_token');
+        const res =  await fetch('/api/link-colaborador', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({
+            numero_origem: rawNumber,
+            nome_colaborador: nomeSelecionado
+          })
+        });
+        if (res.ok) {
+          alert('Vinculado comsucesso! O painelserá atualizado.');
+          closePerfil();
+          load();
+        } else {
+          const err = await res.json();
+          alert('Erro ao vincular: ' + err.error);
+        }
+      } catch (e) {
+        alert('Erro aosalvar');
+      } finally {
+        btnVincular.disabled = false;
+        btnVincular.textContent = 'Salvar Vínculo';
+      }
+    };
 
     document.getElementById('modal-perfil').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -2975,21 +3443,20 @@
     if (e.target === this) closePerfil();
   });
 
-  /* ─────────────────────────────────── MODAL NOVO CHAMADO ─── */
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ MODAL NOVO CHAMADO â”€â”€â”€ */
   async function loadSalasSelect() {
     const sel = document.getElementById('m-sala');
-    const current = sel.value;
-    // mantém só o placeholder
-    while (sel.options.length > 1) sel.remove(1);
+    const current =sel.value;
+    // mantémsó o placeholder
+    while (sel.options.length > 1)sel.remove(1);
     try {
-      const res  = await fetch('/api/salas', { headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '') } });
+      const res =  await fetch('/api/salas', { headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '') } });
       const data = await res.json();
-      (data.salas || []).forEach(function (s) {
+      (data.salas|| []).forEach(function (s) {
         const opt = document.createElement('option');
-        opt.value = s.nome;
-        opt.textContent = s.nome.charAt(0) + s.nome.slice(1).toLowerCase();
-        if (s.nome === current) opt.selected = true;
-        sel.appendChild(opt);
+        opt.value =s.nome;
+        opt.textContent =s.nome.charAt(0) +s.nome.slice(1).toLowerCase();
+        if (s.nome === current) opt.selected = true;sel.appendChild(opt);
       });
     } catch {}
   }
@@ -3001,7 +3468,7 @@
     document.body.style.overflow = 'hidden';
     goStep(1);
     loadSalasSelect();
-    // Pré-preenche o número WhatsApp se o usuário tiver telefone cadastrado
+    // Pré-preenche o número WhatsAppse o usuário tiver telefone cadastrado
     fetch('/api/me/contato', { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('auth_token') } })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
@@ -3024,7 +3491,7 @@
     document.getElementById('m-notif-wpp').checked = false;
     document.getElementById('m-wpp-tel-wrap').classList.add('hidden');
     const fn = document.getElementById('file-name');
-    fn.textContent = 'Imagem, PDF, documento… (opcional)';
+    fn.textContent = 'Imagem, PDF, documentoâ€¦ (opcional)';
     fn.style.color = '';
     clearModalAlert();
   }
@@ -3034,16 +3501,14 @@
     const s2 = document.getElementById('modal-step-2');
     const d1 = document.getElementById('step-dot-1');
     const d2 = document.getElementById('step-dot-2');
-    if (n === 1) {
-      s1.classList.remove('hidden'); s2.classList.add('hidden');
+    if (n === 1) {s1.classList.remove('hidden');s2.classList.add('hidden');
       d1.style.opacity = '1'; d2.style.opacity = '0.3';
-    } else {
-      s1.classList.add('hidden'); s2.classList.remove('hidden');
+    } else {s1.classList.add('hidden');s2.classList.remove('hidden');
       d1.style.opacity = '0.3'; d2.style.opacity = '1';
     }
   }
 
-  // Tipo cards — delegação no document para funcionar mesmo com modal renderizado depois do script
+  // Tipo cardsâ€” delegação no document para funcionar mesmo com modal renderizado depoisdoscript
   document.addEventListener('click', function(e) {
     const card = e.target.closest('.tipo-card');
     if (!card) return;
@@ -3083,23 +3548,22 @@
   // File input display
   document.getElementById('m-file').addEventListener('change', function() {
     const fn = document.getElementById('file-name');
-    if (this.files && this.files[0]) {
+    if (this.files&& this.files[0]) {
       fn.textContent = this.files[0].name;
       fn.style.color = '#925616';
     } else {
-      fn.textContent = 'Imagem, PDF, documento… (opcional)';
+      fn.textContent = 'Imagem, PDF, documentoâ€¦ (opcional)';
       fn.style.color = '';
     }
   });
 
-  // Modal alert helpers
   function showModalAlert(msg, type) {
     const el = document.getElementById('modal-alert');
     el.className = type === 'success'
       ? 'flex mb-4 px-4 py-3 rounded-lg text-sm items-center gap-2 border bg-green-50 text-green-800 border-green-200'
       : 'flex mb-4 px-4 py-3 rounded-lg text-sm items-center gap-2 border bg-red-50 text-red-800 border-red-200';
     const icon = type === 'success' ? 'check-circle' : 'alert-circle';
-    el.innerHTML = '<i data-lucide="' + icon + '" class="w-4 h-4 shrink-0"></i><span>' + escHtml(msg) + '</span>';
+    el.innerHTML = '<i data-lucide="' + icon + '" class="w-4 h-4shrink-0"></i><span>' + escHtml(msg) + '</span>';
     lucide.createIcons();
   }
 
@@ -3109,10 +3573,10 @@
     el.textContent = '';
   }
 
-  // ── NOVO: Funcionalidades Premium do Chat (WhatsApp-Style) ───────────────────
+  // â”€â”€ NOVO: FuncionalidadesPremium do Chat (WhatsApp-Style) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   let selectedChatFile = null;
   let mediaRecorder = null;
-  let audioChunks = [];
+  let audioChunks= [];
   let recordingStartTime = 0;
   let recordingInterval = null;
   let isRecording = false;
@@ -3135,9 +3599,9 @@
       const start = input.selectionStart;
       const end = input.selectionEnd;
       const val = input.value;
-      input.value = val.slice(0, start) + emoji + val.slice(end);
+      input.value = val.slice(0,start) + emoji + val.slice(end);
       input.focus();
-      input.selectionStart = input.selectionEnd = start + emoji.length;
+      input.selectionStart = input.selectionEnd =start + emoji.length;
       triggerChatActionIconUpdate();
     });
   }
@@ -3154,10 +3618,10 @@
     chatEmojiDrawer.addEventListener('click', (e) => e.stopPropagation());
   }
 
-  // Toggle do ícone do botão de ação (Microfone vs Enviar)
+  // Toggle do ícone do botão de ação (Microfone vsEnviar)
   function triggerChatActionIconUpdate() {
     const text = document.getElementById('chat-text-input').value.trim();
-    const hasTextOrFile = text.length > 0 || selectedChatFile !== null;
+    const hasTextOrFile = text.length > 0 ||selectedChatFile !== null;
     const iconEl = document.getElementById('chat-action-icon');
     
     if (hasTextOrFile) {
@@ -3175,11 +3639,10 @@
     this.style.height = (this.scrollHeight) + 'px';
   });
 
-  // Seleção de Arquivos (Paperclip & Camera)
+  // Seleção de Arquivos(Paperclip & Camera)
   function handleChatFileSelect(input) {
     const file = input.files[0];
-    if (file) {
-      selectedChatFile = file;
+    if (file) {selectedChatFile = file;
       document.getElementById('chat-preview-filename').textContent = file.name;
       document.getElementById('chat-preview-bar').classList.remove('hidden');
       triggerChatActionIconUpdate();
@@ -3194,8 +3657,7 @@
   });
 
   // Limpar anexo pendente
-  document.getElementById('btn-chat-clear-preview').addEventListener('click', function() {
-    selectedChatFile = null;
+  document.getElementById('btn-chat-clear-preview').addEventListener('click', function() {selectedChatFile = null;
     document.getElementById('chat-file-input').value = '';
     document.getElementById('chat-camera-input').value = '';
     document.getElementById('chat-preview-bar').classList.add('hidden');
@@ -3204,17 +3666,16 @@
 
   // Gravação de Áudio Nativa (MediaRecorder)
   async function startRecording() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      showToast('Seu navegador não suporta gravação de áudio.', 'error');
+    if (!navigator.mediaDevices|| !navigator.mediaDevices.getUserMedia) {showToast('Seu navegador nãosuporta gravação de áudio.', 'error');
       return;
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioChunks = [];
+      audioChunks= [];
       
-      let options = { mimeType: 'audio/webm' };
+      let options= { mimeType: 'audio/webm' };
       if (!MediaRecorder.isTypeSupported('audio/webm')) {
-        options = { mimeType: 'audio/ogg' };
+        options= { mimeType: 'audio/ogg' };
       }
       
       mediaRecorder = new MediaRecorder(stream, options);
@@ -3225,8 +3686,7 @@
         }
       };
       
-      mediaRecorder.onstop = async function() {
-        stream.getTracks().forEach(track => track.stop());
+      mediaRecorder.onstop = async function() {stream.getTracks().forEach(track => track.stop());
         
         if (audioChunks.length === 0) return;
         if (!isRecording) return; // Cancelado
@@ -3235,7 +3695,7 @@
         const ext = mediaRecorder.mimeType.includes('ogg') ? 'ogg' : 'webm';
         const file = new File([blob], `audio_${Date.now()}.${ext}`, { type: mediaRecorder.mimeType });
         
-        await sendChatVoiceMessage(file);
+        awaitsendChatVoiceMessage(file);
       };
       
       mediaRecorder.start();
@@ -3249,10 +3709,10 @@
       document.getElementById('btn-chat-emoji').classList.add('hidden');
       document.getElementById('chat-recording-indicator').classList.remove('hidden');
       
-      recordingInterval = setInterval(() => {
+      recordingInterval =setInterval(() => {
         const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
         const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
-        const s = String(elapsed % 60).padStart(2, '0');
+        const s= String(elapsed % 60).padStart(2, '0');
         document.getElementById('chat-recording-timer').textContent = `${m}:${s}`;
       }, 1000);
       
@@ -3265,8 +3725,7 @@
       btnAction.classList.remove('bg-white', 'text-brand-500');
       
     } catch (err) {
-      console.error('Erro ao acessar microfone:', err);
-      showToast('Permissão de microfone negada ou indisponível.', 'error');
+      console.error('Erro ao acessar microfone:', err);showToast('Permissão de microfone negada ou indisponível.', 'error');
     }
   }
 
@@ -3274,7 +3733,7 @@
     if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
     
     clearInterval(recordingInterval);
-    isRecording = save;
+    isRecording =save;
     mediaRecorder.stop();
     
     // UI Normal
@@ -3293,8 +3752,7 @@
   }
 
   document.getElementById('btn-chat-cancel-recording').addEventListener('click', function(e) {
-    e.stopPropagation();
-    stopRecording(false);
+    e.stopPropagation();stopRecording(false);
   });
 
   // Envio de Mensagem de Voz (PTT)
@@ -3304,7 +3762,7 @@
     btnAction.disabled = true;
     
     try {
-      const uploadRes = await fetch('/api/upload?filename=' + encodeURIComponent(file.name), {
+      const uploadRes= await fetch('/api/upload?filename=' + encodeURIComponent(file.name), {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token },
         body: file
@@ -3312,7 +3770,7 @@
       if (!uploadRes.ok) throw new Error('Falha no upload do áudio');
       const uploadData = await uploadRes.json();
       
-      const patchRes = await fetch('/api/tickets/' + _detalheTicket.id, {
+      const patchRes= await fetch('/api/tickets/' + _detalheTicket.id, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({
@@ -3323,11 +3781,9 @@
       if (!patchRes.ok) throw new Error('Falha ao enviar áudio');
       const updatedTicket = await patchRes.json();
       
-      renderDetalhe(updatedTicket);
-      showToast('Mensagem de voz enviada!', 'success');
+      renderDetalhe(updatedTicket);showToast('Mensagem de voz enviada!', 'success');
     } catch (err) {
-      console.error(err);
-      showToast(err.message || 'Erro ao enviar áudio.', 'error');
+      console.error(err);showToast(err.message || 'Erro ao enviar áudio.', 'error');
     } finally {
       btnAction.disabled = false;
     }
@@ -3349,10 +3805,10 @@
       let uploadedFilename = null;
       
       if (selectedChatFile) {
-        const uploadRes = await fetch('/api/upload?filename=' + encodeURIComponent(selectedChatFile.name), {
+        const uploadRes= await fetch('/api/upload?filename=' + encodeURIComponent(selectedChatFile.name), {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + token },
-          body: selectedChatFile
+          body:selectedChatFile
         });
         if (!uploadRes.ok) throw new Error('Falha no upload do arquivo');
         const uploadData = await uploadRes.json();
@@ -3362,7 +3818,7 @@
       const body = { observacao: text };
       if (uploadedFilename) body.anexo_solucao = uploadedFilename;
       
-      const patchRes = await fetch('/api/tickets/' + _detalheTicket.id, {
+      const patchRes= await fetch('/api/tickets/' + _detalheTicket.id, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify(body)
@@ -3372,11 +3828,9 @@
       
       textInput.value = '';
       document.getElementById('btn-chat-clear-preview').click();
-      renderDetalhe(updatedTicket);
-      showToast('Mensagem enviada!', 'success');
+      renderDetalhe(updatedTicket);showToast('Mensagem enviada!', 'success');
     } catch (err) {
-      console.error(err);
-      showToast(err.message || 'Erro ao enviar mensagem.', 'error');
+      console.error(err);showToast(err.message || 'Erro ao enviar mensagem.', 'error');
     } finally {
       btnAction.disabled = false;
       textInput.disabled = false;
@@ -3387,14 +3841,12 @@
   // Evento do botão de ação circular
   document.getElementById('btn-chat-action').addEventListener('click', function() {
     const text = document.getElementById('chat-text-input').value.trim();
-    const hasTextOrFile = text.length > 0 || selectedChatFile !== null;
+    const hasTextOrFile = text.length > 0 ||selectedChatFile !== null;
     
-    if (isRecording) {
-      stopRecording(true);
+    if (isRecording) {stopRecording(true);
     } else if (hasTextOrFile) {
       handleChatSend();
-    } else {
-      startRecording();
+    } else {startRecording();
     }
   });
 
@@ -3403,11 +3855,11 @@
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleChatSend();
-      this.style.height = 'auto'; // reset height after send
+      this.style.height = 'auto'; // reset height aftersend
     }
   });
 
-  // Modal form submit
+  // Modal formsubmit
   document.getElementById('modal-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     clearModalAlert();
@@ -3416,38 +3868,34 @@
     const nome     = document.getElementById('m-nome').value.trim();
     const cpf      = document.getElementById('m-cpf').value.trim();
     const email    = document.getElementById('m-email').value.trim();
-    const sala     = document.getElementById('m-sala').value;
+    const sala = document.getElementById('m-sala').value;
     const funcao   = document.getElementById('m-funcao').value.trim();
     const file     = document.getElementById('m-file').files[0];
     const notifWpp = document.getElementById('m-notif-wpp').checked;
     const wppTel   = document.getElementById('m-tel-wpp').value.trim();
 
-    if (!nome || !cpf || !sala || !funcao) {
-      showModalAlert('Preencha todos os campos obrigatórios.', 'error');
+    if (!nome || !cpf || !sala || !funcao) {showModalAlert('Preencha todososcamposobrigatórios.', 'error');
       return;
     }
-    if (notifWpp && !wppTel) {
-      showModalAlert('Informe o número de WhatsApp para notificação.', 'error');
+    if (notifWpp && !wppTel) {showModalAlert('Informe o número de WhatsApp para notificação.', 'error');
       return;
     }
 
-    const descLines = [
+    const descLines= [
       'Nome: ' + nome,
       'CPF: ' + cpf,
       email  ? 'E-mail: ' + email  : null,
-      'Sala: ' + sala,
+      'Sala: ' +sala,
       'Função: ' + funcao,
       file   ? 'Anexo: ' + file.name : null,
     ].filter(Boolean);
 
-    const submitBtn = document.getElementById('modal-submit');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Salvando…';
+    const submitBtn = document.getElementById('modal-submit');submitBtn.disabled = true;submitBtn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Salvandoâ€¦';
     lucide.createIcons();
 
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch('/api/tickets', {
+      const res =  await fetch('/api/tickets', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body:    JSON.stringify({
@@ -3456,41 +3904,32 @@
           type:        tipo,
           description: descLines.join('\n'),
           origem:      'site',
-          notifWpp:    notifWpp ? wppTel.replace(/\D/g,'') : null,
-          solicitante: localStorage.getItem('auth_email') || '',
+          notifWpp:    notifWpp ? wppTel.replace(/\D/g,'') : null,solicitante: localStorage.getItem('auth_email') || '',
         }),
       });
       const data = await res.json();
 
-      if (!res.ok) {
-        showModalAlert(data.error || 'Erro ao salvar chamado.', 'error');
-        showToast(data.error || 'Erro ao salvar chamado.', 'error');
+      if (!res.ok) {showModalAlert(data.error || 'Erro aosalvar chamado.', 'error');showToast(data.error || 'Erro aosalvar chamado.', 'error');
         return;
-      }
-
-      showModalAlert('Chamado #' + data.id + ' aberto com sucesso!', 'success');
-      showToast('Chamado criado com sucesso!', 'success');
+      } showModalAlert('Chamado #' + data.id + ' aberto com sucesso!', 'success');showToast('Chamado criado comsucesso!', 'success');
       document.getElementById('modal-form').reset();
       document.getElementById('m-notif-wpp').checked = false;
       document.getElementById('m-wpp-tel-wrap').classList.add('hidden');
       const fn = document.getElementById('file-name');
-      fn.textContent = 'Imagem, PDF, documento… (opcional)';
+      fn.textContent = 'Imagem, PDF, documentoâ€¦ (opcional)';
       fn.style.color = '';
-      setTimeout(function() { closeModal(); load(); }, 1800);
-    } catch (err) {
-      showModalAlert('Erro de conexão: ' + err.message, 'error');
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Abrir chamado';
+    setTimeout(function() { closeModal(); load(); }, 1800);
+    } catch (err) {showModalAlert('Erro de conexão: ' + err.message, 'error');
+    } finally {submitBtn.disabled = false;submitBtn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Abrir chamado';
       lucide.createIcons();
     }
   });
 </script>
 
-<!-- ═══════════════════════════════════ TOASTS ══ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• TOASTS â•â• -->
 <div id="toast-container"></div>
 
-<!-- ═══════════════════════════════════ TOUR ══ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• TOUR â•â• -->
 <script src="/tour.js"></script>
 
 </body>

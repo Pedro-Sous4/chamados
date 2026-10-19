@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventário & Cockpit de Ativos TI — Laghetto</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50:  '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e3a8a',
+              900: '#0f172a',
+              950: '#0b1120',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Estilo Cockpit / Holográfico com Glassmorphism */
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    .dark .glass-panel {
+      background: rgba(17, 28, 51, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(59, 130, 246, 0.22);
+    }
+
+    .card-cockpit {
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+    .card-cockpit:hover {
+      transform: translateY(-3px) scale(1.01);
+      box-shadow: 0 12px 30px -10px rgba(37, 99, 235, 0.25);
+    }
+    .dark .card-cockpit:hover {
+      box-shadow: 0 12px 30px -10px rgba(59, 130, 246, 0.35);
+    }
+
+    /* Grid com fundo técnico pontilhado */
+    .tech-dots-light {
+      background-image: radial-gradient(#cbd5e1 1.2px, transparent 1.2px);
+      background-size: 20px 20px;
+    }
+    .tech-dots-dark {
+      background-image: radial-gradient(rgba(59, 130, 246, 0.2) 1.2px, transparent 1.2px);
+      background-size: 20px 20px;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.6); }
+  </style>
+</head>
+
+<body class="bg-[#f8fafc] text-[#0f172a] dark:bg-[#0b1120] dark:text-[#f8fafc] min-h-screen flex flex-col font-sans transition-colors duration-300">
+
+  <!-- ================= TOP HEADER / HUD ================= -->
+  <header class="shrink-0 z-30 w-full px-4 sm:px-8 py-3.5 border-b border-slate-200 dark:border-blue-500/20 bg-[#1e3a8a] dark:bg-[#0f172a]/95 text-white shadow-lg backdrop-blur-md sticky top-0">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+      
+      <!-- Marca e Título -->
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all border border-white/20 flex items-center justify-center" title="Voltar para a Central de Chamados">
+          <i data-lucide="arrow-left" class="w-5 h-5 text-white"></i>
+        </a>
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center text-blue-300 shadow-inner">
+            <i data-lucide="cpu" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-lg font-black tracking-wider leading-none text-white">INVENTÁRIO TI</h1>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-blue-500/20 text-blue-300 border border-blue-400/30">Cockpit 2.0</span>
+            </div>
+            <p class="text-xs text-blue-200/70 font-medium mt-0.5">Laghetto Golden Multipropriedade</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Links Rápidos de Navegação -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <a href="/organograma/" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white/10 hover:bg-white/20 transition border border-white/20 text-white" title="Ver Organograma">
+          <i data-lucide="network" class="w-3.5 h-3.5 text-blue-300"></i>
+          <span class="hidden sm:inline">Organograma</span>
+        </a>
+
+        <a href="dashboard.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white/10 hover:bg-white/20 transition border border-white/20 text-white" title="Ver Dashboard de Métricas">
+          <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-blue-300"></i>
+          <span class="hidden sm:inline">BI TI</span>
+        </a>
+
+        <button onclick="openSyncModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 transition" title="Sincronizar com Planilha Google">
+          <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+          <span class="hidden md:inline">Google Planilhas</span>
+        </button>
+
+        <button onclick="openNovoItemModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-md transition border border-blue-400/40">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          <span>Novo Ativo</span>
+        </button>
+
+        <!-- Alternar Tema Claro/Escuro -->
+        <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition border border-white/20 text-white" title="Alternar Modo Escuro / Claro">
+          <i id="themeIcon" data-lucide="moon" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= CONTEÚDO PRINCIPAL ================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
+
+    <!-- HUD METRICS STRIP -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="glass-panel p-4 rounded-2xl shadow-sm border-l-4 border-l-blue-600 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-bold text-gray-500 dark:text-blue-200/60 uppercase tracking-wider">Computadores</p>
+          <p id="metricComputadores" class="text-2xl sm:text-3xl font-black text-[#1e3a8a] dark:text-white mt-0.5">0</p>
+          <p class="text-[11px] text-gray-400 dark:text-gray-400 mt-0.5"><span id="metricNotebooks">0</span> Notebooks | <span id="metricDesktops">0</span> Desktops</p>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+          <i data-lucide="laptop" class="w-6 h-6"></i>
+        </div>
+      </div>
+
+      <div class="glass-panel p-4 rounded-2xl shadow-sm border-l-4 border-l-indigo-600 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-bold text-gray-500 dark:text-indigo-200/60 uppercase tracking-wider">Periféricos & Telas</p>
+          <p id="metricPerifericos" class="text-2xl sm:text-3xl font-black text-indigo-700 dark:text-indigo-300 mt-0.5">0</p>
+          <p class="text-[11px] text-gray-400 mt-0.5"><span id="metricMonitores">0</span> Monitores cadastrados</p>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+          <i data-lucide="monitor" class="w-6 h-6"></i>
+        </div>
+      </div>
+
+      <div class="glass-panel p-4 rounded-2xl shadow-sm border-l-4 border-l-amber-500 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-bold text-gray-500 dark:text-amber-200/60 uppercase tracking-wider">Empréstimos / Hotéis</p>
+          <p id="metricEmprestimos" class="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 mt-0.5">0</p>
+          <p class="text-[11px] text-gray-400 mt-0.5"><span id="metricEmpAtivos">0</span> Ativos | <span id="metricEmpDevolvidos">0</span> Devolvidos</p>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+          <i data-lucide="repeat" class="w-6 h-6"></i>
+        </div>
+      </div>
+
+      <div class="glass-panel p-4 rounded-2xl shadow-sm border-l-4 border-l-emerald-500 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-bold text-gray-500 dark:text-emerald-200/60 uppercase tracking-wider">Infraestrutura & Rede</p>
+          <p id="metricRede" class="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">0</p>
+          <p class="text-[11px] text-gray-400 mt-0.5">Switches, Firewalls & Roteadores</p>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+          <i data-lucide="server" class="w-6 h-6"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLES, ABAS E BARRA DE BUSCA DISRUPTIVA -->
+    <div class="glass-panel p-4 rounded-2xl flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm">
+      
+      <!-- Abas de Categoria -->
+      <div class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-900/60 rounded-xl overflow-x-auto w-full md:w-auto border border-slate-200 dark:border-blue-500/20 shrink-0">
+        <button onclick="setTab('computadores')" id="tabBtn-computadores" class="tab-btn px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 transition-all bg-blue-600 text-white shadow-sm">
+          <i data-lucide="laptop" class="w-4 h-4"></i>
+          <span>Computadores</span>
+          <span id="tabBadge-computadores" class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 text-white font-mono">0</span>
+        </button>
+
+        <button onclick="setTab('perifericos')" id="tabBtn-perifericos" class="tab-btn px-4 py-2 rounded-lg font-semibold text-xs text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-white flex items-center gap-2 transition-all">
+          <i data-lucide="mouse" class="w-4 h-4"></i>
+          <span>Periféricos</span>
+          <span id="tabBadge-perifericos" class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 dark:bg-slate-800 font-mono">0</span>
+        </button>
+
+        <button onclick="setTab('emprestimos')" id="tabBtn-emprestimos" class="tab-btn px-4 py-2 rounded-lg font-semibold text-xs text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-white flex items-center gap-2 transition-all">
+          <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
+          <span>Empréstimos</span>
+          <span id="tabBadge-emprestimos" class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 dark:bg-slate-800 font-mono">0</span>
+        </button>
+
+        <button onclick="setTab('rede')" id="tabBtn-rede" class="tab-btn px-4 py-2 rounded-lg font-semibold text-xs text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-white flex items-center gap-2 transition-all">
+          <i data-lucide="wifi" class="w-4 h-4"></i>
+          <span>Infra / Rede</span>
+          <span id="tabBadge-rede" class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 dark:bg-slate-800 font-mono">0</span>
+        </button>
+      </div>
+
+      <!-- Barra de Busca Global & Filtros -->
+      <div class="flex items-center gap-2.5 w-full md:w-auto flex-1 max-w-xl">
+        <div class="relative flex-1">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          <input 
+            type="text" 
+            id="searchInput" 
+            oninput="renderCards()" 
+            placeholder="Buscar por Service Tag, Hostname, Colaborador, MAC, Setor ou Modelo..."
+            class="w-full pl-10 pr-4 py-2 text-xs sm:text-sm rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-blue-500/30 text-[#0f172a] dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          />
+        </div>
+
+        <!-- Filtro de Status -->
+        <select id="statusFilter" onchange="renderCards()" class="px-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-blue-500/30 text-[#0f172a] dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 shrink-0">
+          <option value="ALL">Todos os Status</option>
+          <option value="em_uso">Em Uso</option>
+          <option value="estoque">Estoque / Reserva</option>
+          <option value="manutencao">Em Manutenção</option>
+          <option value="ativo">Ativo</option>
+          <option value="devolvido">Devolvido</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- CARDS GRID / LISTAGEM COCKPIT -->
+    <div id="itemsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Inserido dinamicamente via JavaScript -->
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div id="emptyState" class="hidden flex-col items-center justify-center p-12 text-center glass-panel rounded-2xl">
+      <div class="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3">
+        <i data-lucide="search-x" class="w-8 h-8"></i>
+      </div>
+      <h3 class="text-base font-bold text-gray-700 dark:text-gray-200">Nenhum equipamento encontrado</h3>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Tente ajustar os filtros ou os termos de pesquisa.</p>
+    </div>
+
+  </main>
+
+  <!-- ================= MODAL DETALHES DO ATIVO ================= -->
+  <div id="itemModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+    <div class="glass-panel bg-white dark:bg-[#111c33] border-2 border-blue-500/60 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden p-6 relative">
+      <button onclick="closeItemModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white p-1 rounded-full bg-black/20 hover:bg-black/40">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+      <div id="itemModalContent">
+        <!-- Preenchido dinamicamente -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL NOVO / EDITAR ATIVO ================= -->
+  <div id="editModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+    <div class="glass-panel bg-white dark:bg-[#111c33] border-2 border-blue-500/60 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden p-6 relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeEditModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white p-1 rounded-full bg-black/20 hover:bg-black/40">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <h2 id="editModalTitle" class="text-xl font-black text-[#1e3a8a] dark:text-blue-300 flex items-center gap-2 mb-4">
+        <i data-lucide="plus-circle" class="w-5 h-5"></i> Cadastrar Ativo
+      </h2>
+
+      <form id="editForm" onsubmit="handleSaveItem(event)" class="space-y-4 text-xs sm:text-sm">
+        <input type="hidden" id="formItemId">
+        <input type="hidden" id="formCategory" value="computadores">
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Categoria</label>
+            <select id="formCategorySelect" onchange="document.getElementById('formCategory').value = this.value" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-blue-500/40 rounded-lg p-2 font-medium">
+              <option value="computadores">Computador / Notebook</option>
+              <option value="perifericos">Periférico (Monitor/Mouse/Teclado)</option>
+              <option value="emprestimos">Empréstimo</option>
+              <option value="rede">Rede & Infra</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Status</label>
+            <select id="formStatus" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-blue-500/40 rounded-lg p-2 font-medium">
+              <option value="em_uso">Em Uso</option>
+              <option value="estoque">Estoque / Reserva</option>
+              <option value="manutencao">Em Manutenção</option>
+              <option value="ativo">Ativo</option>
+              <option value="devolvido">Devolvido</option>
+              <option value="defeito">Defeito</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Service Tag / Serial</label>
+            <input id="formServiceTag" type="text" placeholder="Ex: 9D557X3" required class="w-full font-mono uppercase bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-blue-500/40 rounded-lg p-2">
+          </div>
+          <div>
+            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Hostname (Nome do Computador)</label>
+            <input id="formHostname" type="text" placeholder="Ex: RSADMD001" class="w-full font-mono uppercase bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-blue-500/40 rounded-lg p-2">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Modelo do Equipamento</label>
+            <input id="formModelo" type="text" placeholder="Ex: Dell OptiPlex 3000" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-blue-500/40 rounded-lg p-2">
+          </div>
+          <div>
+            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Tipo de Item</label>
+            <input id="formTipo" type="text" placeholder="Ex: Desktop, Notebook, Monitor..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-blue-500/40 rounded-lg p-2">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Responsável / Colaborador</label>
+            <input id="formResponsavel" type="text" placeholder="Ex: Pedro Sousa" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-blue-500/40 rounded-lg p-2">
+          </div>
+          <div>
+            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Setor / Localidade</label>
+            <input id="formSetor" type="text" placeholder="Ex: TI / Gramado - Matriz" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-blue-500/40 rounded-lg p-2">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Endereço MAC / Conexão</label>
+            <input id="formMac" type="text" placeholder="Ex: 74-86-E2-F6-28-7C" class="w-full font-mono bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-blue-500/40 rounded-lg p-2">
+          </div>
+          <div>
+            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">RustDesk ID (Acesso Remoto)</label>
+            <input id="formRustdesk" type="text" placeholder="Ex: 123 456 789" class="w-full font-mono bg-blue-50 dark:bg-blue-950/40 border border-blue-400/50 rounded-lg p-2">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">Observações Técnicas</label>
+          <textarea id="formObs" rows="2" placeholder="Notas sobre entrega, carregador, especificações adicionais..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-blue-500/40 rounded-lg p-2"></textarea>
+        </div>
+
+        <div class="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-blue-500/20">
+          <button type="button" id="btnDeleteForm" onclick="handleDeleteItem()" class="hidden px-4 py-2 rounded-lg bg-red-600/15 hover:bg-red-600 text-red-500 hover:text-white border border-red-500/30 font-bold transition">
+            Excluir Ativo
+          </button>
+          <div class="flex gap-2 ml-auto">
+            <button type="button" onclick="closeEditModal()" class="px-4 py-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white font-semibold">
+              Cancelar
+            </button>
+            <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-md transition">
+              Salvar Ativo
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL GOOGLE SHEETS SYNC ================= -->
+  <div id="syncModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+    <div class="glass-panel bg-white dark:bg-[#111c33] border-2 border-emerald-500/60 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden p-6 relative">
+      <button onclick="closeSyncModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white p-1 rounded-full bg-black/20 hover:bg-black/40">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400">
+          <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-black text-emerald-600 dark:text-emerald-400 leading-tight">Google Planilhas Conectada</h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Sincronização em tempo real</p>
+        </div>
+      </div>
+
+      <div class="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-400/30 rounded-xl p-3.5 mb-4 text-xs text-emerald-800 dark:text-emerald-200">
+        <p class="font-bold flex items-center gap-1.5 mb-1">
+          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i> Planilha Vinculada:
+        </p>
+        <a id="sheetLinkPreview" href="https://docs.google.com/spreadsheets/d/1csJp1tntBnpDa80OPt8TpRiaYgoPrJhQ/edit?usp=sharing" target="_blank" class="font-mono text-[11px] underline break-all opacity-80 hover:opacity-100">
+          https://docs.google.com/spreadsheets/d/1csJp1tntBnpDa80OPt8TpRiaYgoPrJhQ/...
+        </a>
+        <p class="mt-2 text-[11px] opacity-75">Última atualização: <span id="lastSyncLabel" class="font-mono font-bold">-</span></p>
+      </div>
+
+      <div class="flex flex-col gap-2.5">
+        <a href="https://docs.google.com/spreadsheets/d/1csJp1tntBnpDa80OPt8TpRiaYgoPrJhQ/edit?usp=sharing" target="_blank" class="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[#0f172a] dark:text-white font-bold text-xs flex items-center justify-center gap-2 transition border border-slate-300 dark:border-slate-600">
+          <i data-lucide="external-link" class="w-4 h-4"></i> Abrir Planilha no Google Sheets
+        </a>
+
+        <button onclick="exportToCSV()" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow">
+          <i data-lucide="download" class="w-4 h-4"></i> Exportar Dados Atuais (CSV)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT DE INTERATIVIDADE & DADOS -->
+  <script>
+    let inventoryData = {
+      computadores: [],
+      perifericos: [],
+      rede: [],
+      emprestimos: [],
+      config: {}
+    };
+
+    let activeTab = 'computadores';
+
+    // Alternar tema Claro / Escuro
+    function initTheme() {
+      const isDark = localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        document.getElementById('themeIcon').setAttribute('data-lucide', 'sun');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.getElementById('themeIcon').setAttribute('data-lucide', 'moon');
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      document.getElementById('themeIcon').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+      lucide.createIcons();
+    }
+
+    // Carregar inventário da API
+    async function loadInventory() {
+      try {
+        const res = await fetch('/api/inventario');
+        if (res.ok) {
+          inventoryData = await res.json();
+          updateMetrics();
+          renderCards();
+          if (inventoryData.config?.lastSync) {
+            document.getElementById('lastSyncLabel').textContent = new Date(inventoryData.config.lastSync).toLocaleString('pt-BR');
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao carregar inventário:', err);
+      }
+    }
+
+    function updateMetrics() {
+      const comps = inventoryData.computadores || [];
+      const perifs = inventoryData.perifericos || [];
+      const emp = inventoryData.emprestimos || [];
+      const red = inventoryData.rede || [];
+
+      document.getElementById('metricComputadores').textContent = comps.length;
+      document.getElementById('metricNotebooks').textContent = comps.filter(c => c.tipo === 'Notebook').length;
+      document.getElementById('metricDesktops').textContent = comps.filter(c => c.tipo !== 'Notebook').length;
+
+      document.getElementById('metricPerifericos').textContent = perifs.length;
+      document.getElementById('metricMonitores').textContent = perifs.filter(p => p.tipo?.toLowerCase().includes('monitor')).length;
+
+      document.getElementById('metricEmprestimos').textContent = emp.length;
+      document.getElementById('metricEmpAtivos').textContent = emp.filter(e => e.status === 'ativo').length;
+      document.getElementById('metricEmpDevolvidos').textContent = emp.filter(e => e.status === 'devolvido').length;
+
+      document.getElementById('metricRede').textContent = red.length;
+
+      document.getElementById('tabBadge-computadores').textContent = comps.length;
+      document.getElementById('tabBadge-perifericos').textContent = perifs.length;
+      document.getElementById('tabBadge-emprestimos').textContent = emp.length;
+      document.getElementById('tabBadge-rede').textContent = red.length;
+    }
+
+    function setTab(tab) {
+      activeTab = tab;
+      ['computadores', 'perifericos', 'emprestimos', 'rede'].forEach(t => {
+        const btn = document.getElementById(`tabBtn-${t}`);
+        if (t === tab) {
+          btn.className = 'tab-btn px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 transition-all bg-blue-600 text-white shadow-sm';
+        } else {
+          btn.className = 'tab-btn px-4 py-2 rounded-lg font-semibold text-xs text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-white flex items-center gap-2 transition-all';
+        }
+      });
+      renderCards();
+    }
+
+    function getStatusBadge(status) {
+      switch (status) {
+        case 'em_uso':
+        case 'ativo':
+          return '<span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40">Em Uso</span>';
+        case 'estoque':
+          return '<span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/40">Estoque / Reserva</span>';
+        case 'manutencao':
+          return '<span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 animate-pulse">Manutenção</span>';
+        case 'devolvido':
+          return '<span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-slate-500/20 text-slate-600 dark:text-slate-400 border border-slate-500/40">Devolvido</span>';
+        case 'defeito':
+        case 'descartado':
+          return '<span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/40">Defeito</span>';
+        default:
+          return '<span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-gray-500/20 text-gray-600 dark:text-gray-400 border border-gray-500/40">Indefinido</span>';
+      }
+    }
+
+    // Retorna a foto fotográfica do modelo de equipamento de acordo com o nome/especificação
+    function getModelImage(item) {
+      const mod = String(item.modelo || item.tipo || '').toLowerCase();
+      const tipo = String(item.tipo || '').toLowerCase();
+
+      // 1. Desktops Dell OptiPlex 3000 / 7010
+      if (mod.includes('optiplex') || mod.includes('optiflex') || mod.includes('vostro 3710')) {
+        return '/images/modelos/dell_optiplex_3000.png';
+      }
+
+      // 2. Notebooks Dell Vostro 15 3510 / 3520 / Latitude / Inspiron
+      if (tipo.includes('notebook') || mod.includes('vostro') || mod.includes('latitude') || mod.includes('inspirion') || mod.includes('inspiron') || mod.includes('avell')) {
+        return '/images/modelos/dell_vostro_3510.png';
+      }
+
+      // 3. Monitores Dell SE2222H / LG / Bluecase / Primetek
+      if (mod.includes('se2222')) {
+        return '/images/modelos/dell_se2222h.png';
+      }
+      if (tipo.includes('monitor') || mod.includes('22mp410') || mod.includes('20m35') || mod.includes('primetek') || mod.includes('bluecase') || mod.includes('e2225')) {
+        return '/images/modelos/dell_se2222h.png';
+      }
+
+      // 4. Headsets Intelbras CHS 40 / WHS 60 / Polly
+      if (tipo.includes('headset') || mod.includes('chs 40') || mod.includes('chs40') || mod.includes('whs') || mod.includes('polly') || tipo.includes('fone')) {
+        return '/images/modelos/intelbras_chs40.png';
+      }
+
+      // 5. Mouses Dell MS116 / Logitech / App Tech
+      if (mod.includes('ms 116') || mod.includes('ms116') || tipo.includes('mouse') || mod.includes('morffluoa') || mod.includes('m170')) {
+        return '/images/modelos/dell_ms116.png';
+      }
+
+      // 6. Teclados Dell KB216T / Logitech
+      if (mod.includes('kb 216') || mod.includes('kb216') || tipo.includes('teclado')) {
+        return '/images/modelos/dell_kb216t.png';
+      }
+
+      // 7. Infraestrutura & Rede (Fortigate, Switch Aruba, UniFi, Servidor HP, Roteadores)
+      if (mod.includes('switch') || mod.includes('fortigate') || mod.includes('unifi') || mod.includes('servidor') || mod.includes('proliant') || mod.includes('roteador') || tipo.includes('firewall')) {
+        return 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=260&auto=format&fit=crop&q=80';
+      }
+
+      // Padrão Geral (Hardware Executivo)
+      return 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=260&auto=format&fit=crop&q=80';
+    }
+
+    function renderCards() {
+      const container = document.getElementById('itemsContainer');
+      const emptyState = document.getElementById('emptyState');
+      const search = document.getElementById('searchInput').value.toLowerCase().trim();
+      const statusFilter = document.getElementById('statusFilter').value;
+
+      let list = inventoryData[activeTab] || [];
+
+      // Filtro de status
+      if (statusFilter !== 'ALL') {
+        list = list.filter(item => item.status === statusFilter);
+      }
+
+      // Filtro de busca global
+      if (search) {
+        list = list.filter(item => {
+          return Object.values(item).some(val => 
+            String(val || '').toLowerCase().includes(search)
+          );
+        });
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        emptyState.classList.add('flex');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      emptyState.classList.remove('flex');
+
+      container.innerHTML = list.map(item => {
+        const photoUrl = getModelImage(item);
+
+        if (activeTab === 'computadores') {
+          const isNote = item.tipo === 'Notebook';
+          return `
+            <div class="glass-panel card-cockpit rounded-2xl p-3.5 flex flex-col justify-between cursor-pointer border border-slate-200 dark:border-blue-500/20 hover:border-blue-500 group overflow-hidden" onclick="showItemDetails('${item.id}', 'computadores')">
+              <div>
+                <!-- Topo com Foto do Modelo e Badges -->
+                <div class="flex items-center gap-3 mb-2.5">
+                  <div class="w-16 h-16 rounded-xl overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-blue-500/30 shrink-0 relative group-hover:scale-105 transition-transform duration-300 p-1 flex items-center justify-center">
+                    <img src="${photoUrl}" alt="${item.modelo || item.tipo}" class="max-w-full max-h-full object-contain">
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-1 mb-1">
+                      <h4 class="font-mono font-bold text-sm text-[#0f172a] dark:text-white uppercase truncate">${item.hostname || 'SEM HOSTNAME'}</h4>
+                      ${getStatusBadge(item.status)}
+                    </div>
+                    <p class="text-[11px] font-mono text-blue-600 dark:text-blue-300 font-bold truncate">TAG: ${item.serviceTag || '-'}</p>
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate">${item.modelo || '-'}</p>
+                  </div>
+                </div>
+
+                <div class="space-y-1.5 my-2.5 text-xs bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-200/80 dark:border-blue-500/10">
+                  <p class="text-gray-700 dark:text-gray-200 truncate"><span class="text-gray-400">Responsável:</span> <strong class="text-blue-600 dark:text-blue-300 font-semibold">${item.responsavel || 'Disponível em Estoque'}</strong></p>
+                  <p class="text-gray-500 text-[11px] truncate"><span class="text-gray-400">Setor/Local:</span> ${item.setor || '-'} • ${item.local || 'Matriz'}</p>
+                  ${item.cpu ? `<p class="text-[10px] font-mono text-gray-500 truncate"><span class="text-gray-400">Specs:</span> ${item.cpu} | ${item.ram || ''} | ${item.disco || ''}</p>` : ''}
+                  ${item.mac ? `<p class="text-[10px] font-mono text-gray-400 truncate">MAC: ${item.mac}</p>` : ''}
+                </div>
+              </div>
+
+              <div class="pt-2.5 border-t border-slate-200 dark:border-blue-500/20 flex items-center justify-between gap-2 mt-auto">
+                <span class="text-[10px] text-gray-400 uppercase font-mono">${item.origem || 'Inventário'}</span>
+                
+                <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
+                  ${item.hostname ? `
+                    <button onclick="conectarRustdesk('${item.hostname}')" class="px-2.5 py-1 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] flex items-center gap-1 transition shadow-sm" title="Acessar remotamente via RustDesk">
+                      <i data-lucide="radio" class="w-3 h-3"></i> Conectar
+                    </button>
+                  ` : ''}
+                  <button onclick="openEditItemModal('${item.id}', 'computadores')" class="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800 text-gray-400 hover:text-white transition" title="Editar">
+                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (activeTab === 'perifericos') {
+          return `
+            <div class="glass-panel card-cockpit rounded-2xl p-3.5 flex flex-col justify-between cursor-pointer border border-slate-200 dark:border-blue-500/20 hover:border-blue-500 group overflow-hidden" onclick="showItemDetails('${item.id}', 'perifericos')">
+              <div>
+                <div class="flex items-center gap-3 mb-2.5">
+                  <div class="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-indigo-500/30 shrink-0 relative group-hover:scale-105 transition-transform duration-300">
+                    <img src="${photoUrl}" alt="${item.modelo || item.tipo}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-indigo-900/10"></div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-1 mb-1">
+                      <h4 class="font-bold text-sm text-[#0f172a] dark:text-white leading-none truncate">${item.tipo}</h4>
+                      ${getStatusBadge(item.status)}
+                    </div>
+                    <p class="text-[11px] font-mono text-indigo-500 dark:text-indigo-300 font-bold truncate">${item.modelo || '-'}</p>
+                    <p class="text-[10px] font-mono text-gray-400 truncate">TAG: ${item.serviceTag || '-'}</p>
+                  </div>
+                </div>
+
+                <div class="space-y-1.5 my-2.5 text-xs bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-200/80 dark:border-blue-500/10">
+                  <p class="text-gray-700 dark:text-gray-200 truncate"><span class="text-gray-400">Responsável:</span> <strong class="text-indigo-600 dark:text-indigo-300 font-semibold">${item.responsavel || 'Estoque'}</strong></p>
+                  <p class="text-gray-500 text-[11px] truncate"><span class="text-gray-400">Setor:</span> ${item.setor || '-'}</p>
+                  ${item.obs ? `<p class="text-[10px] text-amber-500/90 italic truncate">${item.obs}</p>` : ''}
+                </div>
+              </div>
+
+              <div class="pt-2.5 border-t border-slate-200 dark:border-blue-500/20 flex items-center justify-end" onclick="event.stopPropagation()">
+                <button onclick="openEditItemModal('${item.id}', 'perifericos')" class="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800 text-gray-400 hover:text-white transition" title="Editar">
+                  <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        } else if (activeTab === 'emprestimos') {
+          return `
+            <div class="glass-panel card-cockpit rounded-2xl p-3.5 flex flex-col justify-between cursor-pointer border border-slate-200 dark:border-blue-500/20 hover:border-blue-500 group overflow-hidden" onclick="showItemDetails('${item.id}', 'emprestimos')">
+              <div>
+                <div class="flex items-center gap-3 mb-2.5">
+                  <div class="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-amber-500/30 shrink-0 relative group-hover:scale-105 transition-transform duration-300">
+                    <img src="${photoUrl}" alt="${item.modelo || item.tipo}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-amber-900/10"></div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-1 mb-1">
+                      <h4 class="font-bold text-sm text-[#0f172a] dark:text-white leading-none truncate">${item.solicitante}</h4>
+                      ${getStatusBadge(item.status)}
+                    </div>
+                    <p class="text-[11px] text-amber-600 dark:text-amber-300 font-bold truncate">${item.setor || 'Setor N/D'}</p>
+                    <p class="text-[10px] font-mono text-gray-400 truncate">TAG: ${item.serviceTag || '-'}</p>
+                  </div>
+                </div>
+
+                <div class="space-y-1.5 my-2.5 text-xs bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-200/80 dark:border-blue-500/10">
+                  <p class="text-gray-700 dark:text-gray-200 truncate"><span class="text-gray-400">Item:</span> <strong>${item.tipo} ${item.modelo}</strong></p>
+                  ${item.observacoes ? `<p class="text-[10px] text-gray-400 italic truncate">${item.observacoes}</p>` : ''}
+                  ${item.devolucao ? `<p class="text-[10px] font-bold text-emerald-500 truncate">${item.devolucao}</p>` : '<p class="text-[10px] text-amber-500 font-bold">● Empréstimo Ativo</p>'}
+                </div>
+              </div>
+
+              <div class="pt-2.5 border-t border-slate-200 dark:border-blue-500/20 flex items-center justify-end" onclick="event.stopPropagation()">
+                <button onclick="openEditItemModal('${item.id}', 'emprestimos')" class="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800 text-gray-400 hover:text-white transition" title="Editar">
+                  <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        } else if (activeTab === 'rede') {
+          return `
+            <div class="glass-panel card-cockpit rounded-2xl p-3.5 flex flex-col justify-between cursor-pointer border border-slate-200 dark:border-blue-500/20 hover:border-blue-500 group overflow-hidden" onclick="showItemDetails('${item.id}', 'rede')">
+              <div>
+                <div class="flex items-center gap-3 mb-2.5">
+                  <div class="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-emerald-500/30 shrink-0 relative group-hover:scale-105 transition-transform duration-300">
+                    <img src="${photoUrl}" alt="${item.modelo || item.tipo}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-emerald-900/10"></div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-1 mb-1">
+                      <h4 class="font-bold text-sm text-[#0f172a] dark:text-white leading-none truncate">${item.tipo}</h4>
+                      ${getStatusBadge(item.status)}
+                    </div>
+                    <p class="text-[11px] font-mono text-emerald-500 dark:text-emerald-300 font-bold truncate">${item.marca} ${item.modelo}</p>
+                    <p class="text-[10px] font-mono text-gray-400 truncate">TAG: ${item.serviceTag || '-'}</p>
+                  </div>
+                </div>
+
+                <div class="space-y-1.5 my-2.5 text-xs bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-200/80 dark:border-blue-500/10">
+                  ${item.hostname ? `<p class="text-gray-700 dark:text-gray-200 font-mono truncate"><span class="text-gray-400">Hostname:</span> ${item.hostname}</p>` : ''}
+                  ${item.obs ? `<p class="text-[10px] text-gray-400 truncate">${item.obs}</p>` : ''}
+                </div>
+              </div>
+
+              <div class="pt-2.5 border-t border-slate-200 dark:border-blue-500/20 flex items-center justify-end" onclick="event.stopPropagation()">
+                <button onclick="openEditItemModal('${item.id}', 'rede')" class="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800 text-gray-400 hover:text-white transition" title="Editar">
+                  <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        }
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function conectarRustdesk(identificador) {
+      if (!identificador) return;
+      const clean = identificador.replace(/\s+/g, '');
+      window.location.href = `rustdesk://${clean}`;
+    }
+
+    // Modal de Detalhes
+    function showItemDetails(id, category) {
+      const item = (inventoryData[category] || []).find(i => String(i.id) === String(id));
+      if (!item) return;
+
+      const photoUrl = getModelImage(item);
+      const content = document.getElementById('itemModalContent');
+      content.innerHTML = `
+        <div class="flex items-center gap-3.5 mb-4">
+          <div class="w-20 h-20 rounded-xl overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-blue-500/30 shrink-0 relative shadow-md p-1.5 flex items-center justify-center">
+            <img src="${photoUrl}" alt="${item.modelo || item.tipo}" class="max-w-full max-h-full object-contain">
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-1 mb-1">
+              <h3 class="text-base sm:text-lg font-black text-[#0f172a] dark:text-white leading-tight truncate">${item.hostname || item.modelo || item.tipo}</h3>
+              ${getStatusBadge(item.status)}
+            </div>
+            <p class="text-xs text-blue-500 font-mono font-bold">${item.serviceTag ? 'Service Tag: ' + item.serviceTag : ''}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">${item.modelo || '-'}</p>
+          </div>
+        </div>
+
+        <div class="space-y-3 bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-blue-500/20 text-xs sm:text-sm">
+          ${item.responsavel ? `
+            <div class="flex justify-between items-center py-1 border-b border-slate-200 dark:border-slate-800">
+              <span class="text-gray-400">Responsável:</span>
+              <span class="font-bold text-[#1e3a8a] dark:text-blue-300">${item.responsavel}</span>
+            </div>
+          ` : ''}
+          ${item.setor ? `
+            <div class="flex justify-between items-center py-1 border-b border-slate-200 dark:border-slate-800">
+              <span class="text-gray-400">Setor:</span>
+              <span class="font-semibold">${item.setor}</span>
+            </div>
+          ` : ''}
+          ${item.modelo ? `
+            <div class="flex justify-between items-center py-1 border-b border-slate-200 dark:border-slate-800">
+              <span class="text-gray-400">Modelo:</span>
+              <span class="font-semibold">${item.modelo}</span>
+            </div>
+          ` : ''}
+          ${item.mac ? `
+            <div class="flex justify-between items-center py-1 border-b border-slate-200 dark:border-slate-800">
+              <span class="text-gray-400">Endereço MAC:</span>
+              <span class="font-mono">${item.mac}</span>
+            </div>
+          ` : ''}
+          ${item.obs || item.observacoes ? `
+            <div class="py-1">
+              <span class="text-gray-400 block mb-1">Observações:</span>
+              <p class="bg-white/60 dark:bg-black/30 p-2 rounded text-xs text-gray-600 dark:text-gray-300 font-mono">${item.obs || item.observacoes}</p>
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="flex items-center gap-2 mt-5">
+          ${item.hostname ? `
+            <button onclick="conectarRustdesk('${item.hostname}')" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow">
+              <i data-lucide="radio" class="w-4 h-4"></i> Acesso Remoto (RustDesk)
+            </button>
+          ` : ''}
+          <button onclick="openEditItemModal('${item.id}', '${category}'); closeItemModal();" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-white font-bold text-xs transition">
+            Editar
+          </button>
+        </div>
+      `;
+
+      document.getElementById('itemModal').classList.remove('hidden');
+      document.getElementById('itemModal').classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function closeItemModal() {
+      document.getElementById('itemModal').classList.add('hidden');
+      document.getElementById('itemModal').classList.remove('flex');
+    }
+
+    // Modal Novo / Edição
+    function openNovoItemModal() {
+      document.getElementById('editForm').reset();
+      document.getElementById('formItemId').value = '';
+      document.getElementById('formCategory').value = activeTab;
+      document.getElementById('formCategorySelect').value = activeTab;
+      document.getElementById('editModalTitle').innerHTML = '<i data-lucide="plus-circle" class="w-5 h-5"></i> Cadastrar Novo Ativo';
+      document.getElementById('btnDeleteForm').classList.add('hidden');
+      document.getElementById('editModal').classList.remove('hidden');
+      document.getElementById('editModal').classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function openEditItemModal(id, category) {
+      const item = (inventoryData[category] || []).find(i => String(i.id) === String(id));
+      if (!item) return;
+
+      document.getElementById('formItemId').value = item.id;
+      document.getElementById('formCategory').value = category;
+      document.getElementById('formCategorySelect').value = category;
+      document.getElementById('formStatus').value = item.status || 'em_uso';
+      document.getElementById('formServiceTag').value = item.serviceTag || '';
+      document.getElementById('formHostname').value = item.hostname || '';
+      document.getElementById('formModelo').value = item.modelo || '';
+      document.getElementById('formTipo').value = item.tipo || '';
+      document.getElementById('formResponsavel').value = item.responsavel || item.solicitante || '';
+      document.getElementById('formSetor').value = item.setor || '';
+      document.getElementById('formMac').value = item.mac || '';
+      document.getElementById('formRustdesk').value = item.rustdesk || '';
+      document.getElementById('formObs').value = item.obs || item.observacoes || '';
+
+      document.getElementById('editModalTitle').innerHTML = '<i data-lucide="pencil" class="w-5 h-5"></i> Editar Ativo';
+      document.getElementById('btnDeleteForm').classList.remove('hidden');
+      document.getElementById('editModal').classList.remove('hidden');
+      document.getElementById('editModal').classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.add('hidden');
+      document.getElementById('editModal').classList.remove('flex');
+    }
+
+    async function handleSaveItem(e) {
+      e.preventDefault();
+      const id = document.getElementById('formItemId').value;
+      const category = document.getElementById('formCategory').value;
+
+      const payload = {
+        category,
+        item: {
+          serviceTag: document.getElementById('formServiceTag').value.trim(),
+          hostname: document.getElementById('formHostname').value.trim(),
+          modelo: document.getElementById('formModelo').value.trim(),
+          tipo: document.getElementById('formTipo').value.trim(),
+          responsavel: document.getElementById('formResponsavel').value.trim(),
+          setor: document.getElementById('formSetor').value.trim(),
+          mac: document.getElementById('formMac').value.trim(),
+          rustdesk: document.getElementById('formRustdesk').value.trim(),
+          obs: document.getElementById('formObs').value.trim(),
+          status: document.getElementById('formStatus').value
+        }
+      };
+
+      try {
+        if (id) {
+          // Atualização PATCH
+          const res = await fetch('/api/inventario', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, category, updates: payload.item })
+          });
+          if (!res.ok) throw new Error('Falha ao salvar');
+        } else {
+          // Criação POST
+          const res = await fetch('/api/inventario', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) throw new Error('Falha ao criar');
+        }
+
+        closeEditModal();
+        await loadInventory();
+      } catch (err) {
+        alert('Erro ao salvar item: ' + err.message);
+      }
+    }
+
+    async function handleDeleteItem() {
+      const id = document.getElementById('formItemId').value;
+      if (!id || !confirm('Tem certeza que deseja excluir este equipamento do inventário?')) return;
+
+      try {
+        const res = await fetch('/api/inventario', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        if (res.ok) {
+          closeEditModal();
+          await loadInventory();
+        }
+      } catch (err) {
+        alert('Erro ao excluir item: ' + err.message);
+      }
+    }
+
+    function openSyncModal() {
+      document.getElementById('syncModal').classList.remove('hidden');
+      document.getElementById('syncModal').classList.add('flex');
+    }
+
+    function closeSyncModal() {
+      document.getElementById('syncModal').classList.add('hidden');
+      document.getElementById('syncModal').classList.remove('flex');
+    }
+
+    function exportToCSV() {
+      const items = inventoryData[activeTab] || [];
+      if (items.length === 0) return alert('Nenhum dado nesta aba para exportar.');
+
+      const headers = Object.keys(items[0]);
+      const csvRows = [headers.join(',')];
+
+      items.forEach(item => {
+        const values = headers.map(h => `"${String(item[h] || '').replace(/"/g, '""')}"`);
+        csvRows.push(values.join(','));
+      });
+
+      const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `inventario_${activeTab}_${Date.now()}.csv`;
+      a.click();
+    }
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      loadInventory();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

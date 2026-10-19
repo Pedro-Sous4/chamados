@@ -1,10 +1,60 @@
-const http = require('http');
+
+function normalizeColabStr(s) {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/^lgm\s*-\s*/i, '')
+    .replace(/^car\s*-\s*/i, '')
+    .trim();
+}
+
+function findColaboradorMatch(allColaboradores, contatos, { sEmail, sNome, realNumber, number }) {
+  if (sEmail && sEmail !== '-') {
+    const m = allColaboradores.find(c => c.email && c.email.toLowerCase() === sEmail.toLowerCase());
+    if (m) return m;
+  }
+
+  const normSNome = normalizeColabStr(sNome);
+
+  // Match por nome
+  if (normSNome && normSNome !== '-' && normSNome !== 'bot') {
+    const m = allColaboradores.find(c => {
+      const cNorm = normalizeColabStr(c.nome);
+      return cNorm === normSNome || cNorm.includes(normSNome) || normSNome.includes(cNorm);
+    });
+    if (m) return m;
+  }
+
+  // Match por telefone ou LID
+  const tReal = String(realNumber || '').replace(/\D/g, '');
+  const tNum = String(number || '').replace(/\D/g, '');
+
+  if (tReal || tNum) {
+    const m = allColaboradores.find(c => {
+      if (!c.telefone) return false;
+      const colabTel = String(c.telefone).replace(/\D/g, '');
+      if (!colabTel) return false;
+
+      if (colabTel === tReal || colabTel === tNum || tReal.endsWith(colabTel) || tNum.endsWith(colabTel) || colabTel.endsWith(tReal) || colabTel.endsWith(tNum)) {
+        return true;
+      }
+      if (colabTel.length >= 8 && tReal.length >= 8 && colabTel.slice(-8) === tReal.slice(-8)) return true;
+      return false;
+    });
+    if (m) return m;
+  }
+
+  return null;
+}
+
+﻿const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
-// ── Configuração de e-mail ────────────────────────────────────────────────────
+// â”€â”€ Configuração de e-mail â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
 const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
 const SMTP_USER = process.env.SMTP_USER || 'ti3@laghettomultipropriedade.com.br';
@@ -33,7 +83,7 @@ async function sendConclusaoEmail({ toEmail, solicitanteNome, atendenteNome, tic
     await mailer.sendMail({
       from: `"Central de Chamados Laghetto" <${SMTP_USER}>`,
       to: toEmail,
-      subject: `Chamado #${ticketId} — ${ticketTipo} concluído`,
+      subject: `Chamado #${ticketId} â€” ${ticketTipo} concluído`,
       text,
       html,
     });
@@ -45,7 +95,81 @@ async function sendConclusaoEmail({ toEmail, solicitanteNome, atendenteNome, tic
   }
 }
 
-// ── Utilitário de escrita em coleção (espelho simplificado do storage do bot) ─
+async function sendNovoChamadoAlert(ticket) {
+  try {
+    const config = readCollection('config');
+    const toEmail = (config && (config.email_alerta || config.emailAlerta)) || 'ti3@laghettomultipropriedade.com.br';
+    if (!toEmail) return { ok: false, error: 'E-mail de alerta não configurado' };
+
+    const dataHora = new Date().toLocaleString('pt-BR', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+      timeZone: 'America/Sao_Paulo',
+    });
+
+    const ticketId = ticket.id || 'N/A';
+    const tipo = ticket.type || 'Suporte';
+    const solicitante = ticket.solicitanteNome || ticket.name || ticket.solicitante || 'Não informado';
+    const telefone = ticket.realNumber || ticket.number || ticket.telefone || 'Não informado';
+    const salaSetor = ticket.sala || 'Não informado';
+    const origemNome = ticket.origem === 'site' ? 'Site' : 'WhatsApp Bot';
+    const descricao = ticket.description || 'Sem descrição';
+
+    const subject = `[Novo Chamado #${ticketId}] ${tipo} — ${solicitante} (${origemNome})`;
+
+    const text =
+      `Central de Chamados TI Laghetto\n` +
+      `Um novo chamado foi aberto no sistema.\n\n` +
+      `ID/Protocolo: #${ticketId}\n` +
+      `Origem: ${origemNome}\n` +
+      `Tipo: ${tipo}\n` +
+      `Solicitante: ${solicitante}\n` +
+      `Telefone/Contato: ${telefone}\n` +
+      `Sala / Setor: ${salaSetor}\n` +
+      `Data/Hora: ${dataHora}\n\n` +
+      `Descrição:\n${descricao}\n\n` +
+      `Acesse a Central de Chamados para atender.`;
+
+    const html =
+      `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">` +
+        `<div style="background: #925616; padding: 20px 24px; color: #ffffff;">` +
+          `<h2 style="margin: 0; font-size: 18px; font-weight: 700;">Novo Chamado Aberto #${ticketId}</h2>` +
+          `<p style="margin: 4px 0 0; font-size: 13px; opacity: 0.9;">Recebido via <strong>${origemNome}</strong></p>` +
+        `</div>` +
+        `<div style="padding: 24px;">` +
+          `<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">` +
+            `<tr><td style="padding: 8px 0; color: #6b7280; width: 140px; font-weight: 600;">Protocolo:</td><td style="padding: 8px 0; color: #111827; font-weight: 700;">#${ticketId}</td></tr>` +
+            `<tr><td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Origem:</td><td style="padding: 8px 0; color: #111827;">${origemNome}</td></tr>` +
+            `<tr><td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Tipo de Demanda:</td><td style="padding: 8px 0; color: #111827; font-weight: 600;">${tipo}</td></tr>` +
+            `<tr><td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Solicitante:</td><td style="padding: 8px 0; color: #111827; font-weight: 600;">${solicitante}</td></tr>` +
+            `<tr><td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Telefone:</td><td style="padding: 8px 0; color: #111827;">${telefone}</td></tr>` +
+            `<tr><td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Sala / Setor:</td><td style="padding: 8px 0; color: #111827;">${salaSetor}</td></tr>` +
+            `<tr><td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Data e Hora:</td><td style="padding: 8px 0; color: #111827;">${dataHora}</td></tr>` +
+          `</table>` +
+          `<div style="background: #f9fafb; border-left: 4px solid #925616; padding: 14px; border-radius: 6px; margin-bottom: 20px;">` +
+            `<p style="margin: 0 0 6px; font-weight: 700; color: #374151; font-size: 13px; text-transform: uppercase;">Descrição do Problema:</p>` +
+            `<p style="margin: 0; color: #1f2937; font-size: 14px; line-height: 1.5; white-space: pre-wrap;">${descricao.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>` +
+          `</div>` +
+          `<p style="margin: 0; font-size: 12px; color: #9ca3af;">Este alerta automático foi gerado pela Central de Chamados Laghetto.</p>` +
+        `</div>` +
+      `</div>`;
+
+    await mailer.sendMail({
+      from: `"Central de Chamados Laghetto" <${SMTP_USER}>`,
+      to: toEmail,
+      subject,
+      text,
+      html,
+    });
+    console.log(`[email] Alerta de novo chamado #${ticketId} enviado para ${toEmail}`);
+    return { ok: true };
+  } catch (err) {
+    console.warn(`[email] Falha ao enviar alerta de novo chamado:`, err.message);
+    return { ok: false, error: err.message };
+  }
+}
+
+// â”€â”€ Utilitário de escrita em coleção (espelho simplificado do storage do bot) â”€
 function insertCollection(collection, record) {
   const filePath = path.join(DADOS_DIR, `${collection}.json`);
   if (!fs.existsSync(DADOS_DIR)) fs.mkdirSync(DADOS_DIR, { recursive: true });
@@ -59,7 +183,7 @@ function insertCollection(collection, record) {
   return saved;
 }
 
-// ── Auth ─────────────────────────────────────────────────────────────────────
+// â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const AUTH_SALT = 'laghetto-salt-2026-chamados';
 
@@ -307,6 +431,21 @@ function sendJson(res, statusCode, data) {
 }
 
 function sendFile(res, filePath) {
+  if (!fs.existsSync(filePath)) {
+    res.writeHead(404);
+    res.end('Not found');
+    return;
+  }
+
+  if (fs.statSync(filePath).isDirectory()) {
+    filePath = path.join(filePath, 'index.html');
+    if (!fs.existsSync(filePath)) {
+      res.writeHead(404);
+      res.end('Not found');
+      return;
+    }
+  }
+
   const ext = path.extname(filePath).toLowerCase();
   const MIME = {
     '.html': 'text/html; charset=utf-8',
@@ -322,17 +461,11 @@ function sendFile(res, filePath) {
     '.svg': 'image/svg+xml',
   };
 
-  if (!fs.existsSync(filePath)) {
-    res.writeHead(404);
-    res.end('Not found');
-    return;
-  }
-
-  res.writeHead(200, { 'Content-Type': MIME[ext] || 'text/plain' });
+  res.writeHead(200, { 'Content-Type': MIME[ext] || 'text/plain', 'Cache-Control': ext === '.html' ? 'no-cache, no-store, must-revalidate' : 'public, max-age=3600' });
   fs.createReadStream(filePath).pipe(res);
 }
 
-// ── Roteador ─────────────────────────────────────────────────────────────────
+// â”€â”€ Roteador â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const ROUTES = {
   /**
@@ -451,9 +584,25 @@ const ROUTES = {
     }
     if (filterType)   tickets = tickets.filter(t => t.type   === filterType);
 
-    // Enriquece tickets com nome/email do solicitante a partir de logins e resolve o nome de referência dos contatos
     const logins = readCollection('logins');
     const contatos = readCollection('contatos');
+    const colsData = readCollection('colaboradores');
+    
+    // Flat map de todos os colaboradores
+    let allColaboradores = [];
+    const root = Array.isArray(colsData) ? colsData[0] : colsData;
+    if (root) {
+        allColaboradores = [...(root.lideranca || [])];
+        const extractDeep = (sectors) => {
+          if (!sectors) return;
+          sectors.forEach(s => {
+            if (s.colaboradores) allColaboradores.push(...s.colaboradores);
+            if (s.subsetores) extractDeep(s.subsetores);
+          });
+        };
+        extractDeep(root.setores);
+      }
+
     tickets = tickets.map(t => {
       let resolvedName = t.name;
       let realNumber = t.number;
@@ -462,7 +611,6 @@ const ROUTES = {
         if (contato && contato.nome) {
           resolvedName = contato.nome;
           
-          // Se for um contato com LID (identificador do bot), tenta achar outro contato com o mesmo nome que tenha número de telefone real (10 a 13 dígitos)
           const contatoReal = contatos.find(c => c.nome === contato.nome && c.numero && c.numero.length >= 10 && c.numero.length <= 13 && c.numero !== contato.numero);
           if (contatoReal) {
             realNumber = contatoReal.numero;
@@ -472,24 +620,35 @@ const ROUTES = {
       
       let enrichedTicket = Object.assign({}, t, { name: resolvedName, realNumber: realNumber });
 
-      if (enrichedTicket.solicitanteNome && enrichedTicket.solicitanteEmail) return enrichedTicket;
-      // Tenta casar pelo email completo ou pelo prefixo (campo solicitante legado)
       let match = logins.find(u =>
         (enrichedTicket.solicitanteEmail && u.email.toLowerCase() === enrichedTicket.solicitanteEmail.toLowerCase()) ||
         (enrichedTicket.solicitante && u.email.toLowerCase().startsWith(enrichedTicket.solicitante.toLowerCase() + '@'))
       );
-      // Para tickets de bot: tenta via contato vinculado (id_login)
       if (!match && enrichedTicket.number) {
         const contato = contatos.find(c => String(c.numero).replace(/\D/g, '') === String(enrichedTicket.number).replace(/\D/g, ''));
         if (contato && contato.id_login) {
           match = logins.find(u => String(u.id) === String(contato.id_login));
         }
       }
-      if (!match) return enrichedTicket;
-      return Object.assign({}, enrichedTicket, {
-        solicitanteNome:  match.name  || enrichedTicket.solicitanteNome  || enrichedTicket.solicitante || '',
-        solicitanteEmail: match.email || enrichedTicket.solicitanteEmail || '',
-      });
+      
+      const sNome = match ? match.name : (enrichedTicket.solicitanteNome || enrichedTicket.name || enrichedTicket.solicitante || '');
+      const sEmail = match ? match.email : (enrichedTicket.solicitanteEmail || enrichedTicket.solicitante || '');
+
+      enrichedTicket.solicitanteNome = sNome;
+      enrichedTicket.solicitanteEmail = sEmail;
+
+            // Link com o organograma
+      let colabMatch = findColaboradorMatch(allColaboradores, contatos, { sEmail, sNome, realNumber, number: t.number });
+
+      if (colabMatch) {
+        enrichedTicket.colabId = colabMatch.id;
+        enrichedTicket.foto = colabMatch.foto;
+        enrichedTicket.cargo = colabMatch.cargo;
+        enrichedTicket.colabSetor = colabMatch.setor;
+        enrichedTicket.solicitanteNome = colabMatch.nome;
+      }
+
+      return enrichedTicket;
     });
 
     if (filterQ) {
@@ -512,12 +671,102 @@ const ROUTES = {
    * POST /api/tickets
    * Body JSON: { name, number, type, description }
    */
+    'POST /api/tickets/direct': (req, res) => {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const data = JSON.parse(body);
+        if (!data.telefone) return sendJson(res, 400, { error: 'Telefone é obrigatório' });
+        
+        const ticketsPath = require('path').join(DADOS_DIR, 'tickets.json');
+        let tickets = readCollection('tickets');
+        const newId = tickets.length > 0 ? Math.max(...tickets.map(t => Number(t.id))) + 1 : 1;
+        
+        // Buscar histórico anterior de conversas desse contato/colaborador
+        const contatos = readCollection('contatos');
+        const telLimpo = String(data.telefone || '').replace(/\D/g, '');
+        const nomeNorm = normalizeColabStr(data.nome);
+        
+        let relatedNums = new Set([telLimpo]);
+        contatos.forEach(ct => {
+          const ctNum = String(ct.numero || '').replace(/\D/g, '');
+          const ctNorm = normalizeColabStr(ct.nome);
+          if (!ctNum) return;
+          if (telLimpo && (ctNum === telLimpo || (telLimpo.length >= 8 && ctNum.endsWith(telLimpo.slice(-8))))) {
+            relatedNums.add(ctNum);
+            contatos.filter(o => o.nome === ct.nome).forEach(o => relatedNums.add(String(o.numero).replace(/\D/g, '')));
+          }
+          if (nomeNorm && (ctNorm === nomeNorm || ctNorm.includes(nomeNorm) || nomeNorm.includes(ctNorm))) {
+            relatedNums.add(ctNum);
+            contatos.filter(o => o.nome === ct.nome).forEach(o => relatedNums.add(String(o.numero).replace(/\D/g, '')));
+          }
+        });
+
+        const prevTicket = tickets.slice().reverse().find(t => {
+          if (!t.conversa || t.conversa.length === 0) return false;
+          const tSol = normalizeColabStr(t.solicitanteNome);
+          const tName = normalizeColabStr(t.name);
+          if (nomeNorm && (tSol === nomeNorm || tName === nomeNorm || tSol.includes(nomeNorm) || tName.includes(nomeNorm))) return true;
+          const tNum = String(t.number || '').replace(/\D/g, '');
+          const tReal = String(t.realNumber || '').replace(/\D/g, '');
+          for (const num of relatedNums) {
+            if (!num) continue;
+            if (num === tNum || num.endsWith(tNum) || tNum.endsWith(num)) return true;
+            if (tReal && (num === tReal || num.endsWith(tReal) || tReal.endsWith(num))) return true;
+          }
+          return false;
+        });
+
+        const initialConversa = prevTicket ? [...prevTicket.conversa] : [];
+
+        const newTicket = {
+          id: String(newId),
+          status: 'em_atendimento',
+          origem: 'bot',
+          number: data.telefone,
+          name: data.nome || 'Usuário',
+          solicitanteNome: data.nome || 'Usuário',
+          type: 'Mensagem Direta',
+          description: 'Atendimento direto iniciado via Organograma.',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          conversa: initialConversa
+        };
+        
+        tickets.push(newTicket);
+        fs.writeFileSync(ticketsPath, JSON.stringify(tickets, null, 2), 'utf-8');
+        
+        // Pause the bot (set to em_atendimento)
+        const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3000;
+        const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
+        const payload = JSON.stringify({ secret: WEBHOOK_SECRET, telefone: data.telefone, id: newTicket.id, tipo: 'Mensagem Direta', atendente: 'Organograma' });
+        
+        const whReq = require('http').request(
+          { hostname: 'localhost', port: WEBHOOK_PORT, path: '/webhook/chamado-assumido', method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
+          (whRes) => { whRes.resume(); console.log(`[site] webhook assumido direto: ${whRes.statusCode}`); }
+        );
+        whReq.on('error', (e) => console.warn('[site] webhook indisponível:', e.message));
+        whReq.write(payload);
+        whReq.end();
+
+        // Dispara e-mail de alerta assíncrono para o TI
+        sendNovoChamadoAlert(newTicket).catch(e => console.warn('[site] Erro alerta direto:', e.message));
+
+        return sendJson(res, 200, { ok: true, ticketId: newTicket.id });
+      } catch (e) {
+        return sendJson(res, 400, { error: 'Invalid JSON' });
+      }
+    });
+  },
+
   'POST /api/tickets': (req, res) => {
     const session = getSession(req);
 
-    let body = '';
-    req.on('data', chunk => (body += chunk));
+    const chunks = [];
+    req.on('data', chunk => chunks.push(chunk));
     req.on('end', () => {
+      let body = Buffer.concat(chunks).toString('utf-8');
       let data;
       try { data = JSON.parse(body); } catch {
         return sendJson(res, 400, { error: 'JSON inválido' });
@@ -580,11 +829,40 @@ const ROUTES = {
         }
       }
 
+      // Dispara e-mail de alerta assíncrono para o TI
+      sendNovoChamadoAlert(saved).catch(e => console.warn('[site] Erro alerta ticket:', e.message));
+
       sendJson(res, 201, saved);
     });
   },
 
-  // ── Autenticação ────────────────────────────────────────────────────────────
+  'POST /api/link-colaborador': (req, res) => {
+    let body = '';
+    req.on('data', chunk => (body += chunk));
+    req.on('end', () => {
+      let data;
+      try { data = JSON.parse(body); } catch { return sendJson(res, 400, { error: 'JSON inválido' }); }
+      const { numero_origem, nome_colaborador } = data;
+      if (!numero_origem || !nome_colaborador) return sendJson(res, 400, { error: 'Faltam dados' });
+
+      let contatos = readCollection('contatos');
+      let c = contatos.find(x => String(x.numero).replace(/\D/g, '') === String(numero_origem).replace(/\D/g, ''));
+      if (c) {
+        c.nome = nome_colaborador;
+      } else {
+        contatos.push({
+          id: Date.now(),
+          createdAt: new Date().toISOString(),
+          numero: numero_origem,
+          nome: nome_colaborador
+        });
+      }
+      fs.writeFileSync(path.join(DADOS_DIR, 'contatos.json'), JSON.stringify(contatos, null, 2), 'utf-8');
+      sendJson(res, 200, { ok: true });
+    });
+  },
+
+  // â”€â”€ Autenticação â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   'POST /api/auth/login': (req, res) => {
     let body = '';
@@ -622,6 +900,207 @@ const ROUTES = {
     sendJson(res, 200, { email: session.email, role: session.role || 'usuario' });
   },
 
+  // â”€â”€ Organograma â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  'GET /api/colaboradores': (req, res) => {
+    // Tenta ler do banco
+    const cols = readCollection('colaboradores');
+    if (Array.isArray(cols)) {
+      if (cols.length === 0) return sendJson(res, 200, { lideranca: [], setores: [] });
+      return sendJson(res, 200, cols[0]);
+    }
+    sendJson(res, 200, cols);
+  },
+
+    'POST /api/bot/broadcast': (req, res) => {
+    const chunks = [];
+    req.on('data', chunk => chunks.push(chunk));
+    req.on('end', () => {
+      let data;
+      try { data = JSON.parse(Buffer.concat(chunks).toString('utf-8')); } catch { return sendJson(res, 400, { error: 'JSON inválido' }); }
+      if (!data.telefones || !data.mensagem) return sendJson(res, 400, { error: 'Faltam dados' });
+      
+      const telefones = data.telefones;
+      let count = 0;
+      telefones.forEach(tel => {
+        const payload = JSON.stringify({ secret: process.env.WEBHOOK_SECRET || '', telefone: tel, mensagem: data.mensagem });
+        const whReq = require('http').request(
+          { hostname: 'localhost', port: process.env.WEBHOOK_PORT || 3000, path: '/webhook/mensagem-direta', method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
+          (whRes) => { whRes.resume(); }
+        );
+        whReq.on('error', () => {});
+        whReq.write(payload);
+        whReq.end();
+        count++;
+      });
+      sendJson(res, 200, { ok: true, count });
+    });
+  },
+
+  'POST /api/colaboradores': (req, res) => {
+    let body = '';
+    req.on('data', chunk => (body += chunk));
+    req.on('end', () => {
+      let data;
+      try { data = JSON.parse(body); } catch { return sendJson(res, 400, { error: 'JSON inválido' }); }
+      
+      const colPath = path.join(DADOS_DIR, 'colaboradores.json');
+      // Salva diretamente como o objeto
+      fs.writeFileSync(colPath, JSON.stringify(data, null, 2), 'utf-8');
+      sendJson(res, 200, { ok: true });
+    });
+  },
+
+  // ── Inventário de TI ────────────────────────────────────────────────────────
+
+  'GET /api/inventario': (req, res) => {
+    const invPath = path.join(DADOS_DIR, 'inventario.json');
+    if (!fs.existsSync(invPath)) {
+      return sendJson(res, 200, { computadores: [], perifericos: [], rede: [], emprestimos: [] });
+    }
+    try {
+      const data = JSON.parse(fs.readFileSync(invPath, 'utf-8'));
+      sendJson(res, 200, data);
+    } catch (err) {
+      sendJson(res, 500, { error: 'Erro ao carregar inventário' });
+    }
+  },
+
+  'POST /api/inventario': (req, res) => {
+    let body = '';
+    req.on('data', chunk => (body += chunk));
+    req.on('end', () => {
+      let data;
+      try { data = JSON.parse(body); } catch { return sendJson(res, 400, { error: 'JSON inválido' }); }
+
+      const invPath = path.join(DADOS_DIR, 'inventario.json');
+      let inv = { computadores: [], perifericos: [], rede: [], emprestimos: [] };
+      if (fs.existsSync(invPath)) {
+        try { inv = JSON.parse(fs.readFileSync(invPath, 'utf-8')); } catch {}
+      }
+
+      const category = data.category || 'computadores';
+      if (!inv[category]) inv[category] = [];
+
+      const newItem = {
+        id: (category.slice(0, 3) || 'it') + '-' + Date.now(),
+        createdAt: new Date().toISOString(),
+        ...data.item
+      };
+      inv[category].unshift(newItem);
+
+      fs.writeFileSync(invPath, JSON.stringify(inv, null, 2), 'utf-8');
+      sendJson(res, 201, { ok: true, item: newItem });
+    });
+  },
+
+  'PATCH /api/inventario': (req, res) => {
+    let body = '';
+    req.on('data', chunk => (body += chunk));
+    req.on('end', () => {
+      let data;
+      try { data = JSON.parse(body); } catch { return sendJson(res, 400, { error: 'JSON inválido' }); }
+
+      const invPath = path.join(DADOS_DIR, 'inventario.json');
+      if (!fs.existsSync(invPath)) return sendJson(res, 404, { error: 'Inventário não encontrado' });
+
+      let inv = JSON.parse(fs.readFileSync(invPath, 'utf-8'));
+      const { id, category, updates } = data;
+
+      let found = false;
+      const targetCat = category || ['computadores', 'perifericos', 'rede', 'emprestimos'];
+      const categoriesToCheck = Array.isArray(targetCat) ? targetCat : [targetCat];
+
+      for (let cat of categoriesToCheck) {
+        if (inv[cat]) {
+          const idx = inv[cat].findIndex(item => String(item.id) === String(id));
+          if (idx !== -1) {
+            inv[cat][idx] = { ...inv[cat][idx], ...updates, updatedAt: new Date().toISOString() };
+            found = true;
+            break;
+          }
+        }
+      }
+
+      if (!found) return sendJson(res, 404, { error: 'Item não encontrado no inventário' });
+
+      fs.writeFileSync(invPath, JSON.stringify(inv, null, 2), 'utf-8');
+      sendJson(res, 200, { ok: true });
+    });
+  },
+
+  'DELETE /api/inventario': (req, res) => {
+    let body = '';
+    req.on('data', chunk => (body += chunk));
+    req.on('end', () => {
+      let data;
+      try { data = JSON.parse(body); } catch { return sendJson(res, 400, { error: 'JSON inválido' }); }
+
+      const invPath = path.join(DADOS_DIR, 'inventario.json');
+      if (!fs.existsSync(invPath)) return sendJson(res, 404, { error: 'Inventário não encontrado' });
+
+      let inv = JSON.parse(fs.readFileSync(invPath, 'utf-8'));
+      const { id } = data;
+
+      let removed = false;
+      ['computadores', 'perifericos', 'rede', 'emprestimos'].forEach(cat => {
+        if (inv[cat]) {
+          const lenBefore = inv[cat].length;
+          inv[cat] = inv[cat].filter(item => String(item.id) !== String(id));
+          if (inv[cat].length < lenBefore) removed = true;
+        }
+      });
+
+      if (!removed) return sendJson(res, 404, { error: 'Item não encontrado' });
+
+      fs.writeFileSync(invPath, JSON.stringify(inv, null, 2), 'utf-8');
+      sendJson(res, 200, { ok: true });
+    });
+  },
+
+  'POST /api/upload-figurinha': (req, res) => {
+    let body = '';
+    req.on('data', chunk => (body += chunk));
+    req.on('end', () => {
+      let data;
+      try { 
+        data = JSON.parse(body); 
+      } catch (e) { 
+        console.error('[upload] Erro parse JSON', e.message);
+        return sendJson(res, 400, { error: 'JSON inválido' }); 
+      }
+      
+      if (!data.foto || !data.nome) {
+        console.error('[upload] Falta foto ou nome');
+        return sendJson(res, 400, { error: 'Faltam foto ou nome' });
+      }
+
+      console.log(`[upload] Recebida foto ${data.nome}, tamanho string: ${data.foto.length}`);
+
+      const matches = data.foto.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      if (!matches || matches.length !== 3) {
+        console.error('[upload] Formato base64 invalido');
+        return sendJson(res, 400, { error: 'Formato base64 inválido' });
+      }
+
+      const buffer = Buffer.from(matches[2], 'base64');
+      const ext = path.extname(data.nome) || '.png';
+      const fileName = `colab_${Date.now()}${ext}`;
+      
+      const uploadDir = path.join(PUBLIC_DIR, 'figurinhas');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      const filePath = path.join(uploadDir, fileName);
+      fs.writeFileSync(filePath, buffer);
+
+      console.log(`[upload] Salvo em ${filePath}`);
+      sendJson(res, 200, { url: `/figurinhas/${fileName}` });
+    });
+  },
+
 
   /**
    * GET /api/tipos
@@ -632,7 +1111,7 @@ const ROUTES = {
     sendJson(res, 200, { tipos });
   },
 
-  // ── Contatos (registros do bot) ────────────────────────────────────────────
+  // â”€â”€ Contatos (registros do bot) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   'GET /api/contatos': (req, res) => {
     if (!requireAuth(req, res)) return;
@@ -699,7 +1178,7 @@ const ROUTES = {
     const data = JSON.stringify({ secret: process.env.WEBHOOK_SECRET || '' });
     const botReq = http.request({
       hostname: 'localhost',
-      port: process.env.WEBHOOK_PORT || 3005,
+      port: process.env.WEBHOOK_PORT || 3000,
       path: '/webhook/import-contacts',
       method: 'POST',
       headers: {
@@ -803,7 +1282,7 @@ const ROUTES = {
     sendJson(res, 200, { telefone: null });
   },
 
-  // ── Logins ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Logins â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   
   'GET /api/logins': (req, res) => {
     const session = requireAuth(req, res);
@@ -862,7 +1341,7 @@ const ROUTES = {
     });
   },
 
-  // ── Configurações Bot (Salas, Setores, etc) ────────────────────────────────
+  // â”€â”€ Configurações Bot (Salas, Setores, etc) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   'GET /api/config/bot': (req, res) => {
     if (!requireAuth(req, res)) return;
@@ -973,20 +1452,26 @@ const ROUTES = {
     });
   },
 
-  // ── Salas (Modal de Novo Chamado no site) ──────────────
+  // â”€â”€ Salas (Modal de Novo Chamado no site) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   'GET /api/salas': (req, res) => {
     if (!requireAuth(req, res)) return;
     
     const config = readCollection('bot_config');
-    const setoresVita = config.setores_vita || ['Jurídico', 'Financeiro', 'Estratégico', 'Controladoria', 'Contas a Receber', 'Central de Contratos', 'Diretoria', 'Backoffice'];
-    const setoresAva = config.setores_ava || ['Conexão Laghetto', 'RH', 'DP', 'Unique'];
-    const salasVendas = config.salas_vendas || ['Pedras Altas', 'Pedras Altas Noturno', 'NBA Park', 'Golden Resort'];
+    const setoresVita = config.setores_vita || ['Contas a Receber', 'Contas a Pagar', 'Jurídico', 'Controladoria', 'Central de Contratos', 'Estratégico', 'Diretoria / CFO'];
+    const setoresAva = config.setores_ava || ['Recursos Humanos', 'Departamento Pessoal'];
+    const setoresCanela = config.setores_canela || ['Unique Golden', 'Unique Chateau', 'Unique Stilo Borges', 'Unique Villagio', 'Unique Riserva', 'Unique Sports', 'Retenção'];
+    const setoresPedrasAltas = config.setores_pedras_altas || ['Captação', 'Consultoria', 'Operacional', 'Pós Vendas comercial Pedras Altas'];
+    const setoresNbaPark = config.setores_nba_park || ['Captação', 'Consultoria', 'Operacional', 'Pós comercial Retenção', 'Pós Vendas comercial NBA'];
+    const setoresGoldenGramado = config.setores_golden_gramado || ['Captação', 'Consultoria', 'Operacional', 'Pós Vendas comercial Golden'];
 
     const locais = [
-      ...setoresVita.map(s => 'VITA - ' + s),
-      ...setoresAva.map(s => 'AVA - ' + s),
-      ...salasVendas.map(s => 'Vendas - ' + s)
+      ...setoresVita.map(s => 'Vita — ' + s),
+      ...setoresAva.map(s => 'AVA — ' + s),
+      ...setoresCanela.map(s => 'Canela — ' + s),
+      ...setoresPedrasAltas.map(s => 'Sala de Vendas Pedras Altas — ' + s),
+      ...setoresNbaPark.map(s => 'Sala de Vendas NBA Park — ' + s),
+      ...setoresGoldenGramado.map(s => 'Sala de Vendas Golden Gramado — ' + s)
     ];
 
     const salas = locais.map((nome, i) => ({ id: i + 1, nome }));
@@ -994,7 +1479,7 @@ const ROUTES = {
   },
 
 
-  // ── Configurações ───────────────────────────────────────────────────────────
+  // â”€â”€ Configurações â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   'GET /api/config/whatsapp': (req, res) => {
     if (!requireAuth(req, res)) return;
@@ -1042,7 +1527,7 @@ const ROUTES = {
     const data = JSON.stringify({ secret: process.env.WEBHOOK_SECRET || '' });
     const botReq = http.request({
       hostname: 'localhost',
-      port: process.env.WEBHOOK_PORT || 3005,
+      port: process.env.WEBHOOK_PORT || 3000,
       path: '/webhook/logout',
       method: 'POST',
       headers: {
@@ -1102,6 +1587,42 @@ const ROUTES = {
     });
   },
 
+  'GET /api/config': (req, res) => {
+    if (!requireAuth(req, res)) return;
+    const config = readCollection('config');
+    sendJson(res, 200, {
+      email_alerta: (config && (config.email_alerta || config.emailAlerta)) || 'ti3@laghettomultipropriedade.com.br',
+      whatsapp: (config && config.whatsapp) || { numero: '' }
+    });
+  },
+
+  'POST /api/config': (req, res) => {
+    const session = requireAuth(req, res);
+    if (!session) return;
+    const ALLOWED = ['administrador', 'supervisor'];
+    if (!ALLOWED.includes(session.role || 'usuario')) {
+      return sendJson(res, 403, { error: 'Sem permissão' });
+    }
+    let body = '';
+    req.on('data', chunk => (body += chunk));
+    req.on('end', () => {
+      let data;
+      try { data = JSON.parse(body); } catch {
+        return sendJson(res, 400, { error: 'JSON inválido' });
+      }
+      const config = readCollection('config') || {};
+      if (data.email_alerta !== undefined) {
+        config.email_alerta = String(data.email_alerta).trim();
+      }
+      if (data.whatsapp !== undefined) {
+        config.whatsapp = data.whatsapp;
+      }
+      const configPath = path.join(DADOS_DIR, 'config.json');
+      fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+      sendJson(res, 200, { ok: true, config });
+    });
+  },
+
   'POST /api/upload': (req, res) => {
     const session = requireAuth(req, res);
     if (!session) return;
@@ -1130,7 +1651,7 @@ const ROUTES = {
   },
 };
 
-// ── Server ────────────────────────────────────────────────────────────────────
+// â”€â”€ Server â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const server = http.createServer((req, res) => {
   const routeKey = `${req.method} ${req.url.split('?')[0]}`;
@@ -1158,34 +1679,52 @@ const server = http.createServer((req, res) => {
     let ticket = tickets.find(t => Number(t.id) === id);
     if (!ticket) return sendJson(res, 404, { error: 'Chamado não encontrado' });
 
-    // Resolve o nome de referência em contatos.json
-    if (ticket.number) {
-      const contatos = readCollection('contatos');
-      const contato = contatos.find(c => String(c.numero).replace(/\D/g, '') === String(ticket.number).replace(/\D/g, ''));
-      if (contato && contato.nome) {
-        ticket = Object.assign({}, ticket, { name: contato.nome });
-      }
+    // Enriquecimento completo igual ao GET /api/tickets
+    const contatos = readCollection('contatos');
+    const colsData = readCollection('colaboradores');
+    let allColaboradores = [];
+    const root = Array.isArray(colsData) ? colsData[0] : colsData;
+    if (root) {
+      allColaboradores = [...(root.lideranca || [])];
+      const extractDeep = (sectors) => {
+        if (!sectors) return;
+        sectors.forEach(s => {
+          if (s.colaboradores) allColaboradores.push(...s.colaboradores);
+          if (s.subsetores) extractDeep(s.subsetores);
+        });
+      };
+      extractDeep(root.setores);
     }
 
-    if (!ticket.solicitanteNome || !ticket.solicitanteEmail) {
-      const logins = readCollection('logins');
-      const match = logins.find(u =>
-        (ticket.solicitanteEmail && u.email.toLowerCase() === ticket.solicitanteEmail.toLowerCase()) ||
-        (ticket.solicitante && u.email.toLowerCase().startsWith(ticket.solicitante.toLowerCase() + '@'))
-      );
-      if (match) ticket = Object.assign({}, ticket, {
-        solicitanteNome:  match.name  || ticket.solicitanteNome  || ticket.solicitante || '',
-        solicitanteEmail: match.email || ticket.solicitanteEmail || '',
-      });
+    let realNumber = null;
+    if (ticket.number) {
+      const contato = contatos.find(c => String(c.numero).replace(/\D/g, '') === String(ticket.number).replace(/\D/g, ''));
+      if (contato) {
+        if (contato.nome) ticket = Object.assign({}, ticket, { name: contato.nome });
+        if (contato.realNumber) realNumber = contato.realNumber;
+      }
     }
-    return sendJson(res, 200, ticket);
+    const sNome = ticket.solicitanteNome || ticket.name || ticket.solicitante;
+    const sEmail = ticket.solicitanteEmail;
+
+    let colabMatch = findColaboradorMatch(allColaboradores, contatos, { sEmail, sNome, realNumber, number: ticket.number });
+
+    const enriched = Object.assign({}, ticket);
+    if (realNumber) enriched.realNumber = realNumber;
+    if (colabMatch) {
+      enriched.foto = colabMatch.foto;
+      enriched.cargo = colabMatch.cargo;
+      enriched.colabSetor = colabMatch.setor;
+      enriched.solicitanteNome = colabMatch.nome;
+    }
+
+    return sendJson(res, 200, enriched);
   }
 
   // Dynamic route: PATCH /api/tickets/:id
   const patchTicketMatch = /^PATCH \/api\/tickets\/(\d+)$/.exec(routeKey);
   if (patchTicketMatch) {
-    const session = requireAuth(req, res);
-    if (!session) return;
+    const session = getSession(req);
     const id = Number(patchTicketMatch[1]);
     let body = '';
     req.on('data', chunk => (body += chunk));
@@ -1207,8 +1746,11 @@ const server = http.createServer((req, res) => {
 
       const anteriorStatus = tickets[idx].status;
       
-      const atendenteLogin = readCollection('logins').find(u => u.email.toLowerCase() === session.email.toLowerCase());
-      const atendenteNome = (atendenteLogin && atendenteLogin.name) ? atendenteLogin.name : session.email;
+      let atendenteNome = data.atendente || 'Suporte (Organograma)';
+      if (session && session.email) {
+        const atendenteLogin = readCollection('logins').find(u => u.email.toLowerCase() === session.email.toLowerCase());
+        atendenteNome = (atendenteLogin && atendenteLogin.name) ? atendenteLogin.name : session.email;
+      }
 
       let addedMessage = false;
       // Atualiza campos permitidos
@@ -1269,7 +1811,7 @@ const server = http.createServer((req, res) => {
       }
 
       const ticket = tickets[idx];
-      const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3005;
+      const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3000;
       const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
       const notifPhone = ticket.notifWpp || (ticket.origem === 'bot' ? ticket.number : null);
       const origemNotif = !!notifPhone;
@@ -1366,7 +1908,7 @@ const server = http.createServer((req, res) => {
   }
 
   // Serve arquivos estáticos de public/
-  const urlPath = req.url === '/' ? '/index.html' : req.url;
+  const parsedUrl = new URL(req.url, 'http://localhost'); const urlPath = parsedUrl.pathname === '/' ? '/index.html' : parsedUrl.pathname;
   sendFile(res, path.join(PUBLIC_DIR, urlPath));
 });
 
@@ -1375,3 +1917,7 @@ initLogins();
 server.listen(PORT, () => {
   console.log(`[site] Rodando em http://localhost:${PORT}`);
 });
+
+
+
+

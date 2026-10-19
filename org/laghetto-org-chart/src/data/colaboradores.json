@@ -1,0 +1,107 @@
+{
+  "lideranca": [
+    {
+      "id": "ceo-1",
+      "nome": "João Silva",
+      "cargo": "CEO",
+      "setor": "Diretoria",
+      "email": "joao.silva@laghetto.com",
+      "ramal": "1001",
+      "apelido": "O Visionário",
+      "foto": "/figurinhas/figurinha_pagina_001.png",
+      "level": 0
+    }
+  ],
+  "setores": [
+    {
+      "nome": "Tecnologia",
+      "colaboradores": [
+        {
+          "id": "tech-1",
+          "nome": "Ana Costa",
+          "cargo": "CTO",
+          "setor": "Tecnologia",
+          "email": "ana.costa@laghetto.com",
+          "ramal": "2001",
+          "apelido": "A Arquiteta",
+          "foto": "/figurinhas/figurinha_pagina_002.png"
+        },
+        {
+          "id": "tech-2",
+          "nome": "Carlos Mendes",
+          "cargo": "Engenheiro Sênior",
+          "setor": "Tecnologia",
+          "email": "carlos.mendes@laghetto.com",
+          "ramal": "2002",
+          "apelido": "O Mago do Código",
+          "foto": "/figurinhas/figurinha_pagina_003.png"
+        }
+      ]
+    },
+    {
+      "nome": "Marketing",
+      "colaboradores": [
+        {
+          "id": "mkt-1",
+          "nome": "Beatriz Lima",
+          "cargo": "CMO",
+          "setor": "Marketing",
+          "email": "beatriz.lima@laghetto.com",
+          "ramal": "3001",
+          "apelido": "A Criativa",
+          "foto": "/figurinhas/figurinha_pagina_004.png"
+        },
+        {
+          "id": "mkt-2",
+          "nome": "Diego Fernandes",
+          "cargo": "Designer Sênior",
+          "setor": "Marketing",
+          "email": "diego.fernandes@laghetto.com",
+          "ramal": "3002",
+          "apelido": "Pixel Perfect",
+          "foto": "/figurinhas/figurinha_pagina_005.png"
+        }
+      ]
+    },
+    {
+      "nome": "Vendas",
+      "colaboradores": [
+        {
+          "id": "ven-1",
+          "nome": "Eduardo Santos",
+          "cargo": "Diretor de Vendas",
+          "setor": "Vendas",
+          "email": "eduardo.santos@laghetto.com",
+          "ramal": "4001",
+          "apelido": "O Fechador",
+          "foto": "/figurinhas/figurinha_pagina_006.png"
+        },
+        {
+          "id": "ven-2",
+          "nome": "Fernanda Alves",
+          "cargo": "Executiva de Contas",
+          "setor": "Vendas",
+          "email": "fernanda.alves@laghetto.com",
+          "ramal": "4002",
+          "apelido": "A Estrategista",
+          "foto": "/figurinhas/figurinha_pagina_007.png"
+        }
+      ]
+    },
+    {
+      "nome": "Recursos Humanos",
+      "colaboradores": [
+        {
+          "id": "rh-1",
+          "nome": "Gabriela Rocha",
+          "cargo": "Diretora de RH",
+          "setor": "Recursos Humanos",
+          "email": "gabriela.rocha@laghetto.com",
+          "ramal": "5001",
+          "apelido": "A Empática",
+          "foto": "/figurinhas/figurinha_pagina_008.png"
+        }
+      ]
+    }
+  ]
+}

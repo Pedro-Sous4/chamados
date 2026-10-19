@@ -1,0 +1,326 @@
+{
+  "lideranca": [
+    {
+      "id": "ceo-1",
+      "nome": "Diego Caceres",
+      "cargo": "CEO",
+      "setor": "Diretoria",
+      "email": "diego@laghettomultipropriedade.com.br",
+      "ramal": "",
+      "apelido": "",
+      "foto": "/figurinhas/colab_1791002983084.png",
+      "level": 0
+    }
+  ],
+  "setores": [
+    {
+      "nome": "Administrativo",
+      "colaboradores": [
+        {
+          "id": "mkt-1",
+          "nome": "Daarlan Benetti",
+          "cargo": "CFO",
+          "setor": "Administrativo",
+          "email": "darlan@laghettomultipropriedade.com.br",
+          "ramal": "",
+          "apelido": "",
+          "foto": "/figurinhas/colab_1791100002417.png",
+          "telefone": "+55 54 9915-0703"
+        }
+      ],
+      "subsetores": [
+        {
+          "nome": "TI",
+          "colaboradores": [
+            {
+              "id": "colab-1791100110616",
+              "nome": "Diego Weber",
+              "cargo": "Gerente de TI",
+              "setor": "TI",
+              "email": "ti@laghettomultipropriedade.com.br",
+              "telefone": "+55 54 8137-5318",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1791100254064.png"
+            },
+            {
+              "id": "colab-1791100323342",
+              "nome": "Pedro Sousa",
+              "cargo": "Analista de TI",
+              "setor": "TI",
+              "email": "ti2@laghettomultipropriedade.com.br",
+              "telefone": "+55 54 8114-3711",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1791100377694.png"
+            },
+            {
+              "id": "colab-1791103512063",
+              "nome": "Lorenzo Kunzler",
+              "cargo": "Estagiário(a)",
+              "setor": "TI",
+              "email": "ti3@laghettomultipropriedade.com.br",
+              "telefone": "+55 54 9601-2581",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1791103574033.png"
+            }
+          ],
+          "subsetores": []
+        },
+        {
+          "nome": "CAR",
+          "colaboradores": [
+            {
+              "id": "colab-1791101448843",
+              "nome": "Prisicla Brito",
+              "cargo": "Supervisor(a)",
+              "setor": "CAR",
+              "email": "car@laghettomultipropriedade.com.br",
+              "telefone": "+55 54 9617-4804",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1791101822759.png",
+              "rustdesk_id": "1 916 249 575",
+              "rustdesk_alias": "RSADMN001",
+              "equipamentos": {
+                "notebook": true,
+                "monitor": "1",
+                "fone": true,
+                "teclado": true,
+                "cpu": true
+              }
+            },
+            {
+              "id": "colab-1791102290230",
+              "nome": "Lorenzo Debastiani",
+              "cargo": "Estagiário(a)",
+              "setor": "CAR",
+              "email": "car3@laghettomultipropriedade.com.br",
+              "telefone": "+55 54 9998-0673",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1791102324146.png"
+            },
+            {
+              "id": "colab-1791102394692",
+              "nome": "Adriani Cordi",
+              "cargo": "Analista",
+              "setor": "CAR",
+              "email": "car8@laghettomultipropriedade.com.br",
+              "telefone": "",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1791102466294.png"
+            }
+          ],
+          "subsetores": []
+        }
+      ]
+    },
+    {
+      "nome": "Vendas",
+      "colaboradores": [
+        {
+          "id": "ven-1",
+          "nome": "Marcio Tavares",
+          "cargo": "CSO",
+          "setor": "Vendas",
+          "email": "marcio@laghettomultipropriedade.com.br",
+          "ramal": "",
+          "apelido": "",
+          "foto": "/figurinhas/colab_1791101958729.png"
+        }
+      ],
+      "subsetores": [
+        {
+          "nome": "Consultoria",
+          "colaboradores": [],
+          "subsetores": [
+            {
+              "nome": "Pedras Altas",
+              "colaboradores": [
+                {
+                  "id": "colab-1791125787806",
+                  "nome": "Fábio Kimura",
+                  "cargo": "Líder de Sala",
+                  "setor": "Pedras Altas",
+                  "email": "vendas1@laghettomultipropriedade.com.br",
+                  "telefone": "+55 64 9267-0335",
+                  "ramal": "",
+                  "apelido": "",
+                  "foto": "/figurinhas/colab_1791132984374.png",
+                  "equipamentos": {
+                    "notebook": true,
+                    "mouse": true,
+                    "fone": true,
+                    "teclado": true
+                  }
+                }
+              ],
+              "subsetores": []
+            },
+            {
+              "nome": "NBA",
+              "colaboradores": [],
+              "subsetores": []
+            },
+            {
+              "nome": "Golden",
+              "colaboradores": [],
+              "subsetores": []
+            }
+          ]
+        },
+        {
+          "nome": "Captação",
+          "colaboradores": [],
+          "subsetores": []
+        },
+        {
+          "nome": "Operacional",
+          "colaboradores": [
+            {
+              "id": "colab-1792377064083",
+              "nome": "Caroline Pinheiro",
+              "cargo": "Gestora Operacional",
+              "setor": "Operacional",
+              "email": "operacoes@laghettomultipropriedade.com.br",
+              "telefone": "53 9180-3710",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1792377179896.png"
+            }
+          ],
+          "subsetores": [
+            {
+              "nome": "Sala Pedras Altas",
+              "colaboradores": [],
+              "subsetores": []
+            },
+            {
+              "nome": "Sala NBA Park",
+              "colaboradores": [
+                {
+                  "id": "colab-1792377321128",
+                  "nome": "Day Rabello",
+                  "cargo": "Gestora Operacional - NBA",
+                  "setor": "Sala NBA Park",
+                  "email": "operacoes.nba@laghettomultipropriedade.com.br",
+                  "telefone": "54 9454-9637",
+                  "ramal": "",
+                  "apelido": "",
+                  "foto": "/figurinhas/colab_1792377342145.png",
+                  "equipamentos": {
+                    "notebook": true,
+                    "mouse": true
+                  }
+                }
+              ],
+              "subsetores": []
+            },
+            {
+              "nome": "Sala Golden",
+              "colaboradores": [],
+              "subsetores": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nome": "Pós-Vendas",
+      "colaboradores": [
+        {
+          "id": "colab-1791004632227",
+          "nome": "Marcelo Leifheit",
+          "cargo": "Diretor de Pós-Vendas",
+          "setor": "Pós-Vendas",
+          "email": "marcelo@laghettomultipropriedade.com.br",
+          "ramal": "",
+          "apelido": "",
+          "foto": "/figurinhas/colab_1791004656983.png"
+        }
+      ],
+      "subsetores": [
+        {
+          "nome": "Unique",
+          "colaboradores": [
+            {
+              "id": "colab-1791007744858",
+              "nome": "Ana Carolina Rocha",
+              "cargo": "Gerente de Pós-Vendas",
+              "setor": "Unique",
+              "email": "unique@laghettomultipropriedade.com.br",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1791007772790.png"
+            }
+          ],
+          "subsetores": [
+            {
+              "nome": "Unique Villagio",
+              "colaboradores": [],
+              "subsetores": []
+            },
+            {
+              "nome": "Retenção",
+              "colaboradores": [
+                {
+                  "id": "colab-1791098487403",
+                  "nome": "Taimara Vettorazzi",
+                  "cargo": "Supervisora Unique",
+                  "setor": "Retenção",
+                  "email": "unique@laghettoborges.com.br",
+                  "telefone": "+55 54 9657-4614",
+                  "ramal": "",
+                  "apelido": "",
+                  "foto": "/figurinhas/colab_1791099605740.png",
+                  "equipamentos": "Notebboke dell sn 85498\nteclado, mouse e fonte\nMonitor 2x\n"
+                },
+                {
+                  "id": "colab-1792376261334",
+                  "nome": "Ana Luiza Rocha de Oliveira",
+                  "cargo": "Analista Unique",
+                  "setor": "Retenção",
+                  "email": "retencao3@laghettomultipropriedade.com.br",
+                  "telefone": "54 9698-5689",
+                  "ramal": "",
+                  "apelido": "",
+                  "foto": "/figurinhas/colab_1792376805886.png",
+                  "equipamentos": {
+                    "cpu": true,
+                    "monitor": "2",
+                    "fone": true,
+                    "mouse": true,
+                    "teclado": true
+                  }
+                },
+                {
+                  "id": "colab-1792377473144",
+                  "nome": "Robert Ferreira",
+                  "cargo": "Analista Unique",
+                  "setor": "Retenção",
+                  "email": "retencao1@laghettomultipropriedade.com.br",
+                  "telefone": "54 9607-8572",
+                  "ramal": "",
+                  "apelido": "",
+                  "foto": "/figurinhas/colab_1792377543895.png",
+                  "equipamentos": {
+                    "notebook": false,
+                    "cpu": true,
+                    "monitor": "2",
+                    "mouse": true,
+                    "fone": true,
+                    "teclado": true
+                  }
+                }
+              ],
+              "subsetores": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

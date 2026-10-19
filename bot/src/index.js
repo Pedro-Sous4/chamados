@@ -67,7 +67,6 @@ function reportStatus(status, qr = null, numero = null) {
 wppconnect
   .create({
     session: 'wpp-bot-session-v16',
-    sessionDataPath: path.resolve(__dirname, '..', 'tokens'),
     catchQR: (base64Qr, asciiQR) => {
       console.log('\n=== ESCANEIE O QR CODE ABAIXO NO SEU WHATSAPP ===\n');
       console.log(asciiQR);
@@ -113,7 +112,6 @@ const pendingBatches = new Map();
 
 function start(client) {
   client.onMessage(async (message) => {
-    console.log(`[DEBUG onMessage] Recebido evento. fromMe: ${message.fromMe}, from: ${message.from}, type: ${message.type}, body: "${message.body || ''}"`);
     const from = message.from || 'desconhecido';
     
     // Filtros básicos

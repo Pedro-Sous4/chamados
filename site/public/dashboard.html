@@ -4,29 +4,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Executivo | Suporte TI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
-            --bg: #f0ebe0;
+            /* Modo Claro Executivo */
+            --bg: #f8fafc;
             --card-bg: #ffffff;
-            --accent: #925616;
-            --accent-light: #c9a882;
-            --text: #3b2008;
-            --text-muted: #9c8a70;
-            --glass-border: #e8d5b0;
+            --primary: #1e3a8a;
+            --primary-accent: #3b82f6;
+            --primary-light: #eff6ff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --border-focus: #93c5fd;
+            --status-aberto: #d97706;
+            --status-atendimento: #2563eb;
+            --status-concluido: #16a34a;
+            --input-bg: #ffffff;
+            --table-th-bg: #f8fafc;
+            --chart-grid: #f1f5f9;
+            --badge-bg: #eff6ff;
+        }
+
+        html.dark {
+            /* Modo Escuro Executivo (Deep Slate Navy & Ice Blue) */
+            --bg: #0b1120;
+            --card-bg: #111c33;
+            --primary: #60a5fa;
+            --primary-accent: #3b82f6;
+            --primary-light: #172554;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(59, 130, 246, 0.20);
+            --border-focus: #60a5fa;
+            --status-aberto: #f59e0b;
+            --status-atendimento: #3b82f6;
+            --status-concluido: #22c55e;
+            --input-bg: #0b1120;
+            --table-th-bg: #15223e;
+            --chart-grid: rgba(59, 130, 246, 0.12);
+            --badge-bg: #1e293b;
+        }
+
+        html.dark input[type="date"] {
+            background: var(--input-bg);
+            color: var(--text-main);
+            border-color: var(--border-color);
+            color-scheme: dark;
+        }
+
+        html.dark .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text-main);
+            border-color: var(--border-color);
+        }
+        html.dark .btn-secondary:hover {
+            background: #172554;
+            color: #60a5fa;
+        }
+
+        html.dark .btn-download {
+            background: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--text-muted);
+        }
+        html.dark .btn-download:hover {
+            color: #60a5fa;
+            border-color: #3b82f6;
+        }
+
+        html.dark .ranking-item {
+            border-bottom-color: rgba(59, 130, 246, 0.15) !important;
+        }
+
+        html.dark .theme-btn-toggle {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Outfit', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: var(--bg);
-            background-image: radial-gradient(circle at top right, #fdf8f0, #f0ebe0);
-            color: var(--text);
+            color: var(--text-main);
             min-height: 100vh;
             padding: 2rem;
+            line-height: 1.5;
         }
 
         .container {
@@ -38,176 +106,429 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
+            gap: 1.5rem;
+            flex-wrap: wrap;
         }
 
-        h1 { font-size: 2rem; font-weight: 700; color: var(--text); }
-        h1 span { color: var(--accent); }
-
-        .filters {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            background: var(--card-bg);
-            padding: 0.8rem 1.5rem;
-            border-radius: 1rem;
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 4px 20px rgba(146, 86, 22, 0.05);
+        h1 { 
+            font-size: 1.85rem; 
+            font-weight: 800; 
+            color: var(--primary); 
+            letter-spacing: -0.5px;
         }
-
-        label {
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--text);
-        }
-
-        input[type="date"] {
-            background: #fdf8f0;
-            border: 1px solid var(--glass-border);
-            color: var(--text);
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            font-family: inherit;
-            outline: none;
-        }
-
-        .btn-action {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-weight: 700;
-            transition: 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(146, 86, 22, 0.25); }
-        .btn-secondary { background: #fdf8f0; color: var(--accent); border: 1px solid var(--glass-border); }
-        .btn-secondary:hover { background: #f5eccb; color: var(--text); }
+        h1 span { color: var(--primary-accent); }
 
         .btn-back {
             text-decoration: none;
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            margin-bottom: 0.4rem;
+            transition: color 0.2s;
         }
-        .btn-back:hover { color: var(--accent); }
+        .btn-back:hover { color: var(--primary-accent); }
+
+        .filters {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 0.65rem 1.25rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            flex-wrap: wrap;
+        }
+
+        .filters label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="date"] {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.45rem 0.65rem;
+            border-radius: 0.5rem;
+            font-family: inherit;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="date"]:focus {
+            border-color: var(--primary-accent);
+        }
+
+        .btn-action {
+            background: var(--primary-accent);
+            color: #ffffff;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .btn-action:hover { 
+            background: #2563eb; 
+            transform: translateY(-1px); 
+            box-shadow: 0 4px 6px -1px rgba(37,99,235,0.2); 
+        }
+
+        .btn-secondary { 
+            background: #ffffff; 
+            color: var(--text-main); 
+            border: 1px solid var(--border-color); 
+        }
+        .btn-secondary:hover { 
+            background: #f1f5f9; 
+            color: var(--primary);
+            box-shadow: none;
+        }
+
+        .btn-pdf {
+            background: var(--primary);
+            color: #ffffff;
+        }
+        .btn-pdf:hover {
+            background: #172554;
+            box-shadow: 0 4px 10px rgba(30,58,138,0.25);
+        }
 
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
             margin-bottom: 2rem;
         }
 
-        @media (min-width: 1200px) {
+        @media (min-width: 1024px) {
             .kpi-grid {
-                grid-template-columns: repeat(6, 1fr);
+                grid-template-columns: repeat(4, 1fr);
             }
         }
 
         .card {
             background: var(--card-bg);
-            border: 1.5px solid var(--glass-border);
-            padding: 1.5rem;
-            border-radius: 1.5rem;
-            box-shadow: 0 8px 30px rgba(146,86,22,0.06);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
             position: relative;
+            overflow: hidden;
         }
 
         .kpi-card {
-            padding: 1.2rem 1rem;
+            padding: 1.25rem 1.5rem;
+            border-top: 4px solid var(--primary-accent);
         }
+        .kpi-card.kpi-total { border-top-color: var(--primary); }
+        .kpi-card.kpi-aberto { border-top-color: var(--status-aberto); }
+        .kpi-card.kpi-atendimento { border-top-color: var(--status-atendimento); }
+        .kpi-card.kpi-concluido { border-top-color: var(--status-concluido); }
 
-        .kpi-card h3 { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
-        .kpi-card .value { font-size: 2.5rem; font-weight: 700; color: var(--accent); }
+        .kpi-card h3 { 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            letter-spacing: 0.8px; 
+            margin-bottom: 0.5rem; 
+        }
+        .kpi-card .value { 
+            font-size: 2.25rem; 
+            font-weight: 800; 
+            color: var(--text-main); 
+            line-height: 1.1;
+        }
+        .kpi-card .sub-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.35rem;
+        }
 
         .chart-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 1.1fr 1.1fr;
             gap: 1.5rem;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
 
-        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-        .chart-header h4 { font-size: 1.1rem; font-weight: 700; color: var(--text); }
-        .chart-card h4 { font-size: 1.1rem; font-weight: 700; color: var(--text); }
-        .btn-download { background: none; border: none; color: var(--accent); cursor: pointer; transition: 0.3s; font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: #FDF8F0; border: 1px solid var(--glass-border); }
-        .btn-download:hover { background: var(--accent); color: #fff; }
+        .chart-card {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
 
-        .chart-container { position: relative; height: 350px; background: #fdf8f0; border-radius: 1rem; padding: 1rem; border: 1px dashed var(--glass-border); }
+        .chart-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 1.25rem; 
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .chart-header h4 { 
+            font-size: 0.95rem; 
+            font-weight: 700; 
+            color: var(--primary); 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .chart-header h4::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 16px;
+            background: var(--primary-accent);
+            border-radius: 2px;
+        }
+
+        .btn-download { 
+            background: #ffffff; 
+            border: 1px solid var(--border-color); 
+            color: var(--text-muted); 
+            cursor: pointer; 
+            transition: 0.2s; 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            padding: 4px 10px; 
+            border-radius: 6px; 
+        }
+        .btn-download:hover { 
+            background: var(--primary-light); 
+            color: var(--primary); 
+            border-color: var(--border-focus);
+        }
+
+        .chart-container { 
+            position: relative; 
+            height: 380px; 
+            background: #ffffff; 
+            border-radius: 0.5rem; 
+            padding: 0.5rem; 
+        }
 
         .ranking-list { list-style: none; }
         .ranking-item {
             display: flex;
             justify-content: space-between;
-            padding: 1rem 0;
-            border-bottom: 1.5px solid #f5eccb;
+            align-items: center;
+            padding: 0.85rem 0.5rem;
+            border-bottom: 1px solid var(--border-color);
         }
         .ranking-item:last-child { border: none; }
-        .ranking-name { font-weight: 600; color: var(--text); }
-        .ranking-count { color: var(--accent); font-weight: 700; }
+        .ranking-name { 
+            font-weight: 600; 
+            color: var(--text-main); 
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .ranking-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 50%;
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+        .ranking-count { 
+            color: var(--primary); 
+            font-weight: 700; 
+            font-size: 0.85rem;
+            background: var(--primary-light);
+            padding: 0.2rem 0.6rem;
+            border-radius: 1rem;
+        }
 
+        /* --- Ajustes Responsivos --- */
         @media (max-width: 1024px) {
             .chart-grid { grid-template-columns: 1fr; }
         }
 
-        /* --- Ajustes Responsivos para Celulares --- */
         @media (max-width: 768px) {
-            body {
-                padding: 1rem;
-            }
-
+            body { padding: 1rem; }
             header {
                 flex-direction: column;
                 align-items: stretch;
-                gap: 1.5rem;
-                margin-bottom: 2rem;
             }
-
-            header h1 {
-                font-size: 1.6rem;
-                text-align: center;
-            }
-
-            header .btn-back {
-                display: block;
-                text-align: center;
-                margin-bottom: 0.5rem;
-            }
-
             .filters {
                 flex-direction: column;
                 align-items: stretch;
-                padding: 1.2rem;
-                gap: 0.8rem;
                 width: 100%;
             }
-
-            .filters label {
-                text-align: center;
-            }
-
-            .filters span {
-                text-align: center;
-                font-size: 0.85rem;
-                font-weight: 600;
-            }
-
-            .filters input[type="date"] {
-                width: 100%;
-                text-align: center;
-            }
-
-            .filters .btn-action {
+            .filters input[type="date"], .filters .btn-action {
                 width: 100%;
                 justify-content: center;
-                padding: 0.7rem;
             }
+        }
+
+        /* --- Template PDF Invisível na Tela Normal --- */
+        #pdfReportTemplate {
+            display: none;
+            background: #ffffff;
+            color: #0f172a;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            padding: 24px 32px;
+            width: 794px; /* A4 standard width at 96 DPI */
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+        .pdf-header-banner {
+            background: linear-gradient(135deg, #1e3a8a, #2563eb);
+            color: #ffffff;
+            padding: 22px 28px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .pdf-header-banner h2 {
+            font-size: 24px;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+        .pdf-header-banner p {
+            font-size: 13px;
+            margin: 6px 0 0 0;
+            opacity: 0.9;
+        }
+        .pdf-kpi-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .pdf-kpi-box {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-top: 4px solid #2563eb;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .pdf-kpi-box .pdf-kpi-val {
+            font-size: 28px;
+            font-weight: 800;
+            color: #1e3a8a;
+            line-height: 1.1;
+        }
+        .pdf-kpi-box .pdf-kpi-lbl {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 6px;
+        }
+        .pdf-section-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #1e3a8a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .pdf-section-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 16px;
+            background: #2563eb;
+            border-radius: 2px;
+        }
+        .pdf-section-desc {
+            font-size: 12px;
+            color: #475569;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+        .pdf-chart-wrap {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px 20px;
+            background: #ffffff;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .pdf-chart-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        .pdf-chart-canvas-container {
+            width: 100%;
+            height: 240px;
+            position: relative;
+        }
+        .pdf-footnotes {
+            font-size: 11px;
+            color: #64748b;
+            font-style: italic;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        .pdf-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .pdf-table th {
+            background: #f1f5f9;
+            color: #334155;
+            text-align: left;
+            padding: 10px 14px;
+            font-weight: 700;
+            border-bottom: 1px solid #cbd5e1;
+        }
+        .pdf-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #1e293b;
+        }
+        .pdf-table tr:last-child td {
+            border-bottom: none;
+        }
+        .pdf-table .row-total td {
+            background: #f8fafc;
+            font-weight: 800;
+            color: #0f172a;
+            border-top: 2px solid #cbd5e1;
+        }
+        .pdf-footer {
+            text-align: center;
+            font-size: 11px;
+            color: #94a3b8;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -216,43 +537,59 @@
 <div class="container">
     <header>
         <div>
-            <a href="index.html" class="btn-back">← Voltar ao Gerenciamento</a>
-            <h1>Business <span>Intelligence</span></h1>
+            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.25rem;">
+                <a href="index.html" class="btn-back">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    Chamados
+                </a>
+                <a href="/organograma/" class="btn-back">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="5" r="3"/><circle cx="6" cy="19" r="3"/><circle cx="18" cy="19" r="3"/><path d="M12 8v4M6 16v-4h12v4"/></svg>
+                    Organograma
+                </a>
+                <a href="inventario.html" class="btn-back" style="color: var(--primary); font-weight: 700;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    Inventário TI
+                </a>
+            </div>
+            <h1>Business <span>Intelligence</span> TI</h1>
         </div>
         <div class="filters">
             <label>Período:</label>
             <input type="date" id="startDate">
-            <span>até</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">até</span>
             <input type="date" id="endDate">
             <button class="btn-action" onclick="loadData()">Filtrar</button>
             <button class="btn-action btn-secondary" onclick="exportToExcel()">Exportar XLSX</button>
+            <button class="btn-action btn-pdf" id="btnExportPDF" onclick="generateExecutivePDF()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Gerar Relatório Executivo (PDF)
+            </button>
+            <button id="btnThemeToggle" class="btn-action btn-secondary" onclick="toggleTheme()" title="Alternar Modo Claro / Escuro" style="padding: 0.5rem 0.75rem;">
+                <span id="themeIcon">🌙</span>
+            </button>
         </div>
     </header>
 
     <div class="kpi-grid">
-        <div class="card kpi-card">
+        <div class="card kpi-card kpi-total">
             <h3>Total de Chamados</h3>
             <div class="value" id="valTotal">0</div>
+            <div class="sub-label">Volume total do período</div>
         </div>
-        <div class="card kpi-card">
-            <h3>Via WhatsApp</h3>
-            <div class="value" id="valWhatsApp" style="color: #15803d;">0</div>
-        </div>
-        <div class="card kpi-card">
-            <h3>Via Painel Web</h3>
-            <div class="value" id="valSite" style="color: #1d4ed8;">0</div>
-        </div>
-        <div class="card kpi-card">
+        <div class="card kpi-card kpi-aberto">
             <h3>Em Aberto</h3>
-            <div class="value" id="valAberto" style="color: #b45309;">0</div>
+            <div class="value" id="valAberto" style="color: var(--status-aberto);">0</div>
+            <div class="sub-label">Aguardando atendimento</div>
         </div>
-        <div class="card kpi-card">
+        <div class="card kpi-card kpi-atendimento">
             <h3>Em Atendimento</h3>
-            <div class="value" id="valEmAtendimento" style="color: #3b82f6;">0</div>
+            <div class="value" id="valEmAtendimento" style="color: var(--status-atendimento);">0</div>
+            <div class="sub-label">Chamados em andamento</div>
         </div>
-        <div class="card kpi-card">
+        <div class="card kpi-card kpi-concluido">
             <h3>Concluídos</h3>
-            <div class="value" id="valConcluido" style="color: #16a34a;">0</div>
+            <div class="value" id="valConcluido" style="color: var(--status-concluido);">0</div>
+            <div class="sub-label">Demandas finalizadas</div>
         </div>
     </div>
 
@@ -268,7 +605,7 @@
         </div>
         <div class="card chart-card">
             <div class="chart-header">
-                <h4>Tipos de Problemas</h4>
+                <h4>Tipos de Problemas (Top 7 + Outros)</h4>
                 <button class="btn-download" onclick="downloadChart('chartTipos', 'Tipos_Problemas.png')">⬇ DOWNLOAD PNG</button>
             </div>
             <div class="chart-container">
@@ -279,31 +616,86 @@
 
     <div class="chart-grid">
         <div class="card chart-card">
-            <h4>Ranking de Solicitantes (Top 5)</h4>
-            <div id="rankingList" class="ranking-list" style="margin-top: 1rem;"></div>
+            <div class="chart-header">
+                <h4>Ranking de Solicitantes (Top 5)</h4>
+            </div>
+            <div id="rankingList" class="ranking-list" style="margin-top: 0.5rem;"></div>
         </div>
         <div class="card chart-card">
-            <h4>Palavras-Chave Frequentes</h4>
-            <div id="keywordCloud" style="display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 1rem;"></div>
+            <div class="chart-header">
+                <h4>Palavras-Chave Frequentes</h4>
+            </div>
+            <div id="keywordCloud" style="display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem 0;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     TEMPLATE DO RELATÓRIO EXECUTIVO (PDF)
+     Renderizado sob demanda para captura limpa
+=============================================== -->
+<div id="pdfReportTemplate">
+    <div class="pdf-header-banner">
+        <h2>Relatório de Atendimento de TI</h2>
+        <p id="pdfPeriodText">Resumo Executivo de Chamados | Período: -- a --</p>
+    </div>
+
+    <div class="pdf-kpi-row">
+        <div class="pdf-kpi-box">
+            <div class="pdf-kpi-val" id="pdfTotalVal">0</div>
+            <div class="pdf-kpi-lbl">TOTAL DE CHAMADOS</div>
+        </div>
+        <div class="pdf-kpi-box">
+            <div class="pdf-kpi-val" id="pdfTaxaVal">100%</div>
+            <div class="pdf-kpi-lbl">TAXA DE CONCLUSÃO</div>
+        </div>
+        <div class="pdf-kpi-box">
+            <div class="pdf-kpi-val" id="pdfPicoVal">0</div>
+            <div class="pdf-kpi-lbl" id="pdfPicoLabel">PICO DE DEMANDA</div>
         </div>
     </div>
 
-    <div class="chart-grid" style="grid-template-columns: 1fr;">
-        <div class="card chart-card">
-            <div class="chart-header">
-                <h4>Volume por Origem</h4>
-                <button class="btn-download" onclick="downloadChart('chartOrigem', 'Origem_Chamados.png')">⬇ DOWNLOAD PNG</button>
-            </div>
-            <div class="chart-container" style="height: 300px;">
-                <canvas id="chartOrigem"></canvas>
-            </div>
+    <div class="pdf-section-title">Evolução Mensal de Chamados</div>
+    <div class="pdf-section-desc" id="pdfEvolucaoDesc">
+        O gráfico abaixo ilustra a evolução do volume de solicitações atendidas ao longo do período selecionado.
+    </div>
+
+    <div class="pdf-chart-wrap">
+        <div class="pdf-chart-title">Evolução Mensal de Chamados de Suporte TI</div>
+        <div class="pdf-chart-canvas-container">
+            <canvas id="pdfMonthlyChart"></canvas>
         </div>
+    </div>
+
+    <div class="pdf-footnotes" id="pdfFootnotes"></div>
+
+    <div class="pdf-section-title" style="margin-top: 18px;">Detalhamento por Período</div>
+    <table class="pdf-table">
+        <thead>
+            <tr>
+                <th style="width: 45%;">Período / Mês</th>
+                <th style="width: 30%;">Volume de Chamados</th>
+                <th style="width: 25%;">Status</th>
+            </tr>
+        </thead>
+        <tbody id="pdfTableBody"></tbody>
+    </table>
+
+    <div class="pdf-footer">
+        Relatório gerado automaticamente para alinhamento gerencial • Suporte de TI
     </div>
 </div>
 
 <script>
     let charts = {};
+    let pdfMonthlyChart = null;
     let rawTicketsList = [];
+    let currentStats = null;
+
+    const MONTH_NAMES = [
+        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
 
     async function loadData() {
         const start = document.getElementById('startDate').value;
@@ -312,18 +704,16 @@
         const url = `/api/stats?start=${start}&end=${end}`;
         const response = await fetch(url);
         const data = await response.json();
+        currentStats = data;
 
-        // Correção: Extrai a lista de tickets da propriedade .tickets
         const tResponse = await fetch(`/api/tickets?start=${start}&end=${end}`);
         const tJson = await tResponse.json();
         rawTicketsList = tJson.tickets || [];
 
-        document.getElementById('valTotal').innerText = data.total;
-        document.getElementById('valWhatsApp').innerText = data.porOrigem.bot || 0;
-        document.getElementById('valSite').innerText = data.porOrigem.site || 0;
-        document.getElementById('valAberto').innerText = data.status.aberto;
+        document.getElementById('valTotal').innerText = data.total || 0;
+        document.getElementById('valAberto').innerText = data.status.aberto || 0;
         document.getElementById('valEmAtendimento').innerText = data.status.em_atendimento || 0;
-        document.getElementById('valConcluido').innerText = data.status.concluido;
+        document.getElementById('valConcluido').innerText = data.status.concluido || 0;
 
         renderCharts(data);
         renderRanking(data.porSolicitante);
@@ -331,9 +721,9 @@
     }
 
     function renderCharts(data) {
-        Object.values(charts).forEach(c => c.destroy());
+        Object.values(charts).forEach(c => c && c.destroy());
 
-        // CHART SETORES
+        // 1. CHART SETORES (Barras Verticais Azuis Corporativas)
         const ctxSetores = document.getElementById('chartSetores').getContext('2d');
         charts.setores = new Chart(ctxSetores, {
             type: 'bar',
@@ -342,9 +732,10 @@
                 datasets: [{
                     label: 'Quantidade',
                     data: Object.values(data.porSetor),
-                    backgroundColor: '#925616',
-                    borderRadius: 12,
-                    barThickness: 60
+                    backgroundColor: '#1e3a8a',
+                    hoverBackgroundColor: '#2563eb',
+                    borderRadius: 6,
+                    maxBarThickness: 50
                 }]
             },
             options: {
@@ -352,87 +743,143 @@
                 maintainAspectRatio: false,
                 plugins: { 
                     legend: { display: false },
-                    title: { display: true, text: 'Distribuição por Setor / Sala', color: '#3b2008', font: { size: 16, weight: 'bold' }, padding: 20 }
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleFont: { size: 13, weight: 'bold' },
+                        padding: 10,
+                        cornerRadius: 6
+                    }
                 },
                 scales: {
-                    y: { beginAtZero: true, grid: { color: 'rgba(146,86,22,0.06)' }, ticks: { color: '#9c8a70', stepSize: 1 } },
-                    x: { grid: { display: false }, ticks: { color: '#3b2008', font: { size: 13, weight: '600' } } }
+                    y: { 
+                        beginAtZero: true, 
+                        grid: { color: '#f1f5f9' }, 
+                        ticks: { color: '#64748b', stepSize: 1 } 
+                    },
+                    x: { 
+                        grid: { display: false }, 
+                        ticks: { color: '#334155', font: { size: 12, weight: '600' } } 
+                    }
                 }
             }
         });
 
-        // CHART TIPOS
+        // 2. CHART TIPOS: BARRAS HORIZONTAIS (Top 7 + Outros ordenados do maior para o menor com rótulos numéricos)
+        const sortedTypes = Object.entries(data.porTipo || {}).sort((a, b) => b[1] - a[1]);
+        const top7 = sortedTypes.slice(0, 7);
+        const others = sortedTypes.slice(7);
+        const othersSum = others.reduce((acc, curr) => acc + curr[1], 0);
+
+        const typesLabels = top7.map(item => item[0]);
+        const typesValues = top7.map(item => item[1]);
+
+        if (othersSum > 0) {
+            typesLabels.push('Outros');
+            typesValues.push(othersSum);
+        }
+
+        const maxVal = Math.max(...typesValues, 10);
         const ctxTipos = document.getElementById('chartTipos').getContext('2d');
-        charts.tipos = new Chart(ctxTipos, {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(data.porTipo),
-                datasets: [{
-                    data: Object.values(data.porTipo),
-                    backgroundColor: ['#925616', '#c9a882', '#b45309', '#e8d5b0', '#f5eccb'],
-                    borderWidth: 2,
-                    borderColor: '#ffffff',
-                    hoverOffset: 15
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '70%',
-                plugins: { 
-                    legend: { position: 'right', labels: { color: '#3b2008', font: { size: 12, weight: '600' } } },
-                    title: { display: true, text: 'Tipos de Problemas', color: '#3b2008', font: { size: 16, weight: 'bold' }, padding: 20 }
-                }
-            }
-        });
 
-        // CHART ORIGEM
-        const ctxOrigem = document.getElementById('chartOrigem').getContext('2d');
-        charts.origem = new Chart(ctxOrigem, {
-            type: 'pie',
+        // Plugin customizado para desenhar os valores numéricos exatos ao lado de cada barra
+        const horizontalValueLabelsPlugin = {
+            id: 'horizontalValueLabels',
+            afterDatasetsDraw(chart) {
+                const { ctx } = chart;
+                chart.data.datasets.forEach((dataset, datasetIndex) => {
+                    const meta = chart.getDatasetMeta(datasetIndex);
+                    meta.data.forEach((bar, index) => {
+                        const val = dataset.data[index];
+                        ctx.fillStyle = '#1e3a8a';
+                        ctx.font = 'bold 12px sans-serif';
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(String(val), bar.x + 8, bar.y);
+                    });
+                });
+            }
+        };
+
+        charts.tipos = new Chart(ctxTipos, {
+            type: 'bar',
             data: {
-                labels: ['WhatsApp (Bot)', 'Painel (Site)'],
+                labels: typesLabels,
                 datasets: [{
-                    data: [data.porOrigem.bot, data.porOrigem.site],
-                    backgroundColor: ['#16a34a', '#1d4ed8'],
-                    borderWidth: 0
+                    label: 'Chamados',
+                    data: typesValues,
+                    backgroundColor: '#3b82f6',
+                    hoverBackgroundColor: '#1d4ed8',
+                    borderRadius: 6,
+                    maxBarThickness: 28
                 }]
             },
+            plugins: [horizontalValueLabelsPlugin],
             options: {
+                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { 
-                    legend: { position: 'right', labels: { color: '#3b2008', font: { size: 14, weight: '600' } } },
-                    title: { display: true, text: 'Volume por Origem', color: '#3b2008', font: { size: 16, weight: 'bold' }, padding: 20 }
+                layout: {
+                    padding: { right: 35 } // Espaço para não cortar os rótulos à direita
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleFont: { size: 12, weight: 'bold' },
+                        padding: 10,
+                        cornerRadius: 6
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        suggestedMax: Math.ceil(maxVal * 1.15),
+                        grid: { color: '#f1f5f9' },
+                        ticks: { color: '#64748b', stepSize: 10 }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: {
+                            color: '#1e293b',
+                            font: { size: 11, weight: '600' }
+                        }
+                    }
                 }
             }
         });
     }
 
     function renderRanking(solicitantes) {
-        const sorted = Object.entries(solicitantes)
+        const sorted = Object.entries(solicitantes || {})
             .sort((a, b) => b[1] - a[1])
             .slice(0, 5);
         
         const list = document.getElementById('rankingList');
-        list.innerHTML = sorted.map(([nome, total]) => `
+        list.innerHTML = sorted.map(([nome, total], idx) => `
             <li class="ranking-item">
-                <span class="ranking-name">${nome}</span>
+                <span class="ranking-name">
+                    <span class="ranking-badge">${idx + 1}</span>
+                    ${nome}
+                </span>
                 <span class="ranking-count">${total} chamados</span>
             </li>
-        `).join('') || '<p style="color:var(--text-muted)">Sem chamados.</p>';
+        `).join('') || '<p style="color:var(--text-muted); padding: 0.5rem;">Sem dados no período.</p>';
     }
 
     function renderKeywords(palavras) {
-        const sorted = Object.entries(palavras)
+        const sorted = Object.entries(palavras || {})
             .sort((a, b) => b[1] - a[1])
             .slice(0, 15);
         
         const container = document.getElementById('keywordCloud');
         container.innerHTML = sorted.map(([word, count]) => {
-            const size = Math.min(1.4, 0.9 + (count * 0.15));
-            return `<span style="font-size: ${size}rem; background: #FDF8F0; padding: 0.4rem 0.9rem; border-radius: 2rem; border: 1px solid var(--glass-border); text-transform: capitalize; color: var(--accent); font-weight: 600;">${word}</span>`;
-        }).join('') || '<p style="color:var(--text-muted)">Aguardando dados...</p>';
+            const size = Math.min(1.25, 0.85 + (count * 0.08));
+            const isDark = document.documentElement.classList.contains('dark');
+            const bg = isDark ? '#1e293b' : '#eff6ff';
+            const bColor = isDark ? 'rgba(59, 130, 246, 0.3)' : '#bfdbfe';
+            const tColor = isDark ? '#93c5fd' : '#1e3a8a';
+            return `<span style="font-size: ${size}rem; background: ${bg}; padding: 0.35rem 0.85rem; border-radius: 2rem; border: 1px solid ${bColor}; color: ${tColor}; font-weight: 600;">${word}</span>`;
+        }).join('') || '<p style="color:var(--text-muted); padding: 0.5rem;">Aguardando dados...</p>';
     }
 
     function exportToExcel() {
@@ -458,18 +905,13 @@
 
     function downloadChart(chartId, filename) {
         const canvas = document.getElementById(chartId);
-        
-        // Criar um canvas temporário para o fundo claro (para o PNG não ficar transparente/estranho)
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = canvas.width;
         tempCanvas.height = canvas.height;
         const tempCtx = tempCanvas.getContext('2d');
         
-        // Fundo claro igual ao Dashboard
-        tempCtx.fillStyle = '#f0ebe0';
+        tempCtx.fillStyle = '#ffffff';
         tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-        
-        // Desenha o gráfico por cima
         tempCtx.drawImage(canvas, 0, 0);
         
         const link = document.createElement('a');
@@ -478,10 +920,289 @@
         link.click();
     }
 
-    // Datas padrão: hoje e 30 dias atrás
+    /* ========================================================
+       GERAÇÃO DO RELATÓRIO EXECUTIVO EM PDF
+    ======================================================== */
+    async function generateExecutivePDF() {
+        const btn = document.getElementById('btnExportPDF');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `
+            <svg class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
+            Gerando PDF...
+        `;
+
+        try {
+            if (!rawTicketsList || rawTicketsList.length === 0) {
+                alert("Nenhum dado carregado para compilar o relatório.");
+                return;
+            }
+
+            // 1. Análise dos dados por Mês
+            const monthMap = {};
+            let minDate = null;
+            let maxDate = null;
+
+            rawTicketsList.forEach(t => {
+                if (!t.createdAt) return;
+                const d = new Date(t.createdAt);
+                if (isNaN(d.getTime())) return;
+
+                if (!minDate || d < minDate) minDate = d;
+                if (!maxDate || d > maxDate) maxDate = d;
+
+                const y = d.getFullYear();
+                const m = d.getMonth();
+                const key = `${y}-${String(m + 1).padStart(2, '0')}`;
+
+                if (!monthMap[key]) {
+                    monthMap[key] = {
+                        year: y,
+                        month: m,
+                        key: key,
+                        count: 0,
+                        concluidos: 0,
+                        earliest: d,
+                        latest: d
+                    };
+                }
+                monthMap[key].count++;
+                if (t.status === 'concluido') monthMap[key].concluidos++;
+                if (d < monthMap[key].earliest) monthMap[key].earliest = d;
+                if (d > monthMap[key].latest) monthMap[key].latest = d;
+            });
+
+            const sortedMonths = Object.values(monthMap).sort((a, b) => a.key.localeCompare(b.key));
+            if (sortedMonths.length === 0) {
+                alert("Não há registros com data válida para montar o gráfico temporal.");
+                return;
+            }
+
+            const totalChamados = rawTicketsList.length;
+            const concluidosTotal = rawTicketsList.filter(t => t.status === 'concluido').length;
+            const taxaConc = totalChamados > 0 ? Math.round((concluidosTotal / totalChamados) * 100) : 100;
+
+            // Encontrar mês de maior pico
+            let picoMonth = sortedMonths[0];
+            sortedMonths.forEach(m => {
+                if (m.count > picoMonth.count) picoMonth = m;
+            });
+
+            const picoNomeMes = MONTH_NAMES[picoMonth.month].toUpperCase();
+            const picoLabelStr = `PICO (${picoNomeMes}/${picoMonth.year})`;
+
+            // Período formatado
+            const minDateStr = minDate.toLocaleDateString('pt-BR');
+            const maxDateStr = maxDate.toLocaleDateString('pt-BR');
+            const periodStr = `Resumo Executivo de Chamados | Período: ${minDateStr} a ${maxDateStr}`;
+
+            // Preenche dados no template
+            document.getElementById('pdfPeriodText').textContent = periodStr;
+            document.getElementById('pdfTotalVal').textContent = totalChamados;
+            document.getElementById('pdfTaxaVal').textContent = `${taxaConc}%`;
+            document.getElementById('pdfPicoVal').textContent = picoMonth.count;
+            document.getElementById('pdfPicoLabel').textContent = picoLabelStr;
+
+            const firstMonthName = MONTH_NAMES[sortedMonths[0].month];
+            const lastMonthName = MONTH_NAMES[sortedMonths[sortedMonths.length - 1].month];
+            document.getElementById('pdfEvolucaoDesc').textContent = 
+                `O gráfico abaixo ilustra a evolução do volume de solicitações atendidas desde o início das atividades em ${minDate.getDate()} de ${firstMonthName.toLowerCase()} de ${minDate.getFullYear()} até o presente momento em ${lastMonthName.toLowerCase()}.`;
+
+            // Notas de rodapé
+            const isFirstPartial = minDate.getDate() > 1;
+            const isLastPartial = (maxDate.getMonth() === new Date().getMonth() && maxDate.getFullYear() === new Date().getFullYear());
+            
+            let footnotesHtml = '';
+            if (isFirstPartial) {
+                footnotesHtml += `* ${MONTH_NAMES[sortedMonths[0].month]}/${sortedMonths[0].year} considera o período de início em ${minDateStr} (${sortedMonths[0].count} chamados).<br>`;
+            }
+            if (isLastPartial) {
+                footnotesHtml += `** ${MONTH_NAMES[sortedMonths[sortedMonths.length - 1].month]}/${sortedMonths[sortedMonths.length - 1].year} considera dados parciais até ${maxDateStr} (${sortedMonths[sortedMonths.length - 1].count} chamados).`;
+            }
+            document.getElementById('pdfFootnotes').innerHTML = footnotesHtml;
+
+            // Preenche a tabela exclusiva: Período / Mês | Volume de Chamados | Status
+            const tbody = document.getElementById('pdfTableBody');
+            tbody.innerHTML = '';
+
+            sortedMonths.forEach((m, idx) => {
+                const tr = document.createElement('tr');
+                const mName = MONTH_NAMES[m.month];
+                let label = `${mName}/${m.year}`;
+                if (idx === 0 && isFirstPartial) label = `${mName}/${m.year} (a partir de ${minDate.getDate()}/${String(minDate.getMonth()+1).padStart(2,'0')})`;
+                else if (idx === sortedMonths.length - 1 && isLastPartial) label = `${mName}/${m.year} (parcial)`;
+
+                const statusPct = m.count > 0 ? Math.round((m.concluidos / m.count) * 100) : 100;
+                tr.innerHTML = `
+                    <td style="font-weight: 600;">${label}</td>
+                    <td style="font-weight: 700; color: #1e3a8a;">${m.count}</td>
+                    <td style="font-weight: 600; color: #16a34a;">${statusPct}% Concluído</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Linha Total Geral
+            const trTotal = document.createElement('tr');
+            trTotal.className = 'row-total';
+            trTotal.innerHTML = `
+                <td>Total Geral</td>
+                <td style="color: #1e3a8a; font-size: 13px;">${totalChamados}</td>
+                <td style="color: #16a34a; font-size: 13px;">${taxaConc}% Concluído</td>
+            `;
+            tbody.appendChild(trTotal);
+
+            // Renderiza o gráfico vertical do PDF com números em cima de cada barra
+            if (pdfMonthlyChart) {
+                pdfMonthlyChart.destroy();
+            }
+
+            const verticalValueLabelsPlugin = {
+                id: 'verticalValueLabels',
+                afterDatasetsDraw(chart) {
+                    const { ctx } = chart;
+                    chart.data.datasets.forEach((dataset, datasetIndex) => {
+                        const meta = chart.getDatasetMeta(datasetIndex);
+                        meta.data.forEach((bar, index) => {
+                            const val = dataset.data[index];
+                            ctx.fillStyle = '#1e3a8a';
+                            ctx.font = 'bold 11px sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'bottom';
+                            ctx.fillText(String(val), bar.x, bar.y - 4);
+                        });
+                    });
+                }
+            };
+
+            const chartLabels = sortedMonths.map((m, idx) => {
+                let s = `${MONTH_NAMES[m.month]}/${m.year}`;
+                if (idx === 0 && isFirstPartial) s += '*';
+                if (idx === sortedMonths.length - 1 && isLastPartial) s += '**';
+                return s;
+            });
+            const chartDataValues = sortedMonths.map(m => m.count);
+            const peakMax = Math.max(...chartDataValues, 10);
+
+            const pdfCanvas = document.getElementById('pdfMonthlyChart');
+            const pdfCtx = pdfCanvas.getContext('2d');
+
+            pdfMonthlyChart = new Chart(pdfCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: 'Quantidade de Chamados',
+                        data: chartDataValues,
+                        backgroundColor: '#2563eb',
+                        borderRadius: 4,
+                        maxBarThickness: 55
+                    }]
+                },
+                plugins: [verticalValueLabelsPlugin],
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    layout: {
+                        padding: { top: 20 }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: Math.ceil(peakMax * 1.15),
+                            grid: { color: '#e2e8f0', borderDash: [3, 3] },
+                            ticks: { color: '#64748b', font: { size: 10 } },
+                            title: {
+                                display: true,
+                                text: 'Quantidade de Chamados',
+                                color: '#64748b',
+                                font: { size: 10, weight: 'bold' }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#334155', font: { size: 10, weight: '600' } }
+                        }
+                    }
+                }
+            });
+
+            // Torna visível momentaneamente para renderização do html2pdf
+            const pdfElement = document.getElementById('pdfReportTemplate');
+            pdfElement.style.display = 'block';
+
+            // Aguarda 1 frame para garantir pintura do Chart
+            await new Promise(r => setTimeout(r, 200));
+
+            const opt = {
+                margin:       [10, 10, 10, 10],
+                filename:     `Relatorio_Executivo_TI_${new Date().toISOString().split('T')[0]}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            await html2pdf().set(opt).from(pdfElement).save();
+
+            // Oculta novamente o template da tela do usuário
+            pdfElement.style.display = 'none';
+
+        } catch (err) {
+            console.error('Erro ao gerar PDF:', err);
+            alert('Falha ao compilar relatório em PDF: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+
+    
+    // Gerenciamento de Tema Claro / Escuro sincronizado
+    function applyDashboardTheme(isDark) {
+        if (isDark) {
+            document.documentElement.classList.add('dark');
+            const icon = document.getElementById('themeIcon');
+            if (icon) icon.innerText = '☀️';
+            localStorage.setItem('laghetto_theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            const icon = document.getElementById('themeIcon');
+            if (icon) icon.innerText = '🌙';
+            localStorage.setItem('laghetto_theme', 'light');
+        }
+        if (currentStats) {
+            renderKeywords(currentStats.palavrasChave || {});
+            if (charts.meses) {
+                const tickColor = isDark ? '#94a3b8' : '#334155';
+                const gridColor = isDark ? 'rgba(59, 130, 246, 0.12)' : '#f1f5f9';
+                charts.meses.options.scales.x.ticks.color = tickColor;
+                charts.meses.options.scales.y.grid.color = gridColor;
+                charts.meses.update();
+            }
+            if (charts.tipos) {
+                const tickColor = isDark ? '#94a3b8' : '#334155';
+                charts.tipos.options.scales.y.ticks.color = tickColor;
+                charts.tipos.update();
+            }
+        }
+    }
+
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.contains('dark');
+        applyDashboardTheme(!isDark);
+    }
+
+    const savedTheme = localStorage.getItem('laghetto_theme');
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyDashboardTheme(savedTheme ? savedTheme === 'dark' : prefersDark);
+
+    // Inicialização de datas e carregamento inicial
     const today = new Date();
     const lastMonth = new Date();
-    lastMonth.setDate(today.getDate() - 30);
+    lastMonth.setDate(today.getDate() - 150); // Abrange últimos meses para carregar o histórico completo
     document.getElementById('startDate').value = lastMonth.toISOString().split('T')[0];
     document.getElementById('endDate').value = today.toISOString().split('T')[0];
     

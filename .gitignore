@@ -11,17 +11,18 @@ bot/src/session.data.json
 dados/uploads/*
 !dados/uploads/.gitkeep
 
+# Proteger base de dados dinâmica de chamados em produção
+dados/tickets.json
+dados/sessions.json
+dados/sessions_bot.json
+
+# Backups locais
+backups/
+
+# Ferramentas portáteis
+tools/
+
 # Ambiente e Logs
 .env
 *.log
 .DS_Store
-
-# Banco de Dados de Produ��o
-dados/*.json
-
-# Arquivos locais
-pm2_home/
-pm2_*.txt
-scratch/
-tokens/
-contacts.csv
