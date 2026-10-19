@@ -245,6 +245,18 @@ const handleSelect = (colaborador) => {
 
   if (!data) return <div className="min-h-screen bg-laghetto-wine text-white flex items-center justify-center">Carregando...</div>;
 
+  // Estatísticas de chamados no topo
+  const ticketStats = React.useMemo(() => {
+    let abertos = 0;
+    let emAndamento = 0;
+    (tickets || []).forEach(t => {
+      if (t.status === 'concluido' || t.status === 'cancelado' || t.status === 'arquivado') return;
+      if (t.status === 'aberto' || !t.status) abertos++;
+      else if (t.status === 'em_atendimento' || t.status === 'em_andamento') emAndamento++;
+    });
+    return { abertos, emAndamento };
+  }, [tickets]);
+
   return (
     <div className={`h-screen w-screen ${isDark ? 'bg-[#0b1120] text-[#f8fafc] org-dots-dark' : 'bg-[#f8fafc] text-[#0f172a] org-dots-light'} flex flex-col relative overflow-hidden transition-colors duration-300`}>
       <style>{`
@@ -258,9 +270,10 @@ const handleSelect = (colaborador) => {
         }
       `}</style>
       <header className={`shrink-0 z-20 w-full pt-3 pb-3 px-3 sm:px-6 flex flex-col gap-2.5 border-b ${isDark ? 'border-blue-500/20 bg-[#0f172a]/90' : 'border-slate-200 bg-[#1e3a8a] text-white shadow-md'} backdrop-blur-md`}>
-        {/* Linha Superior: Logo, Título e Ações */}
-        <div className="flex items-center justify-between gap-2 w-full">
-          <div className="flex items-center gap-2">
+        {/* Linha Superior: Logo/Voltar, Título Centralizado Absoluto e Ações */}
+        <div className="relative flex items-center justify-between gap-2 w-full min-h-[38px]">
+          {/* Lado Esquerdo: Botão Voltar + Badges Elegantes de Chamados */}
+          <div className="flex items-center gap-2 sm:gap-3 z-10">
             <a
               href="/"
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-xs transition-all shadow-md shrink-0 ${
@@ -274,14 +287,75 @@ const handleSelect = (colaborador) => {
               <span className="hidden sm:inline">Central de Chamados</span>
               <span className="sm:hidden">Voltar</span>
             </a>
+
+            {/* Badges de Chamados no Canto Superior */}
+            <div className="flex items-center gap-1.5">
+              {ticketStats.abertos > 0 && (
+                <div 
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border backdrop-blur-md transition-all shadow-sm ${
+                    isDark
+                      ? 'bg-red-500/15 border-red-500/40 text-red-400 shadow-red-500/10'
+                      : 'bg-white/20 border-white/40 text-red-200 shadow-black/10'
+                  }`}
+                  title={`${ticketStats.abertos} chamado(s) em aberto`}
+                >
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                  </span>
+                  <span className="tracking-wide">
+                    {ticketStats.abertos} <span className="hidden md:inline font-normal opacity-90">em aberto</span><span className="md:hidden">aberto</span>
+                  </span>
+                </div>
+              )}
+
+              {ticketStats.emAndamento > 0 && (
+                <div 
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border backdrop-blur-md transition-all shadow-sm ${
+                    isDark
+                      ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-amber-500/10'
+                      : 'bg-white/20 border-white/40 text-amber-200 shadow-black/10'
+                  }`}
+                  title={`${ticketStats.emAndamento} chamado(s) em andamento / atendimento`}
+                >
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
+                  </span>
+                  <span className="tracking-wide">
+                    {ticketStats.emAndamento} <span className="hidden md:inline font-normal opacity-90">em andamento</span><span className="md:hidden">andamento</span>
+                  </span>
+                </div>
+              )}
+
+              {ticketStats.abertos === 0 && ticketStats.emAndamento === 0 && tickets.length > 0 && (
+                <div 
+                  className={`hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border backdrop-blur-md opacity-80 ${
+                    isDark
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                      : 'bg-white/15 border-white/30 text-emerald-100'
+                  }`}
+                  title="Nenhum chamado pendente no momento"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <span>Tudo em dia</span>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="text-center flex-1 mx-2">
-            <h1 className="text-xl sm:text-3xl font-black text-white tracking-widest leading-none">LAGHETTO</h1>
-            <h2 className={`text-xs sm:text-sm font-medium mt-0.5 ${isDark ? 'text-blue-200' : 'text-blue-100'}`}>Organograma de Talentos</h2>
+          {/* Centro Perfeito: Título LAGHETTO absolutamente centralizado na barra */}
+          <div className="absolute left-1/2 -translate-x-1/2 text-center pointer-events-none z-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-widest leading-none drop-shadow-sm">
+              LAGHETTO
+            </h1>
+            <h2 className={`text-[10px] sm:text-xs font-medium mt-0.5 whitespace-nowrap ${isDark ? 'text-blue-200/90' : 'text-blue-100'}`}>
+              Organograma de Talentos
+            </h2>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          {/* Lado Direito: Ações de Admin, Tema e Modos */}
+          <div className="flex items-center gap-1.5 shrink-0 z-10">
             {isAdmin && (
               <div className="flex gap-1">
                 <button 
