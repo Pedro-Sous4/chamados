@@ -243,8 +243,6 @@ const handleSelect = (colaborador) => {
     ));
   };
 
-  if (!data) return <div className="min-h-screen bg-laghetto-wine text-white flex items-center justify-center">Carregando...</div>;
-
   // Estatísticas de chamados no topo
   const ticketStats = React.useMemo(() => {
     let abertos = 0;
@@ -256,6 +254,8 @@ const handleSelect = (colaborador) => {
     });
     return { abertos, emAndamento };
   }, [tickets]);
+
+  if (!data) return <div className="min-h-screen bg-laghetto-wine text-white flex items-center justify-center">Carregando...</div>;
 
   return (
     <div className={`h-screen w-screen ${isDark ? 'bg-[#0b1120] text-[#f8fafc] org-dots-dark' : 'bg-[#f8fafc] text-[#0f172a] org-dots-light'} flex flex-col relative overflow-hidden transition-colors duration-300`}>
