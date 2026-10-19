@@ -20,12 +20,13 @@ const Modal = ({ colaborador, onClose, tickets = [] }) => {
   const [isSending, setIsSending] = useState(false);
   const chatBottomRef = useRef(null);
 
-  // Ativos e equipamentos vinculados pelo inventário de TI
+  // Ativos e equipamentos vinculados pelo inventário de TI e cadastro
   const [colabAssets, setColabAssets] = useState([]);
   const [showAssets, setShowAssets] = useState(false);
 
   useEffect(() => {
     if (!colaborador?.nome) return;
+
     fetch('/api/inventario')
       .then(r => r.json())
       .then(data => {
@@ -60,6 +61,35 @@ const Modal = ({ colaborador, onClose, tickets = [] }) => {
       })
       .catch(err => console.error('Erro ao buscar ativos do colaborador:', err));
   }, [colaborador?.nome]);
+
+  // Lista unificada de equipamentos manuais (caso cadastrado via texto livre ou checklist no organograma)
+  const manualEquipments = React.useMemo(() => {
+    if (!colaborador?.equipamentos) return [];
+    if (typeof colaborador.equipamentos === 'object') {
+      const list = [];
+      const eq = colaborador.equipamentos;
+      if (eq.notebook) list.push({ tipo: 'Notebook', modelo: 'Notebook Corporativo', isManual: true });
+      if (Number(eq.monitor) > 0) list.push({ tipo: 'Monitor', modelo: `Monitor (${eq.monitor}x)`, isManual: true });
+      if (eq.cpu) list.push({ tipo: 'Desktop', modelo: 'Computador / CPU', isManual: true });
+      if (eq.teclado) list.push({ tipo: 'Teclado', modelo: 'Teclado USB', isManual: true });
+      if (eq.mouse) list.push({ tipo: 'Mouse', modelo: 'Mouse Óptico', isManual: true });
+      if (eq.fone) list.push({ tipo: 'Headset', modelo: 'Headset / Fone', isManual: true });
+      return list;
+    }
+    if (typeof colaborador.equipamentos === 'string' && colaborador.equipamentos.trim()) {
+      // Texto livre quebrado por linhas
+      return colaborador.equipamentos.split('\n').filter(l => l.trim()).map(line => ({
+        tipo: 'Equipamento',
+        modelo: line.trim(),
+        isManual: true,
+        isCustomText: true
+      }));
+    }
+    return [];
+  }, [colaborador?.equipamentos]);
+
+  // Total combinado de itens na mochila
+  const totalMochilaCount = colabAssets.length + manualEquipments.length;
 
   const colabTel = String(colaborador?.telefone || '').replace(/\D/g, '');
   const cNorm = normalizeString(colaborador?.nome);
@@ -506,7 +536,7 @@ const Modal = ({ colaborador, onClose, tickets = [] }) => {
                   </div>
                 )}
 
-                {/* Equipamentos & Setup de TI vinculados pelo Inventário */}
+                {/* Mochila Digital Unificada: Ativos do Inventário + Equipamentos declarados */}
                 <div className="flex flex-col gap-2 bg-black/25 p-3 rounded-lg border border-blue-500/20">
                   <div 
                     className="flex items-center justify-between cursor-pointer"
@@ -519,7 +549,7 @@ const Modal = ({ colaborador, onClose, tickets = [] }) => {
                       <div>
                         <p className="text-xs text-gray-400 uppercase">Mochila Digital / Equipamentos TI</p>
                         <p className="font-semibold text-blue-300 text-xs sm:text-sm">
-                          {colabAssets.length > 0 ? `${colabAssets.length} equipamento(s) no Inventário` : 'Nenhum ativo atribuído'}
+                          {totalMochilaCount > 0 ? `${totalMochilaCount} item(ns) atribuído(s)` : 'Nenhum ativo atribuído'}
                         </p>
                       </div>
                     </div>
@@ -537,8 +567,9 @@ const Modal = ({ colaborador, onClose, tickets = [] }) => {
                     </div>
                   </div>
 
-                  {showAssets && colabAssets.length > 0 && (
+                  {showAssets && totalMochilaCount > 0 && (
                     <div className="mt-2 space-y-2 border-t border-white/10 pt-2 animate-in fade-in duration-200">
+                      {/* 1. Ativos do Inventário Oficial */}
                       {colabAssets.map(asset => {
                         const isOpti = String(asset.modelo || '').toLowerCase().includes('optiplex') || String(asset.modelo || '').toLowerCase().includes('optiflex');
                         const isNote = String(asset.tipo || asset.modelo || '').toLowerCase().includes('notebook') || String(asset.modelo || '').toLowerCase().includes('vostro') || String(asset.modelo || '').toLowerCase().includes('latitude');
@@ -572,6 +603,36 @@ const Modal = ({ colaborador, onClose, tickets = [] }) => {
                                 Conectar
                               </button>
                             )}
+                          </div>
+                        );
+                      })}
+
+                      {/* 2. Equipamentos vinculados ao colaborador */}
+                      {manualEquipments.map((eq, i) => {
+                        const mLower = String(eq.modelo || eq.tipo || '').toLowerCase();
+                        const isNote = mLower.includes('notebboke') || mLower.includes('notebook') || mLower.includes('laptop') || mLower.includes('dell sn');
+                        const isMonitor = mLower.includes('monitor');
+                        const isCpu = mLower.includes('cpu') || mLower.includes('desktop') || mLower.includes('computador');
+                        const isKb = mLower.includes('teclado');
+                        const isMouse = mLower.includes('mouse');
+                        const isHeadset = mLower.includes('fone') || mLower.includes('headset');
+
+                        const photoUrl = isCpu ? '/images/modelos/dell_optiplex_3000.png' : isNote ? '/images/modelos/dell_vostro_3510.png' : isMonitor ? '/images/modelos/dell_se2222h.png' : isKb ? '/images/modelos/dell_kb216t.png' : isMouse ? '/images/modelos/dell_ms116.png' : isHeadset ? '/images/modelos/intelbras_chs40.png' : 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=260&auto=format&fit=crop&q=80';
+
+                        return (
+                          <div key={'manual-' + i} className="p-2 rounded bg-black/40 border border-blue-500/20 flex items-center justify-between gap-2 text-xs">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-9 h-9 rounded-lg bg-white dark:bg-slate-800 p-0.5 border border-white/20 shrink-0 flex items-center justify-center overflow-hidden">
+                                <img src={photoUrl} alt={eq.modelo} className="max-w-full max-h-full object-contain" />
+                              </div>
+                              <div className="truncate">
+                                <span className="font-bold text-white block truncate">{eq.modelo}</span>
+                                <span className="text-[10px] text-blue-300 block truncate">Equipamento em posse</span>
+                              </div>
+                            </div>
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-400/30 shrink-0 font-medium">
+                              Atribuído
+                            </span>
                           </div>
                         );
                       })}
@@ -684,26 +745,6 @@ const Modal = ({ colaborador, onClose, tickets = [] }) => {
                         </div>
                       );
                     })}
-                  </div>
-                )}
-                
-                {colaborador.equipamentos && (
-                  <div className="mt-4 p-4 border border-laghetto-gold/20 rounded-lg bg-black/30">
-                    <h3 className="text-laghetto-gold text-xs uppercase font-bold tracking-wider mb-2.5">Equipamentos em Posse</h3>
-                    <div className="text-gray-200 text-sm flex flex-col gap-1">
-                      {typeof colaborador.equipamentos === 'object' ? (
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          {colaborador.equipamentos.notebook && <div className="flex items-center gap-2"><span className="text-laghetto-gold font-bold">✓</span> Notebook</div>}
-                          {colaborador.equipamentos.monitor > 0 && <div className="flex items-center gap-2"><span className="text-laghetto-gold font-bold">✓</span> Monitor ({colaborador.equipamentos.monitor}x)</div>}
-                          {colaborador.equipamentos.mouse && <div className="flex items-center gap-2"><span className="text-laghetto-gold font-bold">✓</span> Mouse</div>}
-                          {colaborador.equipamentos.teclado && <div className="flex items-center gap-2"><span className="text-laghetto-gold font-bold">✓</span> Teclado</div>}
-                          {colaborador.equipamentos.fone && <div className="flex items-center gap-2"><span className="text-laghetto-gold font-bold">✓</span> Fone</div>}
-                          {colaborador.equipamentos.cpu && <div className="flex items-center gap-2"><span className="text-laghetto-gold font-bold">✓</span> CPU</div>}
-                        </div>
-                      ) : (
-                        <p className="whitespace-pre-wrap">{colaborador.equipamentos}</p>
-                      )}
-                    </div>
                   </div>
                 )}
               </div>
