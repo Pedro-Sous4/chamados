@@ -115,6 +115,161 @@
             }
           ],
           "subsetores": []
+        },
+        {
+          "nome": "Controladoria",
+          "colaboradores": [
+            {
+              "id": "colab-1792382121639",
+              "nome": "Gabriela Carvalho",
+              "cargo": "Analista",
+              "setor": "Controladoria",
+              "email": "controladoria@laghetto.com.br",
+              "telefone": "54 9146-9581",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1792382151080.png",
+              "equipamentos": {
+                "notebook": true,
+                "mouse": true,
+                "fone": true,
+                "cpu": false,
+                "teclado": true,
+                "monitor": "1"
+              }
+            },
+            {
+              "id": "colab-1792382125691",
+              "nome": "Bruno Maldonado",
+              "cargo": "Analista",
+              "setor": "Controladoria",
+              "email": "controladoria@laghettomultipropriedade.com.br",
+              "telefone": "54 9369-1990",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1792382215674.png",
+              "equipamentos": {
+                "notebook": true,
+                "mouse": true,
+                "fone": true,
+                "teclado": true,
+                "monitor": "1"
+              }
+            },
+            {
+              "id": "colab-1792382130126",
+              "nome": "Vinicius Ross",
+              "cargo": "Analista",
+              "setor": "Controladoria",
+              "email": "controladoria3@laghettomultipropriedade.com.br",
+              "telefone": "54 8428-8487",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1792382269198.png",
+              "equipamentos": {
+                "notebook": true,
+                "mouse": true,
+                "fone": true,
+                "monitor": "1",
+                "teclado": true
+              }
+            }
+          ],
+          "subsetores": []
+        },
+        {
+          "nome": "Central de Contratos",
+          "colaboradores": [
+            {
+              "id": "colab-1792382375650",
+              "nome": "Ricardo Barbosa",
+              "cargo": "Gerente",
+              "setor": "Central de Contratos",
+              "email": "adm@laghettomultipropriedade.com.br",
+              "telefone": "54 9334-7281",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1792382398311.png",
+              "equipamentos": {
+                "notebook": true,
+                "mouse": true,
+                "fone": true,
+                "teclado": true,
+                "monitor": "1"
+              }
+            },
+            {
+              "id": "colab-1792382380576",
+              "nome": "Adriele Tozzi",
+              "cargo": "Analista",
+              "setor": "Central de Contratos",
+              "email": "adm11@laghettomultipropriedade.com.br",
+              "telefone": "53 9965-5353",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1792382483771.png",
+              "equipamentos": {
+                "cpu": true,
+                "teclado": true,
+                "mouse": true,
+                "fone": false,
+                "monitor": "0"
+              }
+            },
+            {
+              "id": "colab-1792382552414",
+              "nome": "Ana Schneider",
+              "cargo": "Estagiário(a)",
+              "setor": "Central de Contratos",
+              "email": "",
+              "telefone": "",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1792382571055.png",
+              "equipamentos": {
+                "cpu": true,
+                "mouse": true,
+                "teclado": true
+              }
+            },
+            {
+              "id": "colab-1792382557774",
+              "nome": "Rayssa Silva",
+              "cargo": "Analista",
+              "setor": "Central de Contratos",
+              "email": "adm6@laghettomultipropriedade.com.br",
+              "telefone": "92 8522-5113",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1792382713681.png",
+              "equipamentos": {
+                "notebook": true,
+                "fone": true,
+                "mouse": true,
+                "teclado": true,
+                "monitor": "1"
+              }
+            },
+            {
+              "id": "colab-1792382561389",
+              "nome": "Raquel Araújo",
+              "cargo": "Analista",
+              "setor": "Central de Contratos",
+              "email": "adm5@laghettomultipropriedade.com.br",
+              "telefone": "84 9991-2307",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1792382788619.png",
+              "equipamentos": {
+                "cpu": true,
+                "teclado": true,
+                "fone": false,
+                "mouse": true,
+                "monitor": "0"
+              }
+            }
+          ],
+          "subsetores": []
         }
       ]
     },
@@ -195,7 +350,19 @@
           "subsetores": [
             {
               "nome": "Sala Pedras Altas",
-              "colaboradores": [],
+              "colaboradores": [
+                {
+                  "id": "colab-1792381046733",
+                  "nome": "Josiane Luz",
+                  "cargo": "Gestora Operacional",
+                  "setor": "Sala Pedras Altas",
+                  "email": "operacoes.pedras@laghettomultipropriedade.com.br",
+                  "telefone": "51 8026-1020",
+                  "ramal": "",
+                  "apelido": "",
+                  "foto": "/figurinhas/colab_1792381121427.png"
+                }
+              ],
               "subsetores": []
             },
             {
@@ -222,6 +389,47 @@
             {
               "nome": "Sala Golden",
               "colaboradores": [],
+              "subsetores": []
+            },
+            {
+              "nome": "DP",
+              "colaboradores": [
+                {
+                  "id": "colab-1792381306762",
+                  "nome": "Isadora Friedrich",
+                  "cargo": "Analista",
+                  "setor": "DP",
+                  "email": "dp3@laghettomultipropriedade.com.br",
+                  "telefone": "54 8112-0479",
+                  "ramal": "",
+                  "apelido": "",
+                  "foto": "/figurinhas/colab_1792381329459.png",
+                  "equipamentos": {
+                    "notebook": true,
+                    "mouse": true,
+                    "fone": true,
+                    "teclado": true,
+                    "monitor": "1"
+                  }
+                },
+                {
+                  "id": "colab-1792381445627",
+                  "nome": "Rafaela Wingert",
+                  "cargo": "Estagiário(a)",
+                  "setor": "DP",
+                  "email": "dp2@laghettomultipropriedade.com.br",
+                  "telefone": "54 9928-2852",
+                  "ramal": "",
+                  "apelido": "",
+                  "foto": "/figurinhas/colab_1792381456695.png",
+                  "equipamentos": {
+                    "notebook": true,
+                    "mouse": true,
+                    "fone": true,
+                    "monitor": "1"
+                  }
+                }
+              ],
               "subsetores": []
             }
           ]
@@ -313,6 +521,24 @@
                     "mouse": true,
                     "fone": true,
                     "teclado": true
+                  }
+                },
+                {
+                  "id": "colab-1792382890314",
+                  "nome": "Maria Schutz",
+                  "cargo": "Analista",
+                  "setor": "Retenção",
+                  "email": "retencao7@laghettomultipropriedade.com.br",
+                  "telefone": "54 9685-5140",
+                  "ramal": "",
+                  "apelido": "",
+                  "foto": "/figurinhas/colab_1792383045660.png",
+                  "equipamentos": {
+                    "cpu": true,
+                    "teclado": true,
+                    "monitor": "1",
+                    "mouse": true,
+                    "fone": true
                   }
                 }
               ],
