@@ -30,20 +30,26 @@ function findColaboradorMatch(allColaboradores, contatos, { sEmail, sNome, realN
   const tReal = String(realNumber || '').replace(/\D/g, '');
   const tNum = String(number || '').replace(/\D/g, '');
 
-  if (tReal || tNum) {
-    const m = allColaboradores.find(c => {
-      if (!c.telefone) return false;
-      const colabTel = String(c.telefone).replace(/\D/g, '');
-      if (!colabTel) return false;
+  const m = allColaboradores.find(c => {
+    if (!c.telefone) return false;
+    const colabTel = String(c.telefone).replace(/\D/g, '');
+    if (!colabTel || colabTel.length < 8) return false;
 
-      if (colabTel === tReal || colabTel === tNum || tReal.endsWith(colabTel) || tNum.endsWith(colabTel) || colabTel.endsWith(tReal) || colabTel.endsWith(tNum)) {
-        return true;
-      }
+    // Se temos tReal válido (telefone real de 8 a 13 dígitos)
+    if (tReal && tReal.length >= 8) {
+      if (colabTel === tReal || tReal.endsWith(colabTel) || colabTel.endsWith(tReal)) return true;
       if (colabTel.length >= 8 && tReal.length >= 8 && colabTel.slice(-8) === tReal.slice(-8)) return true;
-      return false;
-    });
-    if (m) return m;
-  }
+    }
+
+    // Se temos tNum (número direto ou LID)
+    if (tNum && tNum.length >= 8) {
+      if (colabTel === tNum || tNum.endsWith(colabTel) || colabTel.endsWith(tNum)) return true;
+      if (colabTel.length >= 8 && tNum.length >= 8 && colabTel.slice(-8) === tNum.slice(-8)) return true;
+    }
+
+    return false;
+  });
+  if (m) return m;
 
   return null;
 }
@@ -1713,12 +1719,15 @@ const server = http.createServer((req, res) => {
       extractDeep(root.setores);
     }
 
-    let realNumber = null;
+    let realNumber = ticket.number;
     if (ticket.number) {
       const contato = contatos.find(c => String(c.numero).replace(/\D/g, '') === String(ticket.number).replace(/\D/g, ''));
-      if (contato) {
-        if (contato.nome) ticket = Object.assign({}, ticket, { name: contato.nome });
-        if (contato.realNumber) realNumber = contato.realNumber;
+      if (contato && contato.nome) {
+        ticket = Object.assign({}, ticket, { name: contato.nome });
+        const contatoReal = contatos.find(c => c.nome === contato.nome && c.numero && c.numero.length >= 10 && c.numero.length <= 13 && c.numero !== contato.numero);
+        if (contatoReal) {
+          realNumber = contatoReal.numero;
+        }
       }
     }
     const sNome = ticket.solicitanteNome || ticket.name || ticket.solicitante;

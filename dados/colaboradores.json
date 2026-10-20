@@ -18,7 +18,7 @@
       "colaboradores": [
         {
           "id": "mkt-1",
-          "nome": "Daarlan Benetti",
+          "nome": "Darlan Benetti",
           "cargo": "CFO",
           "setor": "Administrativo",
           "email": "darlan@laghettomultipropriedade.com.br",
@@ -52,7 +52,7 @@
               "telefone": "+55 54 8114-3711",
               "ramal": "",
               "apelido": "",
-              "foto": "/figurinhas/colab_1791100377694.png"
+              "foto": "/figurinhas/colab_1792463278732.png"
             },
             {
               "id": "colab-1791103512063",
@@ -73,7 +73,7 @@
           "colaboradores": [
             {
               "id": "colab-1791101448843",
-              "nome": "Prisicla Brito",
+              "nome": "Priscila Brito",
               "cargo": "Supervisor(a)",
               "setor": "CAR",
               "email": "car@laghettomultipropriedade.com.br",
@@ -112,6 +112,26 @@
               "ramal": "",
               "apelido": "",
               "foto": "/figurinhas/colab_1791102466294.png"
+            },
+            {
+              "id": "colab-1792515002621",
+              "nome": "Alexandra Rossa",
+              "cargo": "Analista",
+              "setor": "CAR",
+              "email": "car7@laghettomultipropriedade.com.br",
+              "telefone": "54 9961-5711",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1792515340855.png",
+              "equipamentos": {
+                "notebook": true,
+                "mouse": true,
+                "fone": true,
+                "teclado": true,
+                "monitor": "1"
+              },
+              "rustdesk_alias": "CAR07",
+              "rustdesk_id": "1218338950"
             }
           ],
           "subsetores": []
@@ -171,6 +191,24 @@
                 "mouse": true,
                 "fone": true,
                 "monitor": "1",
+                "teclado": true
+              }
+            },
+            {
+              "id": "colab-1792431172162",
+              "nome": "Larissa de Oliveira",
+              "cargo": "Estagiário(a)",
+              "setor": "Controladoria",
+              "email": "controladoria4@laghettomultipropriedade.com",
+              "telefone": "54 997125517",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1792434559127.png",
+              "equipamentos": {
+                "cpu": true,
+                "monitor": "2",
+                "mouse": true,
+                "fone": false,
                 "teclado": true
               }
             }
@@ -540,6 +578,23 @@
                     "mouse": true,
                     "fone": true
                   }
+                }
+              ],
+              "subsetores": []
+            },
+            {
+              "nome": "Unique Stilo Borges",
+              "colaboradores": [
+                {
+                  "id": "colab-1792439530719",
+                  "nome": "Leonardo Adiers",
+                  "cargo": "Analista",
+                  "setor": "Unique Stilo Borges",
+                  "email": "stilo2@laghettomultipropriedade.com.br",
+                  "telefone": "51 9375-2512",
+                  "ramal": "",
+                  "apelido": "",
+                  "foto": "/figurinhas/colab_1792439931918.png"
                 }
               ],
               "subsetores": []
