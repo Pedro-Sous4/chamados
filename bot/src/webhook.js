@@ -1,4 +1,4 @@
-﻿const http = require('http');
+const http = require('http');
 const path = require('path');
 const { sendToUser, sendFileToUser } = require('./context');
 const { updateSession, resetSession, findSessionId } = require('./sessions');
@@ -8,7 +8,7 @@ const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
 
 
 /**
- * Inicia o servidor HTTP que recebe notificaÃ§Ãµes do sistema externo.
+ * Inicia o servidor HTTP que recebe notificações do sistema externo.
  *
  * Endpoint:  POST /webhook/chamado-concluido
  * Body JSON: { "telefone": "5511999999999", "secret": "..." }
@@ -32,14 +32,14 @@ function startWebhook() {
         data = JSON.parse(body || '{}');
       } catch {
         res.writeHead(400);
-        res.end('JSON invÃ¡lido');
+        res.end('JSON inválido');
         return;
       }
 
       // Valida secret se configurado
       if (WEBHOOK_SECRET && data.secret !== WEBHOOK_SECRET) {
         res.writeHead(401);
-        res.end('NÃ£o autorizado');
+        res.end('Não autorizado');
         return;
       }
 
@@ -61,16 +61,16 @@ function startWebhook() {
           }
         }
         res.writeHead(400);
-        res.end('Bot nÃ£o disponÃ­vel para logout');
+        res.end('Bot não disponível para logout');
         return;
       }
  
-      // Rota de ImportaÃ§Ã£o de Contatos
+      // Rota de Importação de Contatos
       if (endpoint === '/webhook/import-contacts') {
         const client = require('./context').getClient();
         if (!client) {
           res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
-          res.end(JSON.stringify({ error: 'SessÃ£o do WhatsApp nÃ£o ativa' }));
+          res.end(JSON.stringify({ error: 'Sessão do WhatsApp não ativa' }));
           return;
         }
         try {
@@ -82,10 +82,10 @@ function startWebhook() {
           wppContacts.forEach(wc => {
             if (!wc.id || !wc.id.user) return;
             const num = wc.id.user;
-            // Ignora grupos e outros identificadores nÃ£o numÃ©ricos
+            // Ignora grupos e outros identificadores não numéricos
             if (!/^\d+$/.test(num)) return;
             
-            // Pega o nome mais qualificado disponÃ­vel
+            // Pega o nome mais qualificado disponível
             const nome = wc.name || wc.formattedName || wc.pushname || '';
             if (!nome) return;
 
@@ -126,40 +126,40 @@ function startWebhook() {
       const telefone = data.telefone;
       if (!telefone) {
         res.writeHead(400);
-        res.end('Campo "telefone" obrigatÃ³rio');
+        res.end('Campo "telefone" obrigatório');
         return;
       }
 
-      // Formata o userId no padrÃ£o do WhatsApp, resolvendo conflitos @lid/@c.us
+      // Formata o userId no padrão do WhatsApp, resolvendo conflitos @lid/@c.us
       const userId = findSessionId(telefone);
       console.log(`[webhook] Resolvido userId: ${userId} (entrada: ${telefone})`);
 
       let mensagem;
 
       if (endpoint === '/webhook/chamado-assumido') {
-        const id        = data.id   || 'â€”';
-        const tipo      = data.tipo || data.type || 'â€”';
-        const atendente = data.atendente || 'â€”';
+        const id        = data.id   || '—';
+        const tipo      = data.tipo || data.type || '—';
+        const atendente = data.atendente || '—';
         console.log(`[webhook] chamado assumido para ${userId}`);
         mensagem =
-          `ðŸ”µ *Chamado Assumido*\n\n` +
-          `*#${id}* â€” ${tipo}\n` +
-          `ðŸ‘¤ Assumido por: ${atendente}\n\n` +
-          `Em breve vocÃª receberÃ¡ o atendimento.`;
+          `🔵 *Chamado Assumido*\n\n` +
+          `*#${id}* — ${tipo}\n` +
+          `👤 Assumido por: ${atendente}\n\n` +
+          `Em breve você receberá o atendimento.`;
           
         // Sincroniza estado do bot para Chat Direto
         updateSession(userId, { state: 'em_atendimento', targetTicketId: id });
       } else if (endpoint === '/webhook/chamado-concluido') {
-        const id   = data.id   || 'â€”';
-        const tipo = data.tipo || data.type || 'â€”';
+        const id   = data.id   || '—';
+        const tipo = data.tipo || data.type || '—';
         const obs  = data.observacao || '';
         const anexo = data.anexo_solucao;
-        console.log(`[webhook] chamado concluÃ­do para ${userId}`);
+        console.log(`[webhook] chamado concluído para ${userId}`);
         mensagem =
-          `âœ… *Chamado ConcluÃ­do*\n\n` +
-          `*#${id}* â€” ${tipo}\n\n` +
-          (obs ? `ðŸ“ *ObservaÃ§Ã£o do TÃ©cnico:*\n${obs}\n\n` : '') +
-          `Caso precise de mais suporte, estamos Ã  disposiÃ§Ã£o.`;
+          `✅ *Chamado Concluído*\n\n` +
+          `*#${id}* — ${tipo}\n\n` +
+          (obs ? `📝 *Observação do Técnico:*\n${obs}\n\n` : '') +
+          `Caso precise de mais suporte, estamos à disposição.`;
           
         if (anexo) {
            try {
@@ -168,7 +168,7 @@ function startWebhook() {
              res.end('Mensagem com anexo enviada');
              return;
            } catch(e) { 
-             console.error('Erro ao enviar anexo da soluÃ§Ã£o:', e.message);
+             console.error('Erro ao enviar anexo da solução:', e.message);
              // Prossegue para tentar enviar ao menos o texto abaixo
            }
         }
@@ -176,17 +176,17 @@ function startWebhook() {
         console.log('[webhook] mensagem direta para', userId);
         mensagem = data.mensagem || '';
       } else if (endpoint === '/webhook/mensagem-avulsa') {
-        const id = data.id || 'â€”';
+        const id = data.id || '—';
         const obs = data.observacao || '';
         const anexo = data.anexo_solucao;
-        const atendente = data.atendente || 'â€”';
+        const atendente = data.atendente || '—';
         console.log(`[webhook] mensagem avulsa para ${userId}`);
         mensagem = 
-          `ðŸ’¬ *AtualizaÃ§Ã£o no Chamado #${id}*\n\n` +
+          `💬 *Atualização no Chamado #${id}*\n\n` +
           `*De:* ${atendente}\n\n` +
           `${obs}`;
           
-        // Se o chamado foi atualizado, garantimos que o usuÃ¡rio estÃ¡ no modo chat
+        // Se o chamado foi atualizado, garantimos que o usuário está no modo chat
         updateSession(userId, { state: 'em_atendimento', targetTicketId: id });
           
         if (anexo) {
@@ -205,7 +205,7 @@ function startWebhook() {
       try {
         await sendToUser(userId, mensagem);
         
-        // Se for conclusÃ£o, reseta a sessÃ£o apÃ³s enviar a mensagem
+        // Se for conclusão, reseta a sessão após enviar a mensagem
         if (endpoint === '/webhook/chamado-concluido') {
            resetSession(userId);
         }
@@ -222,11 +222,10 @@ function startWebhook() {
 
   server.listen(WEBHOOK_PORT, () => {
     console.log(`[webhook] servidor rodando na porta ${WEBHOOK_PORT}`);
-    console.log(`[webhook] endpoints disponÃ­veis:`);
+    console.log(`[webhook] endpoints disponíveis:`);
     console.log(`  POST http://localhost:${WEBHOOK_PORT}/webhook/chamado-concluido`);
     console.log(`  POST http://localhost:${WEBHOOK_PORT}/webhook/chamado-assumido`);
   });
 }
 
 module.exports = { startWebhook };
-
