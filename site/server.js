@@ -244,6 +244,16 @@ function requireAuth(req, res) {
   return session;
 }
 
+function getAtendenteNome(req, session, fallback = 'Pedro Sousa') {
+  if (session && session.email) {
+    const logins = readCollection('logins');
+    const user = logins.find(u => u.email.toLowerCase() === session.email.toLowerCase());
+    if (user && user.name) return user.name;
+    return session.email;
+  }
+  return fallback;
+}
+
 // Cria logins.json com usuário padrão se não existir
 function initLogins() {
   const loginsPath = path.join(DADOS_DIR, 'logins.json');
@@ -737,10 +747,14 @@ const ROUTES = {
         tickets.push(newTicket);
         fs.writeFileSync(ticketsPath, JSON.stringify(tickets, null, 2), 'utf-8');
         
+        // Identifica o atendente logado
+        const session = getSession(req);
+        const atendenteNome = getAtendenteNome(req, session, data.atendente || 'Pedro Sousa');
+
         // Pause the bot (set to em_atendimento)
         const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3000;
         const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
-        const payload = JSON.stringify({ secret: WEBHOOK_SECRET, telefone: data.telefone, id: newTicket.id, tipo: 'Mensagem Direta', atendente: 'Organograma' });
+        const payload = JSON.stringify({ secret: WEBHOOK_SECRET, telefone: data.telefone, id: newTicket.id, tipo: 'Mensagem Direta', atendente: atendenteNome });
         
         const whReq = require('http').request(
           { hostname: 'localhost', port: WEBHOOK_PORT, path: '/webhook/chamado-assumido', method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
@@ -1746,11 +1760,7 @@ const server = http.createServer((req, res) => {
 
       const anteriorStatus = tickets[idx].status;
       
-      let atendenteNome = data.atendente || 'Suporte (Organograma)';
-      if (session && session.email) {
-        const atendenteLogin = readCollection('logins').find(u => u.email.toLowerCase() === session.email.toLowerCase());
-        atendenteNome = (atendenteLogin && atendenteLogin.name) ? atendenteLogin.name : session.email;
-      }
+      let atendenteNome = getAtendenteNome(req, session, (data.atendente && data.atendente !== 'Organograma') ? data.atendente : 'Pedro Sousa');
 
       let addedMessage = false;
       // Atualiza campos permitidos
@@ -1879,7 +1889,7 @@ const server = http.createServer((req, res) => {
       }
 
       if (data.status === 'em_atendimento' && anteriorStatus !== 'em_atendimento' && origemNotif) {
-        const payload = JSON.stringify({ secret: WEBHOOK_SECRET, telefone: notifPhone, id: ticket.id, tipo: ticket.type, atendente: session.email });
+        const payload = JSON.stringify({ secret: WEBHOOK_SECRET, telefone: notifPhone, id: ticket.id, tipo: ticket.type, atendente: atendenteNome });
         const whReq = require('http').request(
           { hostname: 'localhost', port: WEBHOOK_PORT, path: '/webhook/chamado-assumido', method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },

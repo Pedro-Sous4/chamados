@@ -194,14 +194,18 @@ const Modal = ({ colaborador, onClose, tickets = [] }) => {
     // 2. Senão, cria novo ticket direto (que já herda histórico das conversas anteriores no backend)
     setIsStartingChat(true);
     try {
+      const token = localStorage.getItem('auth_token');
+      const authHeaders = { 'Content-Type': 'application/json' };
+      if (token) authHeaders['Authorization'] = 'Bearer ' + token;
+
       const res = await fetch('/api/tickets/direct', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome: colaborador.nome, telefone: colabTel })
+        headers: authHeaders,
+        body: JSON.stringify({ nome: colaborador.nome, telefone: colabTel, atendente: 'Pedro Sousa' })
       });
       const data = await res.json();
       if (data.ok && data.ticketId) {
-        const ticketRes = await fetch(`/api/tickets/${data.ticketId}`);
+        const ticketRes = await fetch(`/api/tickets/${data.ticketId}`, { headers: authHeaders });
         if (ticketRes.ok) {
           const ticketData = await ticketRes.json();
           setActiveChatTicket(ticketData);
@@ -231,9 +235,11 @@ const Modal = ({ colaborador, onClose, tickets = [] }) => {
     const textToSend = chatMessage.trim();
     setIsSending(true);
 
+    const atendenteNome = 'Pedro Sousa';
+
     const optimisticMsg = {
       role: 'agent',
-      atendente: 'Organograma',
+      atendente: atendenteNome,
       text: textToSend,
       timestamp: new Date().toISOString()
     };
@@ -245,12 +251,16 @@ const Modal = ({ colaborador, onClose, tickets = [] }) => {
     setChatMessage('');
 
     try {
+      const token = localStorage.getItem('auth_token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+
       const res = await fetch(`/api/tickets/${activeChatTicket.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           observacao: textToSend,
-          atendente: 'Organograma'
+          atendente: atendenteNome
         })
       });
       if (res.ok) {
