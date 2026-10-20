@@ -195,6 +195,7 @@
 
       localStorage.setItem('auth_token', data.token);
       localStorage.setItem('auth_email', data.email);
+      localStorage.setItem('auth_name', data.name || '');
       localStorage.setItem('auth_role', data.role || 'usuario');
       window.location.replace('/');
     } catch {

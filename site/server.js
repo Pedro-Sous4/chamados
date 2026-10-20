@@ -895,9 +895,9 @@ const ROUTES = {
       }
       const token = generateToken();
       // Sessão válida por 8 horas
-      sessions.set(token, { id: user.id, email: user.email, role: user.role || 'usuario', expiresAt: Date.now() + 8 * 60 * 60 * 1000 });
+      sessions.set(token, { id: user.id, email: user.email, name: user.name || '', role: user.role || 'usuario', expiresAt: Date.now() + 8 * 60 * 60 * 1000 });
       saveSessions(sessions);
-      sendJson(res, 200, { token, email: user.email, role: user.role || 'usuario' });
+      sendJson(res, 200, { token, email: user.email, name: user.name || '', role: user.role || 'usuario' });
     });
   },
 
@@ -911,7 +911,10 @@ const ROUTES = {
   'GET /api/auth/verify': (req, res) => {
     const session = getSession(req);
     if (!session) return sendJson(res, 401, { error: 'Sessão inválida' });
-    sendJson(res, 200, { email: session.email, role: session.role || 'usuario' });
+    const logins = readCollection('logins');
+    const user = logins.find(u => u.email.toLowerCase() === session.email.toLowerCase());
+    const name = (user && user.name) ? user.name : (session.name || '');
+    sendJson(res, 200, { email: session.email, name, role: session.role || 'usuario' });
   },
 
   // â”€â”€ Organograma â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
