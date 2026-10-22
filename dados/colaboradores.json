@@ -602,6 +602,29 @@
           ]
         }
       ]
+    },
+    {
+      "nome": "Hoteis",
+      "colaboradores": [],
+      "subsetores": [
+        {
+          "nome": "Fiscal",
+          "colaboradores": [
+            {
+              "id": "colab-1792521525842",
+              "nome": "Ana Paula de Abreu",
+              "cargo": "Analista",
+              "setor": "Fiscal",
+              "email": "fiscal2@laghettohoteis.com.br",
+              "telefone": "51 8680-0326",
+              "ramal": "",
+              "apelido": "",
+              "foto": "/figurinhas/colab_1792521763188.png"
+            }
+          ],
+          "subsetores": []
+        }
+      ]
     }
   ]
 }

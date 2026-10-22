@@ -425,7 +425,7 @@
     "id": 1781898472653,
     "createdAt": "2026-06-19T19:47:52.653Z",
     "numero": "165751394705630",
-    "nome": "Pedro"
+    "nome": "Pedro Sousa"
   },
   {
     "id": 1782132322590,
@@ -449,7 +449,7 @@
     "id": 1782157242277,
     "createdAt": "2026-06-22T19:40:42.277Z",
     "numero": "276329689809094",
-    "nome": "JOSE CONCEICAO DE BARROS - essa venda ainda não integrou no Dynamics"
+    "nome": "Leonardo Adiers"
   },
   {
     "id": 1782211371068,
@@ -671,7 +671,7 @@
     "id": 1786023076933,
     "createdAt": "2026-08-06T13:31:16.933Z",
     "numero": "201807812915395",
-    "nome": "Maria Eduarda Schutz"
+    "nome": "Maria Schutz"
   },
   {
     "id": 1786024090091,
@@ -822,5 +822,17 @@
     "createdAt": "2026-10-01T16:59:04.688Z",
     "numero": "209624636633302",
     "nome": "É a Millena da Laghetto, gostaria de abrir um chamado para colocar o cancelamento de brinde no meu login. \n\nmillena.oliveira\nmo@12345"
+  },
+  {
+    "id": 1792498767958,
+    "createdAt": "2026-10-20T12:19:27.958Z",
+    "numero": "127255737049309",
+    "nome": "Ana Paula de Abreu"
+  },
+  {
+    "id": 1792522958860,
+    "createdAt": "2026-10-20T19:02:38.860Z",
+    "numero": "13151441539072",
+    "nome": "Paulo Emanuel"
   }
 ]

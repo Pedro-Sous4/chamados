@@ -1708,7 +1708,7 @@
       "hostname": "RSADMN009",
       "serviceTag": "D91Y6X3",
       "modelo": "VOSTRO 3510",
-      "responsavel": "FINANCEIRO - PRISCILA SPORTS",
+      "responsavel": "Prisicla Brito",
       "setor": "FINANCEIRO",
       "local": "VITA",
       "cpu": "I5 - 1135",
@@ -1716,7 +1716,10 @@
       "disco": "SSD - 512GB",
       "obs": "",
       "status": "em_uso",
-      "origem": "Salas de Vendas"
+      "origem": "Salas de Vendas",
+      "mac": "",
+      "rustdesk": "1 916 249 575",
+      "updatedAt": "2026-10-20T17:56:40.457Z"
     },
     {
       "id": "eq-111",
@@ -1993,18 +1996,21 @@
     {
       "id": "eq-128",
       "tipo": "Desktop",
-      "hostname": "ONLINE2",
-      "serviceTag": "HVK6KB4",
+      "hostname": "CAR07",
+      "serviceTag": "JVK6KB4",
       "modelo": "INSPIRION 15 3520",
-      "responsavel": "era usado por Alexsandra",
-      "setor": "",
+      "responsavel": "Alexandra Rossa",
+      "setor": "CAR",
       "local": "Salas de Vendas",
       "cpu": "",
       "ram": "",
       "disco": "",
-      "obs": "recebido Weber",
+      "obs": "NOTEBOOK PASSADO DE TÂNIA RISSO PARA ALEXANDRA ROSSA (TODAS DO CAR)",
       "status": "em_uso",
-      "origem": "Salas de Vendas"
+      "origem": "Salas de Vendas",
+      "mac": "",
+      "rustdesk": "1218338950",
+      "updatedAt": "2026-10-20T17:31:14.862Z"
     },
     {
       "id": "eq-129",
