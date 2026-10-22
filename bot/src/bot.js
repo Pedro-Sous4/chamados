@@ -549,10 +549,75 @@ async function processState(client, message, userId) {
       return;
     }
 
+    // ── ATALHO VIP: Caroline Pinheiro (Ajuste de Câmeras/DVR na Sala do Márcio) ──
+    const cleanUserNum = String(userNumber).replace(/\D/g, '');
+    const isCarol = cleanUserNum.includes('5391803710') || cleanUserNum.endsWith('91803710');
+    if (isCarol) {
+      updateSession(userId, {
+        state: 'aguardando_confirmacao_dvr_carol',
+        nome: 'Caroline Pinheiro',
+        local: 'Sala do Márcio (Vendas / Diretoria)',
+        type: 'Equipamento - Câmeras'
+      });
+      await send(
+        `Olá, Carol! 👋\n\n` +
+        `Gostaria que as *Câmeras* fossem ajustadas na TV da Sala do Márcio?\n\n` +
+        `Responda *SIM* para que o chamado seja criado automaticamente, ou *NÃO* se a demanda for outra.`
+      );
+      return;
+    }
+
     updateSession(userId, { state: 'aguardando_nome' });
     const config = getBotConfig();
     const msg = (config.menus || {}).saudacao || 'Olá! Tudo bem? Eu sou o Especialista de Suporte.\n\nPara começar, informe seu *NOME*:';
     await send(msg);
+    return;
+  }
+
+  // ── ESTADO: aguardando_confirmacao_dvr_carol ─────────────────────────────────
+  if (session.state === 'aguardando_confirmacao_dvr_carol') {
+    const resp = text.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+    if (resp === 'SIM' || resp === 'S' || resp === 'COM CERTEZA' || resp === 'POR FAVOR' || resp === 'ISSO') {
+      const ticket = storage.insert('tickets', {
+        name: 'Caroline Pinheiro',
+        number: extractNumber(userId),
+        notifWpp: userId,
+        description: 'Solicitação de ajuste das câmeras do DVR na TV da Sala do Márcio.',
+        status: 'aberto',
+        origem: 'bot',
+        solicitante: 'Caroline Pinheiro',
+        type: 'Equipamento - Câmeras',
+        sala: 'Sala do Márcio (Vendas / Diretoria)',
+        attachment: null,
+        attachments: []
+      });
+
+      // Dispara alerta imediato por e-mail para a equipe de TI
+      enviarAlertaNovoChamado(ticket).catch(err => console.warn('[bot] erro ao disparar alerta Carol DVR:', err.message));
+
+      resetSession(userId);
+      await send(
+        `✅ Perfeito, Carol!\n\n` +
+        `O chamado *#${ticket.id}* foi aberto com sucesso.\n` +
+        `A equipe de TI já foi notificada para ajustar o DVR e as câmeras na TV!`
+      );
+      return;
+    }
+
+    if (resp === 'NAO' || resp === 'N') {
+      // Se a demanda for outra, já direciona para os tipos de demanda mantendo o nome dela
+      updateSession(userId, {
+        state: 'aguardando_demanda_tipo',
+        nome: 'Caroline Pinheiro',
+        local_type: 'VENDAS',
+        local: 'Operacional'
+      });
+      await send(`Entendido, Carol! Como posso te ajudar hoje?\n\n` + getDemandaTipoMenu());
+      return;
+    }
+
+    await send(`Por favor, Carol, responda *SIM* para abrir o chamado das Câmeras ou *NÃO* se for outra solicitação.`);
     return;
   }
 
