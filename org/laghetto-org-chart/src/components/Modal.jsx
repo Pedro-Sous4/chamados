@@ -33,26 +33,38 @@ const Modal = ({ colaborador, onClose, tickets = [] }) => {
         const cName = normalizeString(colaborador.nome);
         const assets = [];
         
+        const isNameMatch = (recordName, targetName) => {
+          if (!recordName || !targetName) return false;
+          const r = normalizeString(recordName);
+          const t = normalizeString(targetName);
+          if (r === t) return true;
+          // Se tiver pelo menos nome e sobrenome
+          const rParts = r.split(/\s+/).filter(Boolean);
+          const tParts = t.split(/\s+/).filter(Boolean);
+          if (rParts.length >= 2 && tParts.length >= 2) {
+            return r.includes(t) || t.includes(r);
+          }
+          // Se for só um primeiro nome genérico (ex: "Pedro"), não associar a "Pedro Sousa"
+          return false;
+        };
+
         // Computadores
         (data.computadores || []).forEach(comp => {
-          const resp = normalizeString(comp.responsavel);
-          if (resp && (resp === cName || resp.includes(cName) || cName.includes(resp))) {
+          if (isNameMatch(comp.responsavel, cName)) {
             assets.push({ ...comp, categoria: 'Computador' });
           }
         });
 
         // Periféricos
         (data.perifericos || []).forEach(p => {
-          const resp = normalizeString(p.responsavel);
-          if (resp && (resp === cName || resp.includes(cName) || cName.includes(resp))) {
+          if (isNameMatch(p.responsavel, cName)) {
             assets.push({ ...p, categoria: 'Periférico' });
           }
         });
 
         // Empréstimos
         (data.emprestimos || []).forEach(e => {
-          const resp = normalizeString(e.solicitante);
-          if (resp && (resp === cName || resp.includes(cName) || cName.includes(resp))) {
+          if (isNameMatch(e.solicitante, cName)) {
             assets.push({ ...e, categoria: 'Empréstimo' });
           }
         });
