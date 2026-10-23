@@ -625,7 +625,6 @@ async function processState(client, message, userId) {
     }
 
     // ── ATALHO VIP: Caroline Pinheiro (Ajuste de Câmeras/DVR na Sala do Márcio) ──
-    const cleanUserNum = String(userNumber).replace(/\D/g, '');
     const isCarol = cleanUserNum.includes('5391803710') || cleanUserNum.endsWith('91803710');
     if (isCarol) {
       updateSession(userId, {
