@@ -598,6 +598,29 @@
                 }
               ],
               "subsetores": []
+            },
+            {
+              "nome": "Unique Château",
+              "colaboradores": [
+                {
+                  "id": "colab-1792759841966",
+                  "nome": "Natiele Schafer",
+                  "cargo": "Supervisor(a)",
+                  "setor": "Unique Château",
+                  "email": "unique@laghettochateau.com.br",
+                  "telefone": "51 9590-2029",
+                  "ramal": "",
+                  "apelido": "",
+                  "foto": "/figurinhas/colab_1792760289304.png",
+                  "equipamentos": {
+                    "notebook": true,
+                    "mouse": true,
+                    "fone": true,
+                    "teclado": true
+                  }
+                }
+              ],
+              "subsetores": []
             }
           ]
         }

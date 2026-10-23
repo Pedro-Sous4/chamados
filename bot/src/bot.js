@@ -527,10 +527,85 @@ async function processState(client, message, userId) {
   // ── ESTADO: idle ───────────────────────────────────────────────────────────
   if (session.state === 'idle') {
     const userNumber = extractNumber(userId);
-    const ticketsAbertos = storage.find('tickets', t => 
-      t.number === userNumber && 
-      (t.status === 'aberto' || t.status === 'em_atendimento')
-    );
+    const cleanUserNum = String(userNumber).replace(/\D/g, '');
+
+    // Correlaciona números vinculados (telefone real e LID) via contatos.json e colaboradores.json
+    let relatedNums = new Set([cleanUserNum, userNumber]);
+    let matchedNames = new Set();
+    try {
+      const contatos = storage.readAll('contatos');
+      contatos.forEach(c => {
+        const cNum = String(c.numero || '').replace(/\D/g, '');
+        if (cNum === cleanUserNum || (cleanUserNum.length >= 8 && cNum.endsWith(cleanUserNum.slice(-8))) || (cNum.length >= 8 && cleanUserNum.endsWith(cNum.slice(-8)))) {
+          if (c.nome) matchedNames.add(c.nome.toLowerCase().trim());
+        }
+      });
+
+      const cols = storage.readAll('colaboradores');
+      const root = Array.isArray(cols) ? cols[0] : cols;
+      const allCols = [...(root?.lideranca || [])];
+      const ext = (s) => { if (!s) return; s.forEach(x => { if (x.colaboradores) allCols.push(...x.colaboradores); if (x.subsetores) ext(x.subsetores); }); };
+      ext(root?.setores);
+
+      allCols.forEach(c => {
+        const cNum = String(c.telefone || '').replace(/\D/g, '');
+        if (cNum === cleanUserNum || (cleanUserNum.length >= 8 && cNum.endsWith(cleanUserNum.slice(-8))) || (cNum.length >= 8 && cleanUserNum.endsWith(cNum.slice(-8)))) {
+          if (c.nome) matchedNames.add(c.nome.toLowerCase().trim());
+        }
+      });
+
+      if (matchedNames.size > 0) {
+        contatos.forEach(c => {
+          const cNome = String(c.nome || '').toLowerCase().trim();
+          for (const mName of matchedNames) {
+            if (cNome && (cNome === mName || cNome.includes(mName) || mName.includes(cNome))) {
+              const cNum = String(c.numero || '').replace(/\D/g, '');
+              if (cNum) {
+                relatedNums.add(cNum);
+                relatedNums.add(`${cNum}@lid`);
+                relatedNums.add(`${cNum}@c.us`);
+              }
+            }
+          }
+        });
+
+        allCols.forEach(c => {
+          const cNome = String(c.nome || '').toLowerCase().trim();
+          for (const mName of matchedNames) {
+            if (cNome && (cNome === mName || cNome.includes(mName) || mName.includes(cNome))) {
+              const cNum = String(c.telefone || '').replace(/\D/g, '');
+              if (cNum) {
+                relatedNums.add(cNum);
+                relatedNums.add(`${cNum}@c.us`);
+              }
+            }
+          }
+        });
+      }
+    } catch (e) {}
+
+    const ticketsAbertos = storage.find('tickets', t => {
+      const isStatusValido = t.status === 'aberto' || t.status === 'em_atendimento';
+      if (!isStatusValido) return false;
+
+      const tNum = String(t.number || '').replace(/\D/g, '');
+      const tNotif = String(t.notifWpp || '');
+      const tNotifNum = tNotif.replace(/\D/g, '');
+
+      if (t.number === userNumber || tNotif === userId) return true;
+      if (tNum && relatedNums.has(tNum)) return true;
+      if (tNotifNum && relatedNums.has(tNotifNum)) return true;
+      if (tNotif && relatedNums.has(tNotif)) return true;
+
+      // Verificação por sufixo de 8 dígitos para telefones celulares
+      for (const r of relatedNums) {
+        const rClean = String(r).replace(/\D/g, '');
+        if (rClean.length >= 8 && tNum.length >= 8 && (rClean.endsWith(tNum.slice(-8)) || tNum.endsWith(rClean.slice(-8)))) {
+          return true;
+        }
+      }
+      return false;
+    });
 
     if (ticketsAbertos.length > 0) {
       const t = ticketsAbertos[ticketsAbertos.length - 1]; 

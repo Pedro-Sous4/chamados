@@ -1,7 +1,7 @@
 const http = require('http');
 const path = require('path');
 const { sendToUser, sendFileToUser } = require('./context');
-const { updateSession, resetSession, findSessionId } = require('./sessions');
+const { updateSession, resetSession, findSessionId, findRelatedSessionIds } = require('./sessions');
 
 const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3000;
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
@@ -132,7 +132,9 @@ function startWebhook() {
 
       // Formata o userId no padrão do WhatsApp, resolvendo conflitos @lid/@c.us
       const userId = findSessionId(telefone);
-      console.log(`[webhook] Resolvido userId: ${userId} (entrada: ${telefone})`);
+      const allRelatedUserIds = findRelatedSessionIds(telefone);
+      if (!allRelatedUserIds.includes(userId)) allRelatedUserIds.push(userId);
+      console.log(`[webhook] Resolvido userId: ${userId} (entrada: ${telefone}, relacionados: ${allRelatedUserIds.join(', ')})`);
 
       let mensagem;
 
@@ -140,15 +142,17 @@ function startWebhook() {
         const id        = data.id   || '—';
         const tipo      = data.tipo || data.type || '—';
         const atendente = data.atendente || '—';
-        console.log(`[webhook] chamado assumido para ${userId}`);
+        console.log(`[webhook] chamado assumido para ${userId} (e sincronizados: ${allRelatedUserIds.join(', ')})`);
         mensagem =
           `🔵 *Chamado Assumido*\n\n` +
           `*#${id}* — ${tipo}\n` +
           `👤 Assumido por: ${atendente}\n\n` +
           `Em breve você receberá o atendimento.`;
           
-        // Sincroniza estado do bot para Chat Direto
-        updateSession(userId, { state: 'em_atendimento', targetTicketId: id });
+        // Sincroniza estado do bot para Chat Direto em todas as sessões correlacionadas (telefone e LID)
+        allRelatedUserIds.forEach(relId => {
+          updateSession(relId, { state: 'em_atendimento', targetTicketId: id });
+        });
       } else if (endpoint === '/webhook/chamado-concluido') {
         const id   = data.id   || '—';
         const tipo = data.tipo || data.type || '—';
@@ -164,6 +168,7 @@ function startWebhook() {
         if (anexo) {
            try {
              await sendFileToUser(userId, anexo, path.basename(anexo), mensagem);
+             allRelatedUserIds.forEach(relId => resetSession(relId));
              res.writeHead(200);
              res.end('Mensagem com anexo enviada');
              return;
@@ -187,7 +192,9 @@ function startWebhook() {
           `${obs}`;
           
         // Se o chamado foi atualizado, garantimos que o usuário está no modo chat
-        updateSession(userId, { state: 'em_atendimento', targetTicketId: id });
+        allRelatedUserIds.forEach(relId => {
+          updateSession(relId, { state: 'em_atendimento', targetTicketId: id });
+        });
           
         if (anexo) {
            try {
@@ -207,7 +214,7 @@ function startWebhook() {
         
         // Se for conclusão, reseta a sessão após enviar a mensagem
         if (endpoint === '/webhook/chamado-concluido') {
-           resetSession(userId);
+           allRelatedUserIds.forEach(relId => resetSession(relId));
         }
 
         res.writeHead(200);

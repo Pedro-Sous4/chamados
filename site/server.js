@@ -748,11 +748,24 @@ const ROUTES = {
 
         const initialConversa = prevTicket ? [...prevTicket.conversa] : [];
 
+        // Detectar se há algum LID ou notifWpp correspondente nos números relacionados
+        let resolvedNotifWpp = null;
+        for (const num of relatedNums) {
+          if (num && (num.length >= 14 || num.endsWith('@lid'))) {
+            resolvedNotifWpp = num.endsWith('@lid') ? num : `${num}@lid`;
+            break;
+          }
+        }
+        if (!resolvedNotifWpp && prevTicket && prevTicket.notifWpp) {
+          resolvedNotifWpp = prevTicket.notifWpp;
+        }
+
         const newTicket = {
           id: String(newId),
           status: 'em_atendimento',
           origem: 'bot',
           number: data.telefone,
+          notifWpp: resolvedNotifWpp || undefined,
           name: data.nome || 'Usuário',
           solicitanteNome: data.nome || 'Usuário',
           type: 'Mensagem Direta',
@@ -769,18 +782,26 @@ const ROUTES = {
         const session = getSession(req);
         const atendenteNome = getAtendenteNome(req, session, data.atendente || 'Pedro Sousa');
 
-        // Pause the bot (set to em_atendimento)
+        // Pause the bot (set to em_atendimento) para todos os identificadores vinculados (telefone e LID)
         const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3000;
         const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
-        const payload = JSON.stringify({ secret: WEBHOOK_SECRET, telefone: data.telefone, id: newTicket.id, tipo: 'Mensagem Direta', atendente: atendenteNome });
         
-        const whReq = require('http').request(
-          { hostname: 'localhost', port: WEBHOOK_PORT, path: '/webhook/chamado-assumido', method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
-          (whRes) => { whRes.resume(); console.log(`[site] webhook assumido direto: ${whRes.statusCode}`); }
-        );
-        whReq.on('error', (e) => console.warn('[site] webhook indisponível:', e.message));
-        whReq.write(payload);
-        whReq.end();
+        const targetsToNotify = new Set([data.telefone]);
+        if (resolvedNotifWpp) targetsToNotify.add(resolvedNotifWpp);
+        for (const rNum of relatedNums) {
+          if (rNum) targetsToNotify.add(rNum);
+        }
+
+        targetsToNotify.forEach(targetTel => {
+          const payload = JSON.stringify({ secret: WEBHOOK_SECRET, telefone: targetTel, id: newTicket.id, tipo: 'Mensagem Direta', atendente: atendenteNome });
+          const whReq = require('http').request(
+            { hostname: 'localhost', port: WEBHOOK_PORT, path: '/webhook/chamado-assumido', method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } },
+            (whRes) => { whRes.resume(); console.log(`[site] webhook assumido direto (${targetTel}): ${whRes.statusCode}`); }
+          );
+          whReq.on('error', (e) => console.warn(`[site] webhook indisponível (${targetTel}):`, e.message));
+          whReq.write(payload);
+          whReq.end();
+        });
 
         // Dispara e-mail de alerta assíncrono para o TI
         sendNovoChamadoAlert(newTicket).catch(e => console.warn('[site] Erro alerta direto:', e.message));
