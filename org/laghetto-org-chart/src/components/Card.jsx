@@ -18,7 +18,9 @@ const Card = ({ searchTerm = '', colaborador, onClick, isCenter = false, isAdmin
 
   const handleDragStart = (e) => {
     if (!isAdmin) return;
+    e.stopPropagation();
     e.dataTransfer.setData('colabId', colaborador.id);
+    e.dataTransfer.effectAllowed = 'move';
   };
 
   
@@ -37,10 +39,11 @@ const Card = ({ searchTerm = '', colaborador, onClick, isCenter = false, isAdmin
         
         <div className="w-full h-3/4 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center overflow-hidden border border-[#3b82f6]/20 relative">
           <img 
+            draggable={false}
             src={colaborador.foto} 
             onError={(e) => { e.target.onerror = null; e.target.src = fallbackImage }} 
             alt={colaborador.nome}
-            className="w-full h-full object-cover pointer-events-none"
+            className="w-full h-full object-cover pointer-events-none select-none"
           />
           {colaborador.rustdesk_id && (
             <div 

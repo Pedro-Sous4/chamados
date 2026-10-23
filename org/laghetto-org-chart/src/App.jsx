@@ -77,11 +77,19 @@ const handleSelect = (colaborador) => {
 
   const [isAddingSetor, setIsAddingSetor] = useState(false);
 
-  const findSector = (setorList, name) => {
+  const findSector = (setorList, target, currentPath = '') => {
+    if (!setorList || !target) return null;
+    const isPathSearch = typeof target === 'string' && target.includes('>');
+
     for (let s of setorList) {
-      if (s.nome === name) return s;
-      if (s.subsetores) {
-        const found = findSector(s.subsetores, name);
+      const thisPath = currentPath ? `${currentPath} > ${s.nome}` : s.nome;
+      if (isPathSearch) {
+        if (thisPath === target) return s;
+      } else {
+        if (s.nome === target) return s;
+      }
+      if (s.subsetores && s.subsetores.length > 0) {
+        const found = findSector(s.subsetores, target, thisPath);
         if (found) return found;
       }
     }
@@ -112,77 +120,115 @@ const handleSelect = (colaborador) => {
       const parentSector = findSector(newData.setores, parent);
       if (parentSector) {
         if (!parentSector.subsetores) parentSector.subsetores = [];
-        parentSector.subsetores.push({ nome, colaboradores: [], subsetores: [] });
+        parentSector.subsetores.push({ nome: nome.trim(), colaboradores: [], subsetores: [] });
       }
     } else {
-      newData.setores.push({ nome, colaboradores: [], subsetores: [] });
+      newData.setores.push({ nome: nome.trim(), colaboradores: [], subsetores: [] });
     }
     handleSave(newData);
     setIsAddingSetor(false);
   };
 
-  const handleConfirmAddColaborador = (nomeSetor) => {
+  const handleConfirmAddColaborador = (sectorIdentifier) => {
     let newData = JSON.parse(JSON.stringify(data));
-    const newColab = {
-      id: "colab-" + Date.now(),
-      nome: "Novo Colaborador",
-      cargo: "Novo Cargo",
-      setor: nomeSetor,
-      email: "",
-      telefone: "",
-      ramal: "",
-      apelido: "",
-      foto: "/figurinhas/figurinha_pagina_001.png"
-    };
+    let targetSetor = null;
+    let finalSectorName = sectorIdentifier;
 
-    if (nomeSetor === 'LIDERANÇA' || nomeSetor === 'LIDERANÃ‡A') {
+    if (sectorIdentifier === 'LIDERANÇA' || sectorIdentifier === 'LIDERANÃ‡A') {
+      finalSectorName = 'Liderança';
+      const newColab = {
+        id: "colab-" + Date.now(),
+        nome: "Novo Colaborador",
+        cargo: "Novo Cargo",
+        setor: finalSectorName,
+        email: "",
+        telefone: "",
+        ramal: "",
+        apelido: "",
+        foto: "/figurinhas/figurinha_pagina_001.png"
+      };
+      if (!newData.lideranca) newData.lideranca = [];
       newData.lideranca.push(newColab);
-    } else {
-      let targetSetor = findSector(newData.setores, nomeSetor);
-      if (targetSetor) {
-        if (!targetSetor.colaboradores) targetSetor.colaboradores = [];
-        targetSetor.colaboradores.push(newColab);
-      }
+      handleSave(newData);
+      setIsAddingColab(false);
+      setEditingColaborador(newColab);
+      return;
     }
-    handleSave(newData);
-    setIsAddingColab(false);
-    setEditingColaborador(newColab);
+
+    targetSetor = findSector(newData.setores, sectorIdentifier);
+    if (targetSetor) {
+      finalSectorName = targetSetor.nome;
+      const newColab = {
+        id: "colab-" + Date.now(),
+        nome: "Novo Colaborador",
+        cargo: "Novo Cargo",
+        setor: finalSectorName,
+        email: "",
+        telefone: "",
+        ramal: "",
+        apelido: "",
+        foto: "/figurinhas/figurinha_pagina_001.png"
+      };
+      if (!targetSetor.colaboradores) targetSetor.colaboradores = [];
+      targetSetor.colaboradores.push(newColab);
+      handleSave(newData);
+      setIsAddingColab(false);
+      setEditingColaborador(newColab);
+    }
   };
 
-  const handleMoveCard = async (colaboradorId, newSetorName) => {
+  const handleMoveCard = async (colaboradorId, newSetorIdentifier) => {
     if (!data) return;
     let newData = JSON.parse(JSON.stringify(data)); 
 
+    // Procura e remove de setores
     let colabToMove = findAndRemoveColab(newData.setores, colaboradorId);
 
-    if (colabToMove) {
-      colabToMove.setor = newSetorName;
-      let targetSetor = findSector(newData.setores, newSetorName);
-      if (targetSetor) {
-        if (!targetSetor.colaboradores) targetSetor.colaboradores = [];
-        
-        targetSetor.colaboradores.push(colabToMove);
-        handleSave(newData);
+    // Se não encontrou em setores, procura na Liderança
+    if (!colabToMove && newData.lideranca) {
+      let idx = newData.lideranca.findIndex(c => c.id === colaboradorId);
+      if (idx !== -1) {
+        colabToMove = newData.lideranca.splice(idx, 1)[0];
+      }
+    }
 
-        // Gatilho de TI Automático
-        if (colabToMove.setor && colabToMove.setor !== newSetorName) {
-           fetch('/api/tickets', {
-             method: 'POST',
-             headers: { 'Content-Type': 'application/json' },
-             body: JSON.stringify({
-               name: 'Sistema RH (Organograma)',
-               number: colabToMove.telefone || '00000000000',
-               type: 'Dúvidas e Suporte',
-               description: `TRANSFERÊNCIA AUTOMÁTICA: O colaborador ${colabToMove.nome} foi transferido do setor "${colabToMove.setor}" para o setor "${newSetorName}". Favor revogar acessos antigos e liberar permissões do novo setor, conforme o cargo: ${colabToMove.cargo}`
-             })
-           }).catch(console.error);
-        }
+    if (!colabToMove) return;
 
+    const oldSector = colabToMove.setor;
+
+    // Destino: Liderança
+    if (newSetorIdentifier === 'LIDERANÇA' || newSetorIdentifier === 'LIDERANÃ‡A') {
+      colabToMove.setor = 'Liderança';
+      if (!newData.lideranca) newData.lideranca = [];
+      newData.lideranca.push(colabToMove);
+      handleSave(newData);
+      return;
+    }
+
+    // Destino: Setor ou Subsetor
+    let targetSetor = findSector(newData.setores, newSetorIdentifier);
+    if (targetSetor) {
+      colabToMove.setor = targetSetor.nome;
+      if (!targetSetor.colaboradores) targetSetor.colaboradores = [];
+      
+      targetSetor.colaboradores.push(colabToMove);
+      handleSave(newData);
+
+      // Gatilho de TI Automático
+      if (oldSector && oldSector !== targetSetor.nome) {
+         fetch('/api/tickets', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+             name: 'Sistema RH (Organograma)',
+             number: colabToMove.telefone || '00000000000',
+             type: 'Dúvidas e Suporte',
+             description: `TRANSFERÊNCIA AUTOMÁTICA: O colaborador ${colabToMove.nome} foi transferido do setor "${oldSector}" para o setor "${targetSetor.nome}". Favor revogar acessos antigos e liberar permissões do novo setor, conforme o cargo: ${colabToMove.cargo}`
+           })
+         }).catch(console.error);
       }
     }
   };
-
-
 
   const handleDeleteColaborador = (colaboradorId) => {
     if (!window.confirm("Tem certeza que deseja excluir este colaborador?")) return;
@@ -196,12 +242,13 @@ const handleSelect = (colaborador) => {
     handleSave(newData);
   };
 
-  const handleRenameSector = (oldName) => {
-    const newName = window.prompt("Digite o novo nome para o setor:", oldName);
-    if (!newName || newName.trim() === '' || newName === oldName) return;
+  const handleRenameSector = (sectorIdentifier, currentName) => {
+    const displayName = currentName || (typeof sectorIdentifier === 'string' && sectorIdentifier.includes('>') ? sectorIdentifier.split('>').pop().trim() : sectorIdentifier);
+    const newName = window.prompt("Digite o novo nome para o setor:", displayName);
+    if (!newName || newName.trim() === '' || newName === displayName) return;
     
     let newData = JSON.parse(JSON.stringify(data));
-    const targetSector = findSector(newData.setores, oldName);
+    const targetSector = findSector(newData.setores, sectorIdentifier);
     if (targetSector) {
       targetSector.nome = newName.trim();
       if (targetSector.colaboradores) {
@@ -211,36 +258,46 @@ const handleSelect = (colaborador) => {
     }
   };
 
-  
-  const handleDeleteSector = (sectorName) => {
-    if (!window.confirm(`ATENÇÃO! Tem certeza que deseja EXCLUIR o setor "${sectorName}"?\n\nTodos os funcionários e subsetores dentro dele também serão excluídos permanentemente!`)) return;
+  const handleDeleteSector = (sectorIdentifier, currentName) => {
+    const displayName = currentName || (typeof sectorIdentifier === 'string' && sectorIdentifier.includes('>') ? sectorIdentifier.split('>').pop().trim() : sectorIdentifier);
+    if (!window.confirm(`ATENÇÃO! Tem certeza que deseja EXCLUIR o setor "${displayName}"?\n\nTodos os funcionários e subsetores dentro dele também serão excluídos permanentemente!`)) return;
     
     let newData = JSON.parse(JSON.stringify(data));
     
-    const removeRecursive = (list) => {
+    const removeRecursive = (list, parentPath = '') => {
       if (!list) return false;
-      const idx = list.findIndex(s => s.nome === sectorName);
+      const isPath = typeof sectorIdentifier === 'string' && sectorIdentifier.includes('>');
+      const idx = list.findIndex(s => {
+        const thisPath = parentPath ? `${parentPath} > ${s.nome}` : s.nome;
+        return isPath ? (thisPath === sectorIdentifier) : (s.nome === sectorIdentifier);
+      });
       if (idx !== -1) {
         list.splice(idx, 1);
         return true;
       }
       for (let s of list) {
-        if (s.subsetores && removeRecursive(s.subsetores)) return true;
+        const thisPath = parentPath ? `${parentPath} > ${s.nome}` : s.nome;
+        if (s.subsetores && removeRecursive(s.subsetores, thisPath)) return true;
       }
       return false;
     };
     
-    removeRecursive(newData.setores);
+    removeRecursive(newData.setores, '');
     handleSave(newData);
   };
 
-  const renderSectorOptions = (setorList, depth = 0) => {
-    return setorList.map(s => (
-      <React.Fragment key={s.nome}>
-        <option value={s.nome}>{"\u00A0".repeat(depth * 4)}{depth > 0 ? '↳ ' : ''}{s.nome}</option>
-        {s.subsetores && renderSectorOptions(s.subsetores, depth + 1)}
-      </React.Fragment>
-    ));
+  const renderSectorOptions = (setorList, depth = 0, parentPath = '') => {
+    return setorList.map(s => {
+      const currentPath = parentPath ? `${parentPath} > ${s.nome}` : s.nome;
+      return (
+        <React.Fragment key={currentPath}>
+          <option value={currentPath}>
+            {"\u00A0".repeat(depth * 4)}{depth > 0 ? '↳ ' : ''}{s.nome} {parentPath ? `(${parentPath})` : ''}
+          </option>
+          {s.subsetores && renderSectorOptions(s.subsetores, depth + 1, currentPath)}
+        </React.Fragment>
+      );
+    });
   };
 
   // Estatísticas de chamados no topo

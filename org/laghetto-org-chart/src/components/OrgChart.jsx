@@ -13,16 +13,18 @@ const getRank = (cargo = '') => {
   return 8;
 };
 
-// Coleta todos os nomes de setores recursivamente
-const getAllSectorNames = (sectorList = []) => {
-  let names = [];
+// Coleta todos os caminhos e nomes de setores recursivamente
+const getAllSectorPaths = (sectorList = [], parentPath = '') => {
+  let paths = [];
   sectorList.forEach(s => {
-    names.push(s.nome);
+    const currentPath = parentPath ? `${parentPath} > ${s.nome}` : s.nome;
+    paths.push(currentPath);
+    paths.push(s.nome);
     if (s.subsetores && s.subsetores.length > 0) {
-      names = names.concat(getAllSectorNames(s.subsetores));
+      paths = paths.concat(getAllSectorPaths(s.subsetores, currentPath));
     }
   });
-  return names;
+  return paths;
 };
 
 // Verifica se um colaborador possui chamado ativo
@@ -49,7 +51,7 @@ const OrgChart = ({ searchTerm, tickets = [], data, onSelect, isAdmin, onMoveCar
   // Estado da liderança (Diego Cáceres / CEO) colapsável
   const [isLiderancaExpanded, setIsLiderancaExpanded] = useState(true);
 
-  const allSectorNames = useMemo(() => getAllSectorNames(setores), [setores]);
+  const allSectorPaths = useMemo(() => getAllSectorPaths(setores), [setores]);
 
   // Animação suave com curva cinematográfica de desaceleração (easeInOutCubic)
   const activeAnimationRef = React.useRef(null);
@@ -121,8 +123,9 @@ const OrgChart = ({ searchTerm, tickets = [], data, onSelect, isAdmin, onMoveCar
         setIsLiderancaExpanded(true);
       }
 
-      // 2. Verifica setores e subsetores
-      const checkSector = (s) => {
+      // 2. Verifica setores e subsetores com caminhos hierárquicos
+      const checkSector = (s, parentPath = '') => {
+        const currentPath = parentPath ? `${parentPath} > ${s.nome}` : s.nome;
         let match = false;
         const colabMatch = (s.colaboradores || []).find(c => c.nome && c.nome.toLowerCase().includes(termLower));
         if (colabMatch) {
@@ -131,14 +134,17 @@ const OrgChart = ({ searchTerm, tickets = [], data, onSelect, isAdmin, onMoveCar
         }
         if (s.subsetores) {
           s.subsetores.forEach(sub => {
-            if (checkSector(sub)) match = true;
+            if (checkSector(sub, currentPath)) match = true;
           });
         }
-        if (match) matchingSectors[s.nome] = true;
+        if (match) {
+          matchingSectors[currentPath] = true;
+          matchingSectors[s.nome] = true;
+        }
         return match;
       };
 
-      (setores || []).forEach(checkSector);
+      (setores || []).forEach(s => checkSector(s, ''));
 
       // Expande setores encontrados
       if (Object.keys(matchingSectors).length > 0) {
@@ -308,14 +314,14 @@ const OrgChart = ({ searchTerm, tickets = [], data, onSelect, isAdmin, onMoveCar
     };
   }, []);
 
-  const toggleSector = (sectorName, event) => {
-    const isCurrentlyExpanded = !!expandedSectors[sectorName];
+  const toggleSector = (sectorPath, event) => {
+    const isCurrentlyExpanded = !!expandedSectors[sectorPath];
     const willBeExpanded = !isCurrentlyExpanded;
-    const sectorDomId = 'sector-header-' + sectorName.replace(/\s+/g, '-');
+    const sectorDomId = 'sector-header-' + sectorPath.replace(/[^a-zA-Z0-9]/g, '-');
 
     setExpandedSectors(prev => ({
       ...prev,
-      [sectorName]: willBeExpanded
+      [sectorPath]: willBeExpanded
     }));
 
     if (willBeExpanded) {
@@ -329,7 +335,7 @@ const OrgChart = ({ searchTerm, tickets = [], data, onSelect, isAdmin, onMoveCar
 
   const expandAll = () => {
     const all = {};
-    allSectorNames.forEach(n => { all[n] = true; });
+    allSectorPaths.forEach(n => { all[n] = true; });
     setExpandedSectors(all);
     setIsLiderancaExpanded(true);
   };
@@ -340,21 +346,36 @@ const OrgChart = ({ searchTerm, tickets = [], data, onSelect, isAdmin, onMoveCar
     setTimeout(() => resetToHomePosition(true), 80);
   };
 
-  const handleDragOver = (e, setorName) => {
+  const handleDragOver = (e, sectorPath) => {
     e.preventDefault();
-    setDragOverSector(setorName);
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverSector !== sectorPath) {
+      setDragOverSector(sectorPath);
+    }
   };
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.currentTarget && e.currentTarget.contains(e.relatedTarget)) {
+      return;
+    }
     setDragOverSector(null);
   };
 
-  const handleDrop = (e, setorName) => {
+  const handleDrop = (e, sectorPath) => {
     e.preventDefault();
+    e.stopPropagation();
     setDragOverSector(null);
     const colabId = e.dataTransfer.getData('colabId');
     if (colabId && onMoveCard) {
-      onMoveCard(colabId, setorName);
+      // Auto-expande o setor destino para o usuário ver o card imediatamente
+      setExpandedSectors(prev => ({
+        ...prev,
+        [sectorPath]: true
+      }));
+      onMoveCard(colabId, sectorPath);
     }
   };
 
@@ -396,10 +417,13 @@ const OrgChart = ({ searchTerm, tickets = [], data, onSelect, isAdmin, onMoveCar
     }).catch(() => alert('Erro de conexão ao enviar.'));
   };
 
-  const SectorNode = ({ s }) => {
-    const isExpanded = !!expandedSectors[s.nome];
+  const SectorNode = ({ s, parentPath = '' }) => {
+    const currentPath = parentPath ? `${parentPath} > ${s.nome}` : s.nome;
+    const isExpanded = !!expandedSectors[currentPath] || !!expandedSectors[s.nome];
+    const isDragOver = dragOverSector === currentPath;
     const colabs = s.colaboradores || [];
     const totalPessoas = colabs.length;
+    const domId = 'sector-header-' + currentPath.replace(/[^a-zA-Z0-9]/g, '-');
 
     // Resumo de chamados no setor
     let abertosCount = 0;
@@ -425,21 +449,21 @@ const OrgChart = ({ searchTerm, tickets = [], data, onSelect, isAdmin, onMoveCar
       <li>
         <div 
           className={`inline-flex flex-col items-center p-3 rounded-2xl transition-all duration-300 min-w-[220px] ${
-            dragOverSector === s.nome ? 'bg-laghetto-gold/15 ring-2 ring-laghetto-gold' : ''
+            isDragOver ? 'bg-laghetto-gold/25 ring-4 ring-laghetto-gold scale-105 shadow-2xl z-30' : ''
           }`}
-          onDragOver={(e) => handleDragOver(e, s.nome)}
+          onDragOver={(e) => handleDragOver(e, currentPath)}
           onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, s.nome)}
+          onDrop={(e) => handleDrop(e, currentPath)}
         >
           {/* Header do Setor com Botão de Colapso e Badges */}
           <div 
-            id={'sector-header-' + s.nome.replace(/\s+/g, '-')}
-            onClick={(e) => toggleSector(s.nome, e)}
+            id={domId}
+            onClick={(e) => toggleSector(currentPath, e)}
             className={`group/sector cursor-pointer select-none px-4 py-2 rounded-2xl border transition-all duration-300 backdrop-blur-md shadow-md flex items-center gap-2.5 ${
               isExpanded 
                 ? 'bg-blue-600 text-white border-blue-500 shadow-blue-500/20' 
                 : 'bg-white dark:bg-[#111c33] hover:bg-blue-50 dark:hover:bg-[#15223e] border-blue-200 dark:border-blue-500/40 text-[#0f172a] dark:text-[#f8fafc]'
-            } ${hasAnyActive && !isExpanded ? (abertosCount > 0 ? 'ring-2 ring-red-500 animate-pulse' : 'ring-2 ring-amber-400 animate-pulse') : ''}`}
+            } ${isDragOver ? 'ring-2 ring-laghetto-gold' : ''} ${hasAnyActive && !isExpanded ? (abertosCount > 0 ? 'ring-2 ring-red-500 animate-pulse' : 'ring-2 ring-amber-400 animate-pulse') : ''}`}
             title="Clique para expandir ou recolher este setor"
           >
             {/* Ícone Indicador de Expandir / Recolher */}
@@ -479,10 +503,10 @@ const OrgChart = ({ searchTerm, tickets = [], data, onSelect, isAdmin, onMoveCar
             {/* Ações de Admin */}
             {isAdmin && (
               <div className="flex items-center gap-1.5 ml-2 border-l border-white/20 pl-2">
-                <button onClick={(e) => { e.stopPropagation(); if (onRenameSector) onRenameSector(s.nome); }} className="hover:text-laghetto-gold transition-colors p-1" title="Renomear Setor">
+                <button onClick={(e) => { e.stopPropagation(); if (onRenameSector) onRenameSector(currentPath, s.nome); }} className="hover:text-laghetto-gold transition-colors p-1" title="Renomear Setor">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); if (onDeleteSector) onDeleteSector(s.nome); }} className="text-red-400 hover:text-red-300 transition-colors p-1" title="Excluir Setor">
+                <button onClick={(e) => { e.stopPropagation(); if (onDeleteSector) onDeleteSector(currentPath, s.nome); }} className="text-red-400 hover:text-red-300 transition-colors p-1" title="Excluir Setor">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                 </button>
                 <button onClick={(e) => handleBroadcast(e, s)} className="text-blue-400 hover:text-blue-300 transition-colors p-1" title="Aviso via WhatsApp">
@@ -515,7 +539,9 @@ const OrgChart = ({ searchTerm, tickets = [], data, onSelect, isAdmin, onMoveCar
         {/* Subsetores recursivos */}
         {s.subsetores && s.subsetores.length > 0 && (
           <ul>
-            {s.subsetores.map(sub => <SectorNode key={sub.nome} s={sub} />)}
+            {s.subsetores.map(sub => (
+              <SectorNode key={currentPath + ' > ' + sub.nome} s={sub} parentPath={currentPath} />
+            ))}
           </ul>
         )}
       </li>
@@ -612,7 +638,15 @@ const OrgChart = ({ searchTerm, tickets = [], data, onSelect, isAdmin, onMoveCar
 
       <ul>
         <li>
-          <div id="lideranca-node" className="inline-flex flex-col items-center">
+          <div 
+            id="lideranca-node" 
+            className={`inline-flex flex-col items-center p-3 rounded-2xl transition-all duration-300 ${
+              dragOverSector === 'LIDERANÇA' ? 'bg-laghetto-gold/25 ring-4 ring-laghetto-gold scale-105 shadow-2xl z-30' : ''
+            }`}
+            onDragOver={(e) => handleDragOver(e, 'LIDERANÇA')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'LIDERANÇA')}
+          >
             {/* Header Liderança Clicável para Colapsar/Expandir */}
             <div 
               onClick={() => setIsLiderancaExpanded(!isLiderancaExpanded)}
@@ -643,7 +677,7 @@ const OrgChart = ({ searchTerm, tickets = [], data, onSelect, isAdmin, onMoveCar
           </div>
           {setores && setores.length > 0 && (
             <ul>
-              {setores.map(s => <SectorNode key={s.nome} s={s} />)}
+              {setores.map(s => <SectorNode key={s.nome} s={s} parentPath="" />)}
             </ul>
           )}
         </li>
