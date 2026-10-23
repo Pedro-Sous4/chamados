@@ -3319,9 +3319,29 @@
     const solLabel =  rawSol.includes('@') ? rawSol.split('@')[0] : rawSol;
     
     // Prioriza o nome de referência (de contatos.json)se disponível
-    const name = ticket.name ||solLabel;
-    const rawNumber = ticket.origem !== 'site' ? (ticket.realNumber || ticket.number) : (ticket.solicitanteEmail || ticket.solicitante);
-    const number = ticket.origem !== 'site' ? formatPhone(rawNumber) : (rawNumber || '—');
+    // Prioriza o telefone real e formatado
+    let rawPhone = (ticket.realNumber && ticket.realNumber.length <= 13) ? ticket.realNumber : null;
+    if (!rawPhone && ticket.number && ticket.number.length >= 10 && ticket.number.length <= 13) {
+      rawPhone = ticket.number;
+    }
+    // Se não encontrou direto, tenta encontrar nos colaboradores
+    if (!rawPhone && _allColabs && _allColabs.length > 0) {
+      const matchCol = _allColabs.find(c => {
+        const cNome = (c.nome || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+        const tNome = (ticket.solicitanteNome || ticket.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+        return cNome && tNome && (cNome === tNome || cNome.includes(tNome) || tNome.includes(cNome));
+      });
+      if (matchCol && matchCol.telefone) {
+        rawPhone = String(matchCol.telefone).replace(/\D/g, '');
+      }
+    }
+    
+    let displayContact = '—';
+    if (ticket.origem !== 'site') {
+      displayContact = rawPhone ? formatPhone(rawPhone) : formatPhone(ticket.realNumber || ticket.number);
+    } else {
+      displayContact = ticket.solicitanteEmail || ticket.solicitante || '—';
+    }
 
     // Avatar
     const perf  = document.getElementById('perf-avatar');
@@ -3336,11 +3356,11 @@
 
     document.getElementById('perf-nome').textContent     = ticket.solicitanteNome || name;
     document.getElementById('perf-iniciais').textContent = ticket.cargo || ticket.colabSetor || initialsOf(name);
-    document.getElementById('perf-numero').textContent   = number;
+    document.getElementById('perf-numero').textContent   = displayContact;
 
     const labelEl = document.getElementById('perf-numero-label');
     if (labelEl) {
-      labelEl.textContent = ticket.origem !== 'site' ? 'Telefone/ID dosolicitante' : 'E-mail dosolicitante';
+      labelEl.textContent = ticket.origem !== 'site' ? 'WhatsApp do Solicitante' : 'E-mail do Solicitante';
     }
 
     // Chamadosdestesolicitante

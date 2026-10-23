@@ -625,7 +625,9 @@ async function processState(client, message, userId) {
     }
 
     // ── ATALHO VIP: Caroline Pinheiro (Ajuste de Câmeras/DVR na Sala do Márcio) ──
-    const isCarol = cleanUserNum.includes('5391803710') || cleanUserNum.endsWith('91803710');
+    const isCarol = cleanUserNum.includes('5391803710') || cleanUserNum.endsWith('91803710') ||
+                    Array.from(matchedNames).some(n => n.includes('caroline pinheiro') || n.includes('carol pinheiro')) ||
+                    Array.from(relatedNums).some(r => String(r).includes('5391803710') || String(r).endsWith('91803710'));
     if (isCarol) {
       updateSession(userId, {
         state: 'aguardando_confirmacao_dvr_carol',
@@ -666,6 +668,27 @@ async function processState(client, message, userId) {
         attachment: null,
         attachments: []
       });
+
+      // Garante o cadastro do contato
+      try {
+        const contatos = storage.readAll('contatos');
+        const normalizedNum = extractNumber(userId);
+        const exists = contatos.some(c => String(c.numero).replace(/\D/g, '') === normalizedNum);
+        if (!exists) {
+          contatos.push({
+            id: Date.now(),
+            createdAt: new Date().toISOString(),
+            numero: normalizedNum,
+            nome: 'Caroline Pinheiro'
+          });
+          const fs = require('fs');
+          const path = require('path');
+          const contatosPath = path.resolve(__dirname, '..', '..', 'dados', 'contatos.json');
+          fs.writeFileSync(contatosPath, JSON.stringify(contatos, null, 2), 'utf-8');
+        }
+      } catch (err) {
+        console.error('[bot] erro ao salvar contato Carol:', err.message);
+      }
 
       // Dispara alerta imediato por e-mail para a equipe de TI
       enviarAlertaNovoChamado(ticket).catch(err => console.warn('[bot] erro ao disparar alerta Carol DVR:', err.message));

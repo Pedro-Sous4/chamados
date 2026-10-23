@@ -665,7 +665,7 @@ const ROUTES = {
       enrichedTicket.solicitanteNome = sNome;
       enrichedTicket.solicitanteEmail = sEmail;
 
-            // Link com o organograma
+      // Link com o organograma
       let colabMatch = findColaboradorMatch(allColaboradores, contatos, { sEmail, sNome, realNumber, number: t.number });
 
       if (colabMatch) {
@@ -674,6 +674,13 @@ const ROUTES = {
         enrichedTicket.cargo = colabMatch.cargo;
         enrichedTicket.colabSetor = colabMatch.setor;
         enrichedTicket.solicitanteNome = colabMatch.nome;
+        if (colabMatch.telefone) {
+          const cTel = String(colabMatch.telefone).replace(/\D/g, '');
+          if (cTel && cTel.length >= 10 && cTel.length <= 13) {
+            enrichedTicket.realNumber = cTel;
+            realNumber = cTel;
+          }
+        }
       }
 
       return enrichedTicket;
@@ -910,6 +917,40 @@ const ROUTES = {
           nome: nome_colaborador
         });
       }
+
+      // Se o colaborador do organograma tiver telefone cadastrado, garante o registro do número real dele também
+      const colsData = readCollection('colaboradores');
+      const root = Array.isArray(colsData) ? colsData[0] : colsData;
+      let allColaboradores = [];
+      if (root) {
+        allColaboradores = [...(root.lideranca || [])];
+        const extractDeep = (sectors) => {
+          if (!sectors) return;
+          sectors.forEach(s => {
+            if (s.colaboradores) allColaboradores.push(...s.colaboradores);
+            if (s.subsetores) extractDeep(s.subsetores);
+          });
+        };
+        extractDeep(root.setores);
+      }
+      const colabObj = allColaboradores.find(col => normalizeColabStr(col.nome) === normalizeColabStr(nome_colaborador));
+      if (colabObj && colabObj.telefone) {
+        const telLimpo = String(colabObj.telefone).replace(/\D/g, '');
+        if (telLimpo && telLimpo.length >= 10 && telLimpo.length <= 13) {
+          const cReal = contatos.find(x => String(x.numero).replace(/\D/g, '') === telLimpo);
+          if (cReal) {
+            cReal.nome = colabObj.nome;
+          } else {
+            contatos.push({
+              id: Date.now() + 1,
+              createdAt: new Date().toISOString(),
+              numero: telLimpo,
+              nome: colabObj.nome
+            });
+          }
+        }
+      }
+
       fs.writeFileSync(path.join(DADOS_DIR, 'contatos.json'), JSON.stringify(contatos, null, 2), 'utf-8');
       sendJson(res, 200, { ok: true });
     });
